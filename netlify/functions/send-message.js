@@ -19,15 +19,17 @@ export async function handler(event) {
       return { statusCode: 400, body: 'Message too long (max 500 characters)' }
     }
 
+    const { name } = JSON.parse(event.body)
     const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
                event.headers['client-ip'] ||
                'unknown'
+    const displayName = name?.trim() || `visitor`
 
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `[${ip}]: ${message}`,
+        content: `[${displayName} - ${ip}]: ${message}`,
         allowed_mentions: { parse: [] }
       })
     })

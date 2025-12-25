@@ -7,6 +7,8 @@ function App() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [chatActive, setChatActive] = useState(false)
+  const [name, setName] = useState('')
+  const [showName, setShowName] = useState(false)
   const messagesEndRef = useRef(null)
   const pollingRef = useRef(null)
 
@@ -59,7 +61,7 @@ function App() {
       const res = await fetch('/api/send-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: message.trim() })
+        body: JSON.stringify({ message: message.trim(), name: name.trim() })
       })
 
       if (res.ok) {
@@ -180,22 +182,44 @@ function App() {
             </div>
           )}
 
-          <form onSubmit={sendMessage} className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              maxLength={500}
-              className="flex-1 px-3 py-2 bg-transparent border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
-            />
-            <button
-              type="submit"
-              disabled={sending || !message.trim()}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:cursor-not-allowed text-zinc-100 rounded-lg text-sm font-medium transition-colors"
-            >
-              {sending ? '...' : 'Send'}
-            </button>
+          <form onSubmit={sendMessage} className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                maxLength={500}
+                className="flex-1 px-3 py-2 bg-transparent border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
+              />
+              <button
+                type="submit"
+                disabled={sending || !message.trim()}
+                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:cursor-not-allowed text-zinc-100 rounded-lg text-sm font-medium transition-colors"
+              >
+                {sending ? '...' : 'Send'}
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              {!showName ? (
+                <button
+                  type="button"
+                  onClick={() => setShowName(true)}
+                  className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+                >
+                  + add name
+                </button>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="Your name (optional)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={20}
+                  className="px-2 py-1 bg-transparent border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
+                />
+              )}
+            </div>
           </form>
           {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
         </section>
