@@ -104,70 +104,79 @@ async function sendEmbed(botToken, embed) {
 }
 
 async function updateStats(botToken) {
-  // Find the pinned stats message or get it by searching
   const statsMessageId = process.env.DISCORD_STATS_MESSAGE_ID
 
+  console.log('updateStats called, messageId:', statsMessageId ? 'configured' : 'NOT CONFIGURED')
+
   if (!statsMessageId) {
-    // If no stats message configured, just log and return
     console.log('No stats message ID configured, skipping stats update')
     return
   }
 
-  try {
-    // Fetch current stats message
-    const getResponse = await fetch(
-      `https://discord.com/api/v10/channels/${TRACKING_CHANNEL_ID}/messages/${statsMessageId}`,
-      {
-        headers: { 'Authorization': `Bot ${botToken}` }
-      }
-    )
-
-    if (!getResponse.ok) {
-      console.error('Failed to fetch stats message')
-      return
+  // Fetch current stats message
+  console.log('Fetching stats message...')
+  const getResponse = await fetch(
+    `https://discord.com/api/v10/channels/${TRACKING_CHANNEL_ID}/messages/${statsMessageId}`,
+    {
+      headers: { 'Authorization': `Bot ${botToken}` }
     }
+  )
 
-    const message = await getResponse.json()
-    const content = message.content
-
-    // Parse current stats
-    const todayMatch = content.match(/Today:\*\* (\d+)/)
-    const totalMatch = content.match(/Total:\*\* (\d+)/)
-    const lastResetMatch = content.match(/Last Reset:\*\* (\d{4}-\d{2}-\d{2})/)
-
-    let todayCount = todayMatch ? parseInt(todayMatch[1]) : 0
-    let totalCount = totalMatch ? parseInt(totalMatch[1]) : 0
-    const lastReset = lastResetMatch ? lastResetMatch[1] : null
-
-    const today = new Date().toISOString().split('T')[0]
-
-    // Reset daily count if it's a new day
-    if (lastReset !== today) {
-      todayCount = 0
-    }
-
-    // Increment counts
-    todayCount++
-    totalCount++
-
-    // Build updated message
-    const updatedContent = buildStatsMessage(todayCount, totalCount, today)
-
-    // Edit the message
-    await fetch(
-      `https://discord.com/api/v10/channels/${TRACKING_CHANNEL_ID}/messages/${statsMessageId}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bot ${botToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ content: updatedContent })
-      }
-    )
-  } catch (error) {
-    console.error('Failed to update stats:', error)
+  if (!getResponse.ok) {
+    const errorText = await getResponse.text()
+    console.error('Failed to fetch stats message:', getResponse.status, errorText)
+    throw new Error(`Failed to fetch stats: ${errorText}`)
   }
+
+  const message = await getResponse.json()
+  const content = message.content
+  console.log('Current stats message content:', content.substring(0, 50) + '...')
+
+  // Parse current stats
+  const todayMatch = content.match(/Today:\*\* (\d+)/)
+  const totalMatch = content.match(/Total:\*\* (\d+)/)
+  const lastResetMatch = content.match(/Last Reset:\*\* (\d{4}-\d{2}-\d{2})/)
+
+  let todayCount = todayMatch ? parseInt(todayMatch[1]) : 0
+  let totalCount = totalMatch ? parseInt(totalMatch[1]) : 0
+  const lastReset = lastResetMatch ? lastResetMatch[1] : null
+
+  const today = new Date().toISOString().split('T')[0]
+
+  // Reset daily count if it's a new day
+  if (lastReset !== today) {
+    todayCount = 0
+  }
+
+  // Increment counts
+  todayCount++
+  totalCount++
+
+  console.log(`Updating stats: today=${todayCount}, total=${totalCount}`)
+
+  // Build updated message
+  const updatedContent = buildStatsMessage(todayCount, totalCount, today)
+
+  // Edit the message
+  const editResponse = await fetch(
+    `https://discord.com/api/v10/channels/${TRACKING_CHANNEL_ID}/messages/${statsMessageId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bot ${botToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content: updatedContent })
+    }
+  )
+
+  if (!editResponse.ok) {
+    const errorText = await editResponse.text()
+    console.error('Failed to edit stats message:', editResponse.status, errorText)
+    throw new Error(`Failed to edit stats: ${errorText}`)
+  }
+
+  console.log('Stats updated successfully!')
 }
 
 function buildStatsMessage(today, total, resetDate) {
