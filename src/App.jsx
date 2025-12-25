@@ -2,30 +2,27 @@ import { useState, useEffect, useRef } from 'react'
 
 function App() {
   const [loaded, setLoaded] = useState(false)
-  const [chatOpen, setChatOpen] = useState(false)
-  const [username, setUsername] = useState('')
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const [chatActive, setChatActive] = useState(false)
   const messagesEndRef = useRef(null)
   const pollingRef = useRef(null)
 
   useEffect(() => {
     setLoaded(true)
-    const saved = localStorage.getItem('dacc-username')
-    if (saved) setUsername(saved)
   }, [])
 
   useEffect(() => {
-    if (chatOpen) {
+    if (chatActive) {
       fetchMessages()
       pollingRef.current = setInterval(fetchMessages, 3000)
     }
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current)
     }
-  }, [chatOpen])
+  }, [chatActive])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -43,29 +40,36 @@ function App() {
     }
   }
 
+  const parseContent = (content, isWebhook) => {
+    if (isWebhook) {
+      return content.replace(/\*\*/g, '')
+    }
+    return content
+  }
+
   const sendMessage = async (e) => {
     e.preventDefault()
-    if (!username.trim() || !message.trim() || sending) return
+    if (!message.trim() || sending) return
 
     setError('')
     setSending(true)
-    localStorage.setItem('dacc-username', username)
+    if (!chatActive) setChatActive(true)
 
     try {
       const res = await fetch('/api/send-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), message: message.trim() })
+        body: JSON.stringify({ message: message.trim() })
       })
 
       if (res.ok) {
         setMessage('')
         setTimeout(fetchMessages, 500)
       } else {
-        setError('Failed to send message')
+        setError('Failed to send')
       }
     } catch (e) {
-      setError('Failed to send message')
+      setError('Failed to send')
     } finally {
       setSending(false)
     }
@@ -160,72 +164,40 @@ function App() {
 
         <section className={`mb-16 transition-all duration-700 delay-400 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="font-mono text-sm text-zinc-500 mb-4">
-            <span className="text-emerald-400">$</span> nc dacc.chat 443
+            <span className="text-emerald-400">$</span> echo "message us" <span className="text-zinc-600"># yes this is live - #general</span>
           </div>
 
-          {!chatOpen ? (
-            <div className="p-6 rounded-lg border border-zinc-800">
-              <p className="text-zinc-400 mb-4">
-                Have a question? Send us a message and chat with club members in real-time.
-              </p>
-              <button
-                onClick={() => setChatOpen(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg font-medium transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                Open Chat
-              </button>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-zinc-800 overflow-hidden">
-              <div className="h-64 overflow-y-auto p-4 space-y-3 bg-zinc-900/50">
-                {messages.length === 0 ? (
-                  <p className="text-zinc-600 text-sm text-center py-8">No messages yet. Start the conversation!</p>
-                ) : (
-                  messages.map((msg) => (
-                    <div key={msg.id} className={`text-sm ${msg.isWebhook ? 'text-cyan-400' : 'text-zinc-300'}`}>
-                      <span className="font-mono text-zinc-500">[{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span>{' '}
-                      <span className={msg.isWebhook ? 'text-cyan-500' : 'text-emerald-400'}>{msg.author}:</span>{' '}
-                      {msg.content}
-                    </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              <form onSubmit={sendMessage} className="p-4 border-t border-zinc-800 bg-zinc-900/30">
-                <div className="flex gap-3 mb-3">
-                  <input
-                    type="text"
-                    placeholder="Your name"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    maxLength={20}
-                    className="w-32 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-600"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Type a message..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    maxLength={500}
-                    className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-600"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sending || !username.trim() || !message.trim()}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    {sending ? '...' : 'Send'}
-                  </button>
+          {chatActive && messages.length > 0 && (
+            <div className="mb-4 max-h-48 overflow-y-auto space-y-1">
+              {messages.map((msg) => (
+                <div key={msg.id} className="font-mono text-sm">
+                  <span className="text-zinc-600">[{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span>{' '}
+                  <span className={msg.isWebhook ? 'text-cyan-500' : 'text-emerald-400'}>{msg.author}:</span>{' '}
+                  <span className="text-zinc-400">{parseContent(msg.content, msg.isWebhook)}</span>
                 </div>
-                {error && <p className="text-red-400 text-xs">{error}</p>}
-                <p className="text-zinc-600 text-xs">Messages are sent to our Discord server. Be respectful.</p>
-              </form>
+              ))}
+              <div ref={messagesEndRef} />
             </div>
           )}
+
+          <form onSubmit={sendMessage} className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Type a message..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              maxLength={500}
+              className="flex-1 px-3 py-2 bg-transparent border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
+            />
+            <button
+              type="submit"
+              disabled={sending || !message.trim()}
+              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:cursor-not-allowed text-zinc-100 rounded-lg text-sm font-medium transition-colors"
+            >
+              {sending ? '...' : 'Send'}
+            </button>
+          </form>
+          {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
         </section>
 
         <footer className={`pt-8 border-t border-zinc-800 transition-all duration-700 delay-500 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>

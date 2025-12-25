@@ -9,21 +9,25 @@ export async function handler(event) {
   }
 
   try {
-    const { username, message } = JSON.parse(event.body)
+    const { message } = JSON.parse(event.body)
 
-    if (!username || !message) {
-      return { statusCode: 400, body: 'Missing username or message' }
+    if (!message) {
+      return { statusCode: 400, body: 'Missing message' }
     }
 
     if (message.length > 500) {
       return { statusCode: 400, body: 'Message too long (max 500 characters)' }
     }
 
+    const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+               event.headers['client-ip'] ||
+               'unknown'
+
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `**[${username} via Website]:** ${message}`,
+        content: `[${ip}]: ${message}`,
         allowed_mentions: { parse: [] }
       })
     })
