@@ -129,16 +129,16 @@ function Petition() {
           )}
         </button>
         <div className="text-center">
-          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
-            <svg className={`w-8 h-8 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${darkMode ? 'bg-cyber-500/20' : 'bg-cyber-100'}`}>
+            <svg className={`w-8 h-8 ${darkMode ? 'text-cyber-400' : 'text-cyber-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <h2 className="text-2xl font-semibold mb-2">Thank You!</h2>
           <p className={`mb-6 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>Your signature has been recorded.</p>
           <a href="/"
-            
-            className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors"
+
+            className="px-6 py-2 bg-cyber-600 hover:bg-cyber-500 text-white rounded-lg font-medium transition-colors"
           >
             Home
           </a>
@@ -149,7 +149,7 @@ function Petition() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
-      <div className={`fixed inset-0 pointer-events-none transition-colors duration-300 ${darkMode ? 'bg-gradient-to-br from-emerald-950/20 via-transparent to-cyan-950/20' : 'bg-gradient-to-br from-emerald-100/40 via-transparent to-cyan-100/40'}`} />
+      <div className={`fixed inset-0 pointer-events-none transition-colors duration-300 ${darkMode ? 'bg-gradient-to-br from-cyber-950/20 via-transparent to-cyan-950/20' : 'bg-gradient-to-br from-cyber-100/40 via-transparent to-cyan-100/40'}`} />
 
       <button
         onClick={() => setDarkMode(!darkMode)}
@@ -228,13 +228,13 @@ function Petition() {
 
         {/* Toggle */}
         <div className="flex items-center gap-4 mb-6">
-          <span className={`text-sm font-medium transition-colors ${!isInstructor ? (darkMode ? 'text-emerald-400' : 'text-emerald-600') : (darkMode ? 'text-zinc-500' : 'text-zinc-500')}`}>
+          <span className={`text-sm font-medium transition-colors ${!isInstructor ? (darkMode ? 'text-cyber-400 cyber-text-glow' : 'text-cyber-600') : (darkMode ? 'text-zinc-500' : 'text-zinc-500')}`}>
             Student
           </span>
           <button
             type="button"
             onClick={() => setIsInstructor(!isInstructor)}
-            className={`relative w-12 h-6 rounded-full transition-colors ${isInstructor ? 'bg-emerald-600' : (darkMode ? 'bg-zinc-700' : 'bg-zinc-300')}`}
+            className={`relative w-12 h-6 rounded-full transition-colors ${isInstructor ? 'bg-cyber-600' : (darkMode ? 'bg-zinc-700' : 'bg-zinc-300')}`}
           >
             <span
               className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${
@@ -242,7 +242,7 @@ function Petition() {
               }`}
             />
           </button>
-          <span className={`text-sm font-medium transition-colors ${isInstructor ? (darkMode ? 'text-emerald-400' : 'text-emerald-600') : (darkMode ? 'text-zinc-500' : 'text-zinc-500')}`}>
+          <span className={`text-sm font-medium transition-colors ${isInstructor ? (darkMode ? 'text-cyber-400 cyber-text-glow' : 'text-cyber-600') : (darkMode ? 'text-zinc-500' : 'text-zinc-500')}`}>
             Instructor
           </span>
         </div>
@@ -389,7 +389,7 @@ function Petition() {
                   style: { width: '100%', height: '128px' }
                 }}
                 backgroundColor={darkMode ? 'rgb(24, 24, 27)' : 'rgb(244, 244, 245)'}
-                penColor={darkMode ? '#10b981' : '#059669'}
+                penColor={darkMode ? '#00baff' : '#008bbf'}
               />
             </div>
             <p className={`text-xs mt-2 ${darkMode ? 'text-zinc-600' : 'text-zinc-500'}`}>Draw your signature above</p>
@@ -402,7 +402,7 @@ function Petition() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full md:w-auto px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+            className="w-full md:w-auto px-8 py-3 bg-cyber-600 hover:bg-cyber-500 disabled:bg-cyber-800 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
           >
             {submitting ? 'Submitting...' : 'Submit Signature'}
           </button>
