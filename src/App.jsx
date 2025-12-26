@@ -8,12 +8,16 @@ function App() {
   const [error, setError] = useState('')
   const [chatActive, setChatActive] = useState(false)
   const [name, setName] = useState('')
-  const [darkMode, setDarkMode] = useState(true)
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode')
+    return saved !== null ? JSON.parse(saved) : true
+  })
   const [onlineCount, setOnlineCount] = useState(null)
   const messagesEndRef = useRef(null)
   const pollingRef = useRef(null)
   const chatTrackedRef = useRef(false)
   const contentRef = useRef(null)
+  const cloneRef = useRef(null)
   const progressRef = useRef(null)
   const scrollInitialized = useRef(false)
   const chatOpenedAtRef = useRef(null)
@@ -26,13 +30,13 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!contentRef.current) return
+    if (!cloneRef.current) return
 
     const initScroll = () => {
       if (scrollInitialized.current) return
-      const contentHeight = contentRef.current?.offsetHeight
-      if (contentHeight > 0) {
-        window.scrollTo({ top: contentHeight, behavior: 'instant' })
+      const cloneHeight = cloneRef.current?.offsetHeight
+      if (cloneHeight > 0) {
+        window.scrollTo({ top: cloneHeight, behavior: 'instant' })
         scrollInitialized.current = true
       }
     }
@@ -44,19 +48,26 @@ function App() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (!contentRef.current || !progressRef.current) return
+      if (!cloneRef.current || !contentRef.current || !progressRef.current) return
 
       const scrollTop = window.scrollY
+      const cloneHeight = cloneRef.current.offsetHeight
       const contentHeight = contentRef.current.offsetHeight
-      const maxScroll = contentHeight * 2
 
-      const normalizedPosition = ((scrollTop - contentHeight) % contentHeight + contentHeight) % contentHeight
-      const progress = contentHeight > 0 ? (normalizedPosition / contentHeight) * 100 : 0
+      // Clone 2 starts after Clone 1 + Content
+      const clone2Start = cloneHeight + contentHeight
+
+      // Progress bar tracks position within the clone content cycle
+      const normalizedPosition = ((scrollTop - cloneHeight) % cloneHeight + cloneHeight) % cloneHeight
+      const progress = cloneHeight > 0 ? (normalizedPosition / cloneHeight) * 100 : 0
       progressRef.current.style.transform = `scaleX(${Math.min(1, Math.max(0, progress / 100))})`
 
-      if (scrollTop >= maxScroll) {
+      // Wrap when entering Clone 2 (scrolling down past content)
+      if (scrollTop >= clone2Start) {
         window.scrollTo({ top: scrollTop - contentHeight, behavior: 'instant' })
-      } else if (scrollTop < contentHeight) {
+      }
+      // Wrap when entering Clone 1 (scrolling up past content start)
+      else if (scrollTop < cloneHeight) {
         window.scrollTo({ top: scrollTop + contentHeight, behavior: 'instant' })
       }
     }
@@ -69,6 +80,7 @@ function App() {
     const bgColor = darkMode ? '#09090b' : '#f4f4f5'
     document.documentElement.style.backgroundColor = bgColor
     document.body.style.backgroundColor = bgColor
+    localStorage.setItem('darkMode', JSON.stringify(darkMode))
   }, [darkMode])
 
   useEffect(() => {
@@ -291,6 +303,31 @@ function App() {
       </section>
 
       {!isClone && (
+        <section className={`mb-16 transition-all duration-700 delay-350 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <div className={`font-mono text-sm mb-4 transition-colors duration-300 ${darkMode ? 'text-zinc-500' : 'text-zinc-600'}`}>
+            <span className={`transition-colors duration-300 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>$</span> ./petition.sh
+          </div>
+
+          <a
+            href="/petition"
+            className={`group block p-5 rounded-xl border transition-all duration-300 ${darkMode ? 'border-zinc-800 hover:border-emerald-800 bg-zinc-900/50 hover:bg-emerald-950/30' : 'border-zinc-300 hover:border-emerald-300 bg-white/50 hover:bg-emerald-50/50'}`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className={`font-medium mb-1 transition-colors duration-300 ${darkMode ? 'text-zinc-100 group-hover:text-emerald-400' : 'text-zinc-900 group-hover:text-emerald-600'}`}>
+                  Sign the Club Petition
+                </h3>
+                
+              </div>
+              <svg className={`w-5 h-5 transition-all duration-300 group-hover:translate-x-1 ${darkMode ? 'text-zinc-600 group-hover:text-emerald-400' : 'text-zinc-400 group-hover:text-emerald-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+        </section>
+      )}
+
+      {!isClone && (
         <section className={`mb-16 transition-all duration-700 delay-400 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className={`font-mono text-sm mb-4 transition-colors duration-300 ${darkMode ? 'text-zinc-500' : 'text-zinc-600'}`}>
             <span className={`transition-colors duration-300 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>$</span> echo "message us" <span className={`transition-colors duration-300 ${darkMode ? 'text-zinc-600' : 'text-zinc-500'}`}># live chat - #general</span>
@@ -396,7 +433,7 @@ function App() {
         )}
       </button>
 
-      <div aria-hidden="true">{renderContent(true)}</div>
+      <div ref={cloneRef} aria-hidden="true">{renderContent(true)}</div>
 
       <div ref={contentRef}>{renderContent(false)}</div>
 
