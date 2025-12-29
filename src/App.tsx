@@ -1,9 +1,26 @@
 import { useState, useEffect, useRef } from 'react'
 
+interface Message {
+  id: string
+  content: string
+  author: string
+  timestamp: string
+  isWebhook: boolean
+}
+
+interface VisitorData {
+  timezone: string
+  language: string
+  screen: string
+  platform: string
+  referrer: string
+  userAgent: string
+}
+
 function App() {
   const [loaded, setLoaded] = useState(false)
   const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [chatActive, setChatActive] = useState(false)
@@ -12,17 +29,17 @@ function App() {
     const saved = localStorage.getItem('darkMode')
     return saved !== null ? JSON.parse(saved) : true
   })
-  const [onlineCount, setOnlineCount] = useState(null)
-  const messagesEndRef = useRef(null)
-  const pollingRef = useRef(null)
+  const [onlineCount, setOnlineCount] = useState<number | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const chatTrackedRef = useRef(false)
-  const contentRef = useRef(null)
-  const cloneRef = useRef(null)
-  const progressRef = useRef(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const cloneRef = useRef<HTMLDivElement>(null)
+  const progressRef = useRef<HTMLDivElement>(null)
   const scrollInitialized = useRef(false)
-  const chatOpenedAtRef = useRef(null)
+  const chatOpenedAtRef = useRef<number | null>(null)
   const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
-  const pingAudioRef = useRef(null)
+  const pingAudioRef = useRef<HTMLAudioElement>(null)
   const lastMessageCountRef = useRef(0)
 
   useEffect(() => {
@@ -36,7 +53,7 @@ function App() {
     const initScroll = () => {
       if (scrollInitialized.current) return
       const cloneHeight = cloneRef.current?.offsetHeight
-      if (cloneHeight > 0) {
+      if (cloneHeight && cloneHeight > 0) {
         window.scrollTo({ top: cloneHeight, behavior: 'instant' })
         scrollInitialized.current = true
       }
@@ -107,7 +124,7 @@ function App() {
 
       const res = await fetch(`/api/get-messages?after=${openedAt}`)
       if (res.ok) {
-        const data = await res.json()
+        const data: Message[] = await res.json()
 
         const prevCount = lastMessageCountRef.current
         const hasNewResponse = data.length > prevCount &&
@@ -121,7 +138,9 @@ function App() {
         lastMessageCountRef.current = data.length
         setMessages(data)
       }
-    } catch (e) {}
+    } catch {
+      // Silently handle fetch errors
+    }
   }
 
   const fetchOnlineCount = async () => {
@@ -131,10 +150,12 @@ function App() {
         const data = await res.json()
         setOnlineCount(data.online)
       }
-    } catch (e) {}
+    } catch {
+      // Silently handle fetch errors
+    }
   }
 
-  const getVisitorData = () => ({
+  const getVisitorData = (): VisitorData => ({
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     language: navigator.language,
     screen: `${window.screen.width}x${window.screen.height}`,
@@ -143,7 +164,7 @@ function App() {
     userAgent: navigator.userAgent
   })
 
-  const trackVisit = async (type) => {
+  const trackVisit = async (type: string) => {
     try {
       if (type === 'page_view') {
         const lastVisit = localStorage.getItem('dacc_last_visit')
@@ -156,7 +177,7 @@ function App() {
         localStorage.setItem('dacc_last_visit', now.toString())
       }
 
-      const payload = { type }
+      const payload: { type: string; visitorData?: VisitorData } = { type }
       if (type === 'chat_opened') {
         payload.visitorData = getVisitorData()
       }
@@ -165,17 +186,19 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-    } catch (e) {}
+    } catch {
+      // Silently handle fetch errors
+    }
   }
 
-  const parseContent = (content, isWebhook) => {
+  const parseContent = (content: string, isWebhook: boolean): string => {
     if (isWebhook) {
       return content.replace(/\*\*/g, '')
     }
     return content
   }
 
-  const sendMessage = async (e) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!message.trim() || sending) return
 
@@ -192,7 +215,7 @@ function App() {
       }
     }
 
-    const optimisticMessage = {
+    const optimisticMessage: Message = {
       id: `temp-${Date.now()}`,
       content: messageText,
       author: displayName,
@@ -213,7 +236,7 @@ function App() {
         setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id))
         setError('Failed to send')
       }
-    } catch (e) {
+    } catch {
       setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id))
       setError('Failed to send')
     } finally {

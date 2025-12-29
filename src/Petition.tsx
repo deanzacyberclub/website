@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, ChangeEvent, FormEvent } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import SignatureCanvas from 'react-signature-canvas'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
@@ -8,8 +8,21 @@ import 'react-pdf/dist/Page/TextLayer.css'
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
+interface StudentForm {
+  name: string
+  studentId: string
+  email: string
+}
+
+interface InstructorForm {
+  name: string
+  office: string
+  phone: string
+  email: string
+}
+
 function Petition() {
-  const [numPages, setNumPages] = useState(null)
+  const [numPages, setNumPages] = useState<number | null>(null)
   const [pdfExpanded, setPdfExpanded] = useState(false)
   const [isInstructor, setIsInstructor] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -19,15 +32,15 @@ function Petition() {
     const saved = localStorage.getItem('darkMode')
     return saved !== null ? JSON.parse(saved) : true
   })
-  const sigCanvas = useRef(null)
+  const sigCanvas = useRef<SignatureCanvas>(null)
 
-  const [studentForm, setStudentForm] = useState({
+  const [studentForm, setStudentForm] = useState<StudentForm>({
     name: '',
     studentId: '',
     email: ''
   })
 
-  const [instructorForm, setInstructorForm] = useState({
+  const [instructorForm, setInstructorForm] = useState<InstructorForm>({
     name: '',
     office: '',
     phone: '',
@@ -45,12 +58,14 @@ function Petition() {
     if (sigCanvas.current) {
       const canvas = sigCanvas.current.getCanvas()
       const ctx = canvas.getContext('2d')
-      ctx.fillStyle = darkMode ? 'rgb(24, 24, 27)' : 'rgb(244, 244, 245)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      if (ctx) {
+        ctx.fillStyle = darkMode ? 'rgb(24, 24, 27)' : 'rgb(244, 244, 245)'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
     }
   }, [darkMode])
 
-  const onDocumentLoadSuccess = ({ numPages }) => {
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages)
   }
 
@@ -59,20 +74,22 @@ function Petition() {
     if (sigCanvas.current) {
       const canvas = sigCanvas.current.getCanvas()
       const ctx = canvas.getContext('2d')
-      ctx.fillStyle = darkMode ? 'rgb(24, 24, 27)' : 'rgb(244, 244, 245)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      if (ctx) {
+        ctx.fillStyle = darkMode ? 'rgb(24, 24, 27)' : 'rgb(244, 244, 245)'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
     }
   }
 
-  const handleStudentChange = (e) => {
+  const handleStudentChange = (e: ChangeEvent<HTMLInputElement>) => {
     setStudentForm({ ...studentForm, [e.target.name]: e.target.value })
   }
 
-  const handleInstructorChange = (e) => {
+  const handleInstructorChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInstructorForm({ ...instructorForm, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
 
@@ -81,7 +98,7 @@ function Petition() {
       return
     }
 
-    const signatureData = sigCanvas.current.toDataURL('image/png')
+    const signatureData = sigCanvas.current?.toDataURL('image/png')
 
     setSubmitting(true)
 
@@ -212,7 +229,7 @@ function Petition() {
                 </div>
               }
             >
-              {Array.from(new Array(numPages), (el, index) => (
+              {Array.from(new Array(numPages), (_, index) => (
                 <Page
                   key={`page_${index + 1}`}
                   pageNumber={index + 1}
