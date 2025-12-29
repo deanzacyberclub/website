@@ -21,7 +21,7 @@ interface VisitorData {
 }
 
 // Matrix rain characters
-const matrixChars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF'
+const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*<>[]{}=/\\|'
 
 function MatrixRain() {
   const columns = useMemo(() => {
