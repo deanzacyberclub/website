@@ -11,7 +11,7 @@ function Footer({ children, className = '' }: FooterProps) {
       <div className="flex flex-col gap-4">
         {children}
         <p className="text-sm text-gray-500 text-center">
-          Made with 💖 & 🤗 from Cupertino, CA by{' '}
+          Made with ❤️ from Cupertino, CA by{' '}
           <a
             href="https://github.com/aaronhma"
             target="_blank"

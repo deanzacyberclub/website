@@ -8,4 +8,4 @@
 
 ---
 
-Website made with 💖 & 🤗 from Cupertino, CA by [Aaron Ma ↗](https://github.com/aaronhma) and [Neel Anshu ↗](https://github.com/boredcreator).
+Website made with ❤️ from Cupertino, CA by [Aaron Ma ↗](https://github.com/aaronhma) and [Neel Anshu ↗](https://github.com/boredcreator).
