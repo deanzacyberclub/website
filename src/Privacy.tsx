@@ -23,7 +23,7 @@ function Privacy() {
           </div>
 
           <h1 className="text-3xl font-bold text-matrix neon-text mb-2">Privacy Policy</h1>
-          <p className="text-gray-500 text-sm">Last updated: December 2024</p>
+          <p className="text-gray-500 text-sm">Last updated: December 2025</p>
         </header>
 
         {/* Content */}

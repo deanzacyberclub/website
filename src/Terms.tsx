@@ -23,7 +23,7 @@ function Terms() {
           </div>
 
           <h1 className="text-3xl font-bold text-matrix neon-text mb-2">Terms of Service</h1>
-          <p className="text-gray-500 text-sm">Last updated: December 2024</p>
+          <p className="text-gray-500 text-sm">Last updated: December 2025</p>
         </header>
 
         {/* Content */}
@@ -108,14 +108,23 @@ function Terms() {
 
         {/* Footer */}
         <Footer className="mt-0 border-matrix/20">
-          <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
-            <Link to="/terms" className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all">
-              Terms of Service
-            </Link>
-            <span className="text-gray-700">|</span>
-            <Link to="/privacy" className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all">
-              Privacy Policy
-            </Link>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <p className="text-sm text-gray-600 font-terminal">
+              <span className="text-matrix neon-text-subtle">$</span> ping{' '}
+              <a
+                href="https://www.deanza.edu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all"
+              >
+                https://deanza.edu
+              </a>
+            </p>
+            <div className="text-xs text-gray-700 font-terminal">
+              <span className="text-matrix/50">[</span>
+              SYSTEM ACTIVE
+              <span className="text-matrix/50">]</span>
+            </div>
           </div>
         </Footer>
       </div>

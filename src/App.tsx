@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import Footer from './components/Footer'
 
 const prefetchPetition = () => import('./Petition')
+const prefetchMeetings = () => import('./Meetings')
 
 interface Message {
   id: string
@@ -443,6 +445,18 @@ function App() {
             </svg>
             CONSTITUTION
           </a>
+
+          <Link
+            to="/meetings"
+            className="btn-hack rounded-lg inline-flex items-center gap-3"
+            onMouseEnter={prefetchMeetings}
+            onFocus={prefetchMeetings}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            MEETINGS
+          </Link>
         </div>
       </section>
 
@@ -582,7 +596,7 @@ function App() {
                     <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">Officer</p>
                     <p className="text-matrix font-semibold">Mobin Norouzi</p>
                   </div>
-                </div>=
+                </div>
               </div>
             </div>
           </div>
