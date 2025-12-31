@@ -9,6 +9,7 @@ const Terms = lazy(() => import('./Terms'))
 const Privacy = lazy(() => import('./Privacy'))
 const Meetings = lazy(() => import('./Meetings'))
 const MeetingDetails = lazy(() => import('./MeetingDetails'))
+const NotFound = lazy(() => import('./NotFound'))
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -29,6 +30,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/meetings/:id" element={<MeetingDetails />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
