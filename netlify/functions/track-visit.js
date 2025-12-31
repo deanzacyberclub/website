@@ -20,6 +20,8 @@ export async function handler(event) {
 
     if (type === 'page_view') {
       await updateStats(botToken)
+      const embed = buildVisitorEmbed(ip, visitorData, 'New Visitor')
+      await sendEmbed(botToken, embed)
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -28,7 +30,7 @@ export async function handler(event) {
     }
 
     if (type === 'chat_opened') {
-      const embed = buildVisitorEmbed(ip, visitorData)
+      const embed = buildVisitorEmbed(ip, visitorData, 'Chat Session Started')
       await sendEmbed(botToken, embed)
       return {
         statusCode: 200,
@@ -44,26 +46,40 @@ export async function handler(event) {
   }
 }
 
-function buildVisitorEmbed(ip, data = {}) {
+function buildVisitorEmbed(ip, data = {}, title = 'New Visitor') {
   const timestamp = new Date().toISOString()
 
   const fields = [
-    { name: 'IP Address', value: ip || 'Unknown', inline: true },
+    { name: 'IP Address', value: `\`${ip || 'Unknown'}\``, inline: true },
     { name: 'Timezone', value: data.timezone || 'Unknown', inline: true },
     { name: 'Language', value: data.language || 'Unknown', inline: true },
-    { name: 'Screen', value: data.screen || 'Unknown', inline: true },
+    { name: 'Screen Resolution', value: data.screen || 'Unknown', inline: true },
+    { name: 'Viewport Size', value: data.viewportSize || 'Unknown', inline: true },
+    { name: 'Device Pixel Ratio', value: data.devicePixelRatio?.toString() || 'Unknown', inline: true },
     { name: 'Platform', value: data.platform || 'Unknown', inline: true },
-    { name: 'Referrer', value: data.referrer || 'Direct', inline: true },
+    { name: 'CPU Cores', value: data.hardwareConcurrency?.toString() || 'Unknown', inline: true },
+    { name: 'Device Memory', value: data.deviceMemory ? `${data.deviceMemory} GB` : 'Unknown', inline: true },
+    { name: 'Color Depth', value: data.colorDepth ? `${data.colorDepth}-bit` : 'Unknown', inline: true },
+    { name: 'Touch Support', value: data.touchSupport ? `Yes (${data.maxTouchPoints} points)` : 'No', inline: true },
+    { name: 'Connection Type', value: data.connectionType || 'Unknown', inline: true },
+    { name: 'Cookies Enabled', value: data.cookiesEnabled ? 'Yes' : 'No', inline: true },
+    { name: 'Do Not Track', value: data.doNotTrack || 'Not set', inline: true },
+    { name: 'Online Status', value: data.online ? 'Online' : 'Offline', inline: true },
+    { name: 'Referrer', value: data.referrer || 'Direct', inline: false },
+    { name: 'Page URL', value: data.pageUrl || 'Unknown', inline: false },
   ]
 
   if (data.userAgent) {
-    const browser = parseUserAgent(data.userAgent)
-    fields.push({ name: 'Browser', value: browser, inline: false })
+    const browserInfo = parseUserAgent(data.userAgent)
+    fields.push({ name: 'Browser Info', value: browserInfo, inline: false })
+    fields.push({ name: 'Full User Agent', value: `\`\`\`${data.userAgent.substring(0, 1000)}\`\`\``, inline: false })
   }
 
+  const color = title === 'New Visitor' ? 0x00ff41 : 0x10b981
+
   return {
-    title: 'New Chat Session Started',
-    color: 0x10b981,
+    title: `${title}`,
+    color,
     fields,
     timestamp,
     footer: { text: 'DACC Website Tracker' }
@@ -73,13 +89,52 @@ function buildVisitorEmbed(ip, data = {}) {
 function parseUserAgent(ua) {
   if (!ua) return 'Unknown'
 
-  if (ua.includes('Firefox')) return 'Firefox'
-  if (ua.includes('Edg/')) return 'Edge'
-  if (ua.includes('Chrome')) return 'Chrome'
-  if (ua.includes('Safari')) return 'Safari'
-  if (ua.includes('Opera') || ua.includes('OPR')) return 'Opera'
+  let browser = 'Unknown'
+  let version = ''
+  let os = 'Unknown'
 
-  return ua.length > 100 ? ua.substring(0, 100) + '...' : ua
+  // Detect browser
+  if (ua.includes('Firefox/')) {
+    browser = 'Firefox'
+    version = ua.match(/Firefox\/(\d+)/)?.[1] || ''
+  } else if (ua.includes('Edg/')) {
+    browser = 'Edge'
+    version = ua.match(/Edg\/(\d+)/)?.[1] || ''
+  } else if (ua.includes('Chrome/')) {
+    browser = 'Chrome'
+    version = ua.match(/Chrome\/(\d+)/)?.[1] || ''
+  } else if (ua.includes('Safari/') && !ua.includes('Chrome')) {
+    browser = 'Safari'
+    version = ua.match(/Version\/(\d+)/)?.[1] || ''
+  } else if (ua.includes('Opera') || ua.includes('OPR/')) {
+    browser = 'Opera'
+    version = ua.match(/(?:Opera|OPR)\/(\d+)/)?.[1] || ''
+  }
+
+  // Detect OS
+  if (ua.includes('Windows NT 10')) os = 'Windows 10/11'
+  else if (ua.includes('Windows NT 6.3')) os = 'Windows 8.1'
+  else if (ua.includes('Windows NT 6.2')) os = 'Windows 8'
+  else if (ua.includes('Windows NT 6.1')) os = 'Windows 7'
+  else if (ua.includes('Mac OS X')) {
+    const macVersion = ua.match(/Mac OS X (\d+[._]\d+)/)?.[1]?.replace('_', '.')
+    os = macVersion ? `macOS ${macVersion}` : 'macOS'
+  }
+  else if (ua.includes('iPhone')) os = 'iOS (iPhone)'
+  else if (ua.includes('iPad')) os = 'iOS (iPad)'
+  else if (ua.includes('Android')) {
+    const androidVersion = ua.match(/Android (\d+\.?\d*)/)?.[1]
+    os = androidVersion ? `Android ${androidVersion}` : 'Android'
+  }
+  else if (ua.includes('Linux')) os = 'Linux'
+  else if (ua.includes('CrOS')) os = 'Chrome OS'
+
+  // Detect device type
+  let device = 'Desktop'
+  if (ua.includes('Mobile') || ua.includes('Android') && !ua.includes('Tablet')) device = 'Mobile'
+  else if (ua.includes('Tablet') || ua.includes('iPad')) device = 'Tablet'
+
+  return `${browser}${version ? ' ' + version : ''} on ${os} (${device})`
 }
 
 async function sendEmbed(botToken, embed) {

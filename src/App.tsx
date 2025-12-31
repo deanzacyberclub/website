@@ -18,6 +18,18 @@ interface VisitorData {
   platform: string
   referrer: string
   userAgent: string
+  colorDepth: number
+  deviceMemory: number | null
+  hardwareConcurrency: number
+  cookiesEnabled: boolean
+  doNotTrack: string | null
+  online: boolean
+  connectionType: string | null
+  touchSupport: boolean
+  maxTouchPoints: number
+  devicePixelRatio: number
+  pageUrl: string
+  viewportSize: string
 }
 
 // Matrix rain characters
@@ -131,14 +143,32 @@ function App() {
     }
   }
 
-  const getVisitorData = (): VisitorData => ({
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    language: navigator.language,
-    screen: `${window.screen.width}x${window.screen.height}`,
-    platform: navigator.platform,
-    referrer: document.referrer || 'Direct',
-    userAgent: navigator.userAgent
-  })
+  const getVisitorData = (): VisitorData => {
+    const nav = navigator as Navigator & {
+      deviceMemory?: number
+      connection?: { effectiveType?: string }
+    }
+    return {
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      language: navigator.language,
+      screen: `${window.screen.width}x${window.screen.height}`,
+      platform: navigator.platform,
+      referrer: document.referrer || 'Direct',
+      userAgent: navigator.userAgent,
+      colorDepth: window.screen.colorDepth,
+      deviceMemory: nav.deviceMemory || null,
+      hardwareConcurrency: navigator.hardwareConcurrency || 0,
+      cookiesEnabled: navigator.cookieEnabled,
+      doNotTrack: navigator.doNotTrack,
+      online: navigator.onLine,
+      connectionType: nav.connection?.effectiveType || null,
+      touchSupport: 'ontouchstart' in window,
+      maxTouchPoints: navigator.maxTouchPoints || 0,
+      devicePixelRatio: window.devicePixelRatio || 1,
+      pageUrl: window.location.href,
+      viewportSize: `${window.innerWidth}x${window.innerHeight}`
+    }
+  }
 
   const trackVisit = async (type: string) => {
     try {
@@ -149,8 +179,7 @@ function App() {
         if (lastVisit && (now - parseInt(lastVisit)) < tenMinutes) return
         localStorage.setItem('dacc_last_visit', now.toString())
       }
-      const payload: { type: string; visitorData?: VisitorData } = { type }
-      if (type === 'chat_opened') payload.visitorData = getVisitorData()
+      const payload = { type, visitorData: getVisitorData() }
       await fetch('/api/track-visit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
