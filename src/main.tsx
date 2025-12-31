@@ -5,6 +5,8 @@ import App from './App'
 import './index.css'
 
 const Petition = lazy(() => import('./Petition'))
+const Terms = lazy(() => import('./Terms'))
+const Privacy = lazy(() => import('./Privacy'))
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -21,6 +23,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/petition" element={<Petition />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

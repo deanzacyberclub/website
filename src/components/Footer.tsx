@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 
 interface FooterProps {
   children?: ReactNode
@@ -31,6 +32,15 @@ function Footer({ children, className = '' }: FooterProps) {
           </a>
           .
         </p>
+        <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
+          <Link to="/terms" className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all">
+            Terms of Service
+          </Link>
+          <span className="text-gray-700">|</span>
+          <Link to="/privacy" className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all">
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </footer>
   )

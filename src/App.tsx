@@ -90,7 +90,7 @@ function App() {
 
   useEffect(() => {
     setLoaded(true)
-    trackVisit('page_view')
+    // trackVisit('page_view')
   }, [])
 
   useEffect(() => {
