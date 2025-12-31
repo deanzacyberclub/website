@@ -18,9 +18,12 @@ export async function handler(event) {
                event.headers['client-ip'] ||
                'unknown'
 
+    // Get geolocation data from IP
+    const geoData = await getGeoLocation(ip)
+
     if (type === 'page_view') {
       await updateStats(botToken)
-      const embed = buildVisitorEmbed(ip, visitorData, 'New Visitor')
+      const embed = buildVisitorEmbed(ip, visitorData, geoData, 'New Visitor')
       await sendEmbed(botToken, embed)
       return {
         statusCode: 200,
@@ -30,7 +33,7 @@ export async function handler(event) {
     }
 
     if (type === 'chat_opened') {
-      const embed = buildVisitorEmbed(ip, visitorData, 'Chat Session Started')
+      const embed = buildVisitorEmbed(ip, visitorData, geoData, 'Chat Session Started')
       await sendEmbed(botToken, embed)
       return {
         statusCode: 200,
@@ -46,33 +49,116 @@ export async function handler(event) {
   }
 }
 
-function buildVisitorEmbed(ip, data = {}, title = 'New Visitor') {
+async function getGeoLocation(ip) {
+  // Default empty geo data
+  const defaultGeo = {
+    city: null,
+    region: null,
+    country: null,
+    countryCode: null,
+    isp: null,
+    org: null,
+    lat: null,
+    lon: null
+  }
+
+  if (!ip || ip === 'unknown' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+    return defaultGeo
+  }
+
+  // Try ip-api.com first (free, no API key, 45 req/min)
+  try {
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,isp,org,lat,lon`, {
+      signal: AbortSignal.timeout(3000)
+    })
+    if (response.ok) {
+      const data = await response.json()
+      if (data.status === 'success') {
+        return {
+          city: data.city,
+          region: data.regionName,
+          country: data.country,
+          countryCode: data.countryCode,
+          isp: data.isp,
+          org: data.org,
+          lat: data.lat,
+          lon: data.lon
+        }
+      }
+    }
+  } catch (e) {
+    console.error('ip-api.com failed:', e.message)
+  }
+
+  // Fallback to ipapi.co (free tier, 1000 req/day)
+  try {
+    const response = await fetch(`https://ipapi.co/${ip}/json/`, {
+      signal: AbortSignal.timeout(3000)
+    })
+    if (response.ok) {
+      const data = await response.json()
+      if (!data.error) {
+        return {
+          city: data.city,
+          region: data.region,
+          country: data.country_name,
+          countryCode: data.country_code,
+          isp: data.org,
+          org: data.org,
+          lat: data.latitude,
+          lon: data.longitude
+        }
+      }
+    }
+  } catch (e) {
+    console.error('ipapi.co failed:', e.message)
+  }
+
+  return defaultGeo
+}
+
+function buildVisitorEmbed(ip, data = {}, geo = {}, title = 'New Visitor') {
   const timestamp = new Date().toISOString()
+
+  // Build location string
+  let locationStr = 'Unknown'
+  if (geo.city || geo.region || geo.country) {
+    const parts = [geo.city, geo.region, geo.country].filter(Boolean)
+    locationStr = parts.join(', ')
+    if (geo.countryCode) {
+      locationStr += ` :flag_${geo.countryCode.toLowerCase()}:`
+    }
+  }
 
   const fields = [
     { name: 'IP Address', value: `\`${ip || 'Unknown'}\``, inline: true },
+    { name: 'Location', value: locationStr, inline: true },
+    { name: 'ISP / Org', value: geo.isp || geo.org || 'Unknown', inline: true },
     { name: 'Timezone', value: data.timezone || 'Unknown', inline: true },
     { name: 'Language', value: data.language || 'Unknown', inline: true },
+    { name: 'Platform', value: data.platform || 'Unknown', inline: true },
     { name: 'Screen Resolution', value: data.screen || 'Unknown', inline: true },
     { name: 'Viewport Size', value: data.viewportSize || 'Unknown', inline: true },
-    { name: 'Device Pixel Ratio', value: data.devicePixelRatio?.toString() || 'Unknown', inline: true },
-    { name: 'Platform', value: data.platform || 'Unknown', inline: true },
     { name: 'CPU Cores', value: data.hardwareConcurrency?.toString() || 'Unknown', inline: true },
     { name: 'Device Memory', value: data.deviceMemory ? `${data.deviceMemory} GB` : 'Unknown', inline: true },
-    { name: 'Color Depth', value: data.colorDepth ? `${data.colorDepth}-bit` : 'Unknown', inline: true },
     { name: 'Touch Support', value: data.touchSupport ? `Yes (${data.maxTouchPoints} points)` : 'No', inline: true },
     { name: 'Connection Type', value: data.connectionType || 'Unknown', inline: true },
-    { name: 'Cookies Enabled', value: data.cookiesEnabled ? 'Yes' : 'No', inline: true },
-    { name: 'Do Not Track', value: data.doNotTrack || 'Not set', inline: true },
-    { name: 'Online Status', value: data.online ? 'Online' : 'Offline', inline: true },
     { name: 'Referrer', value: data.referrer || 'Direct', inline: false },
     { name: 'Page URL', value: data.pageUrl || 'Unknown', inline: false },
   ]
 
+  // Add coordinates if available
+  if (geo.lat && geo.lon) {
+    fields.push({
+      name: 'Coordinates',
+      value: `[${geo.lat}, ${geo.lon}](https://www.google.com/maps?q=${geo.lat},${geo.lon})`,
+      inline: false
+    })
+  }
+
   if (data.userAgent) {
     const browserInfo = parseUserAgent(data.userAgent)
     fields.push({ name: 'Browser Info', value: browserInfo, inline: false })
-    fields.push({ name: 'Full User Agent', value: `\`\`\`${data.userAgent.substring(0, 1000)}\`\`\``, inline: false })
   }
 
   const color = title === 'New Visitor' ? 0x00ff41 : 0x10b981
