@@ -5,6 +5,7 @@ import App from './App'
 import './index.css'
 
 const Petition = lazy(() => import('./Petition'))
+const Attendance = lazy(() => import('./Attendance'))
 const Terms = lazy(() => import('./Terms'))
 const Privacy = lazy(() => import('./Privacy'))
 const Meetings = lazy(() => import('./Meetings'))
@@ -26,6 +27,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/petition" element={<Petition />} />
+          <Route path="/live" element={<Attendance />} />
           <Route path="/meetings" element={<Meetings />} />
           <Route path="/meetings/:id" element={<MeetingDetails />} />
           <Route path="/terms" element={<Terms />} />
