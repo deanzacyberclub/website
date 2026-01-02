@@ -1,4 +1,4 @@
-# De Anza Cyber Security Club
+# De Anza Cybersecurity Club
 
 ## [Visit Website ↗](https://dacc.club/)
 
