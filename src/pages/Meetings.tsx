@@ -37,7 +37,7 @@ export interface Meeting {
   resources?: Resource[]
 }
 
-// Sample meeting data - replace with Firebase data later
+// Sample meeting data - replace with real data later
 export const MEETINGS_DATA: Meeting[] = [
   {
     id: '1',

@@ -305,21 +305,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Officer - Aarush */}
-              <div className="card-hack p-4 rounded-lg">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-matrix/20 border border-matrix/40 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">Officer</p>
-                    <p className="text-matrix font-semibold">Aarush</p>
-                  </div>
-                </div>
-              </div>
-
               {/* Officer - Thant Thu Hein */}
               <div className="card-hack p-4 rounded-lg">
                 <div className="flex items-center gap-3 mb-3">

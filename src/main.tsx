@@ -12,6 +12,7 @@ const Meetings = lazy(() => import('@/pages/Meetings'))
 const MeetingDetails = lazy(() => import('@/pages/MeetingDetails'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 const Auth = lazy(() => import('@/pages/Auth'))
+const AuthCallback = lazy(() => import('@/pages/AuthCallback'))
 const Login = lazy(() => import('@/pages/Login'))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Settings = lazy(() => import('@/pages/Settings'))
@@ -37,6 +38,7 @@ ReactDOM.createRoot(document.getElementById('deanzacybersecurityclub')!).render(
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />

@@ -1,5 +1,5 @@
 {
-  "name": "dacc-website",
+  "name": "deanzacybersecurityclub",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "firebase": "^12.7.0",
+    "@supabase/supabase-js": "^2.89.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.11.0"

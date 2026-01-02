@@ -1,158 +1,162 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import {
-  User,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  updateProfile,
-  fetchSignInMethodsForEmail,
-  deleteUser,
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-  reauthenticateWithPopup
-} from 'firebase/auth'
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import { auth, googleProvider, db, storage } from '@/lib/firebase'
+import { User, Session } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 
 export interface UserProfile {
-  uid: string
+  id: string
   email: string
-  displayName: string
-  studentId: string
-  photoURL: string | null
-  createdAt: Date
+  display_name: string
+  student_id: string | null
+  photo_url: string | null
+  created_at: string
 }
 
 interface AuthContextType {
   user: User | null
+  session: Session | null
   userProfile: UserProfile | null
   loading: boolean
-  checkEmailExists: (email: string) => Promise<boolean>
-  signInWithEmail: (email: string, password: string) => Promise<void>
-  signUpWithEmail: (
-    email: string,
-    password: string,
-    displayName: string,
-    studentId: string,
-    profilePicture?: File
-  ) => Promise<void>
-  signInWithGoogle: () => Promise<void>
+  signInWithMagicLink: (email: string) => Promise<void>
+  verifyOtp: (email: string, token: string) => Promise<void>
   signOut: () => Promise<void>
   updateUserProfile: (
     displayName: string,
     studentId: string,
     profilePicture?: File | null
   ) => Promise<void>
-  deleteAccount: (password?: string) => Promise<void>
+  deleteAccount: () => Promise<void>
+  createProfile: (
+    displayName: string,
+    studentId: string,
+    profilePicture?: File
+  ) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user)
-      if (user) {
-        const profile = await fetchUserProfile(user.uid)
-        setUserProfile(profile)
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchUserProfile(session.user.id)
       } else {
-        setUserProfile(null)
+        setLoading(false)
       }
-      setLoading(false)
     })
-    return unsubscribe
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+
+        if (session?.user) {
+          await fetchUserProfile(session.user.id)
+        } else {
+          setUserProfile(null)
+        }
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  const fetchUserProfile = async (uid: string): Promise<UserProfile | null> => {
+  const fetchUserProfile = async (userId: string): Promise<void> => {
     try {
-      const docRef = doc(db, 'users', uid)
-      const docSnap = await getDoc(docRef)
-      if (docSnap.exists()) {
-        return docSnap.data() as UserProfile
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        // User might not have a profile yet (first login)
+        setUserProfile(null)
+        return
       }
-      return null
+      setUserProfile(data)
     } catch {
-      return null
+      setUserProfile(null)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const checkEmailExists = async (email: string): Promise<boolean> => {
-    try {
-      const methods = await fetchSignInMethodsForEmail(auth, email)
-      return methods.length > 0
-    } catch {
-      return false
-    }
+  const signInWithMagicLink = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+    if (error) throw error
   }
 
-  const signInWithEmail = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password)
+  const verifyOtp = async (email: string, token: string) => {
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email'
+    })
+    if (error) throw error
   }
 
-  const signUpWithEmail = async (
-    email: string,
-    password: string,
+  const createProfile = async (
     displayName: string,
     studentId: string,
     profilePicture?: File
   ) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-    const user = userCredential.user
+    if (!user) throw new Error('No user logged in')
 
-    let photoURL: string | null = null
+    let photoUrl: string | null = null
 
+    // Upload profile picture if provided
     if (profilePicture) {
-      const storageRef = ref(storage, `profile-pictures/${user.uid}`)
-      await uploadBytes(storageRef, profilePicture)
-      photoURL = await getDownloadURL(storageRef)
+      const fileExt = profilePicture.name.split('.').pop()
+      const filePath = `${user.id}/avatar.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(filePath, profilePicture, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(filePath)
+
+      photoUrl = urlData.publicUrl
     }
 
-    await updateProfile(user, {
-      displayName,
-      photoURL
-    })
-
-    const userProfile: UserProfile = {
-      uid: user.uid,
-      email: user.email!.toLowerCase(),
-      displayName,
-      studentId,
-      photoURL,
-      createdAt: new Date()
-    }
-
-    await setDoc(doc(db, 'users', user.uid), userProfile)
-    setUserProfile(userProfile)
-  }
-
-  const signInWithGoogle = async () => {
-    const result = await signInWithPopup(auth, googleProvider)
-    const user = result.user
-
-    const existingProfile = await fetchUserProfile(user.uid)
-    if (!existingProfile) {
-      const userProfile: UserProfile = {
-        uid: user.uid,
+    // Create user profile in database
+    const { data, error: profileError } = await supabase
+      .from('users')
+      .insert({
+        id: user.id,
         email: user.email!.toLowerCase(),
-        displayName: user.displayName || 'User',
-        studentId: '',
-        photoURL: user.photoURL,
-        createdAt: new Date()
-      }
-      await setDoc(doc(db, 'users', user.uid), userProfile)
-      setUserProfile(userProfile)
-    }
+        display_name: displayName,
+        student_id: studentId || null,
+        photo_url: photoUrl
+      })
+      .select()
+      .single()
+
+    if (profileError) throw profileError
+    setUserProfile(data)
   }
 
   const signOut = async () => {
-    await firebaseSignOut(auth)
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
     setUserProfile(null)
   }
 
@@ -163,86 +167,98 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     if (!user || !userProfile) throw new Error('No user logged in')
 
-    let photoURL = userProfile.photoURL
+    let photoUrl = userProfile.photo_url
 
     // Handle profile picture update
     if (profilePicture) {
-      const storageRef = ref(storage, `profile-pictures/${user.uid}`)
-      await uploadBytes(storageRef, profilePicture)
-      photoURL = await getDownloadURL(storageRef)
-    } else if (profilePicture === null && userProfile.photoURL) {
+      const fileExt = profilePicture.name.split('.').pop()
+      const filePath = `${user.id}/avatar.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(filePath, profilePicture, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(filePath)
+
+      photoUrl = urlData.publicUrl
+    } else if (profilePicture === null && userProfile.photo_url) {
       // User wants to remove profile picture
       try {
-        const storageRef = ref(storage, `profile-pictures/${user.uid}`)
-        await deleteObject(storageRef)
+        const { data: files } = await supabase.storage
+          .from('profile-pictures')
+          .list(user.id)
+
+        if (files && files.length > 0) {
+          const filesToRemove = files.map(f => `${user.id}/${f.name}`)
+          await supabase.storage
+            .from('profile-pictures')
+            .remove(filesToRemove)
+        }
       } catch {
-        // File might not exist, ignore
+        // Ignore storage errors
       }
-      photoURL = null
+      photoUrl = null
     }
 
-    // Update Firebase Auth profile
-    await updateProfile(user, {
-      displayName,
-      photoURL
-    })
+    // Update database profile
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        display_name: displayName,
+        student_id: studentId || null,
+        photo_url: photoUrl
+      })
+      .eq('id', user.id)
+      .select()
+      .single()
 
-    // Update Firestore profile
-    const updatedProfile: UserProfile = {
-      ...userProfile,
-      displayName,
-      studentId,
-      photoURL
-    }
-
-    await setDoc(doc(db, 'users', user.uid), updatedProfile)
-    setUserProfile(updatedProfile)
+    if (error) throw error
+    setUserProfile(data)
   }
 
-  const deleteAccount = async (password?: string) => {
+  const deleteAccount = async () => {
     if (!user) throw new Error('No user logged in')
-
-    // Re-authenticate user before deletion
-    const providerId = user.providerData[0]?.providerId
-    if (providerId === 'google.com') {
-      await reauthenticateWithPopup(user, googleProvider)
-    } else if (providerId === 'password' && password) {
-      const credential = EmailAuthProvider.credential(user.email!, password)
-      await reauthenticateWithCredential(user, credential)
-    } else {
-      throw new Error('Password required for re-authentication')
-    }
 
     // Delete profile picture from storage
     try {
-      const storageRef = ref(storage, `profile-pictures/${user.uid}`)
-      await deleteObject(storageRef)
+      const { data: files } = await supabase.storage
+        .from('profile-pictures')
+        .list(user.id)
+
+      if (files && files.length > 0) {
+        const filesToRemove = files.map(f => `${user.id}/${f.name}`)
+        await supabase.storage
+          .from('profile-pictures')
+          .remove(filesToRemove)
+      }
     } catch {
-      // File might not exist, ignore
+      // Ignore storage errors
     }
 
-    // Delete user document from Firestore
-    await deleteDoc(doc(db, 'users', user.uid))
+    // Delete user profile from database (will cascade due to FK)
+    await supabase.from('users').delete().eq('id', user.id)
 
-    // Delete Firebase Auth user
-    await deleteUser(user)
-
-    setUserProfile(null)
+    // Sign out the user
+    await signOut()
   }
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        session,
         userProfile,
         loading,
-        checkEmailExists,
-        signInWithEmail,
-        signUpWithEmail,
-        signInWithGoogle,
+        signInWithMagicLink,
+        verifyOtp,
         signOut,
         updateUserProfile,
-        deleteAccount
+        deleteAccount,
+        createProfile
       }}
     >
       {children}

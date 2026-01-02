@@ -86,9 +86,9 @@ function Dashboard() {
           </div>
           <div className="terminal-body">
             <div className="flex items-start gap-4 mb-6">
-              {user.photoURL ? (
+              {userProfile?.photo_url ? (
                 <img
-                  src={user.photoURL}
+                  src={userProfile.photo_url}
                   alt="Profile"
                   className="w-16 h-16 rounded-lg border border-matrix/40 neon-box"
                 />
@@ -101,11 +101,11 @@ function Dashboard() {
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-matrix font-semibold text-lg truncate">
-                  {user.displayName || 'Agent'}
+                  {userProfile?.display_name || 'Agent'}
                 </p>
                 <p className="text-gray-500 text-sm truncate">{user.email}</p>
                 <div className="mt-2 text-xs text-gray-600 font-terminal">
-                  <span className="text-matrix">UID:</span> {user.uid.slice(0, 12)}...
+                  <span className="text-matrix">UID:</span> {user.id.slice(0, 12)}...
                 </div>
               </div>
             </div>
@@ -118,21 +118,19 @@ function Dashboard() {
                 </div>
                 <div>
                   <span className="text-gray-600">AUTH_METHOD</span>
-                  <p className="text-matrix mt-1">
-                    {user.providerData[0]?.providerId === 'google.com' ? 'GOOGLE' : 'EMAIL'}
-                  </p>
+                  <p className="text-matrix mt-1">EMAIL</p>
                 </div>
                 <div>
                   <span className="text-gray-600">STUDENT_ID</span>
-                  <p className={`mt-1 ${userProfile?.studentId ? 'text-matrix' : 'text-gray-600'}`}>
-                    {userProfile?.studentId || 'NOT SET'}
+                  <p className={`mt-1 ${userProfile?.student_id ? 'text-matrix' : 'text-gray-600'}`}>
+                    {userProfile?.student_id || 'NOT SET'}
                   </p>
                 </div>
                 <div>
                   <span className="text-gray-600">CREATED</span>
                   <p className="text-matrix mt-1">
-                    {user.metadata.creationTime
-                      ? new Date(user.metadata.creationTime).toLocaleDateString()
+                    {userProfile?.created_at
+                      ? new Date(userProfile.created_at).toLocaleDateString()
                       : 'N/A'}
                   </p>
                 </div>

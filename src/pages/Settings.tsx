@@ -14,7 +14,6 @@ function Settings() {
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deletePassword, setDeletePassword] = useState('')
   const [deleteError, setDeleteError] = useState('')
   const [deleteLoading, setDeleteLoading] = useState(false)
 
@@ -34,10 +33,10 @@ function Settings() {
 
   useEffect(() => {
     if (userProfile) {
-      setDisplayName(userProfile.displayName || '')
-      setStudentId(userProfile.studentId || '')
-      if (userProfile.photoURL) {
-        setProfilePreview(userProfile.photoURL)
+      setDisplayName(userProfile.display_name || '')
+      setStudentId(userProfile.student_id || '')
+      if (userProfile.photo_url) {
+        setProfilePreview(userProfile.photo_url)
       }
     }
   }, [userProfile])
@@ -103,24 +102,15 @@ function Settings() {
     setDeleteError('')
 
     try {
-      const isGoogleUser = user?.providerData[0]?.providerId === 'google.com'
-      await deleteAccount(isGoogleUser ? undefined : deletePassword)
+      await deleteAccount()
       navigate('/')
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      if (errorMessage.includes('wrong-password') || errorMessage.includes('invalid-credential')) {
-        setDeleteError('[ERROR] Incorrect password')
-      } else if (errorMessage.includes('Password required')) {
-        setDeleteError('[ERROR] Password required')
-      } else {
-        setDeleteError('[ERROR] Failed to delete account')
-      }
+      setDeleteError(`[ERROR] ${errorMessage}`)
     } finally {
       setDeleteLoading(false)
     }
   }
-
-  const isGoogleUser = user?.providerData[0]?.providerId === 'google.com'
 
   if (authLoading) {
     return (
@@ -336,7 +326,6 @@ function Settings() {
             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => {
               setShowDeleteModal(false)
-              setDeletePassword('')
               setDeleteError('')
             }}
           />
@@ -360,24 +349,9 @@ function Settings() {
                 </p>
               </div>
 
-              {!isGoogleUser && (
-                <div className="mb-4">
-                  <label className="block text-sm mb-2 text-gray-500 font-terminal">--confirm-password</label>
-                  <input
-                    type="password"
-                    value={deletePassword}
-                    onChange={(e) => setDeletePassword(e.target.value)}
-                    className="input-hack w-full rounded-lg"
-                    placeholder="Enter your password to confirm"
-                  />
-                </div>
-              )}
-
-              {isGoogleUser && (
-                <p className="text-xs text-gray-600 font-terminal mb-4 text-center">
-                  <span className="text-matrix">[INFO]</span> You'll be prompted to re-authenticate with Google
-                </p>
-              )}
+              <p className="text-xs text-gray-600 font-terminal mb-4 text-center">
+                <span className="text-matrix">[INFO]</span> This action cannot be undone
+              </p>
 
               {deleteError && (
                 <div className="text-hack-red text-sm font-terminal mb-4 text-center">{deleteError}</div>
@@ -387,7 +361,6 @@ function Settings() {
                 <button
                   onClick={() => {
                     setShowDeleteModal(false)
-                    setDeletePassword('')
                     setDeleteError('')
                   }}
                   className="btn-hack rounded-lg flex-1"
@@ -396,7 +369,7 @@ function Settings() {
                 </button>
                 <button
                   onClick={handleDeleteAccount}
-                  disabled={deleteLoading || (!isGoogleUser && !deletePassword)}
+                  disabled={deleteLoading}
                   className="flex-1 px-4 py-2 bg-hack-red/20 border border-hack-red/50 text-hack-red rounded-lg hover:bg-hack-red/30 transition-colors font-terminal text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {deleteLoading ? (

@@ -1,7 +1,5 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import Footer from '@/components/Footer'
 import { MEETINGS_DATA, TYPE_COLORS, TYPE_LABELS } from './Meetings'
@@ -32,8 +30,8 @@ function Attendance() {
 
   // Prefill student ID from user profile
   useEffect(() => {
-    if (userProfile?.studentId && !form.studentId) {
-      setForm(prev => ({ ...prev, studentId: userProfile.studentId }))
+    if (userProfile?.student_id && !form.studentId) {
+      setForm(prev => ({ ...prev, studentId: userProfile.student_id || '' }))
     }
   }, [userProfile])
 
@@ -73,15 +71,15 @@ function Attendance() {
     setSubmitting(true)
 
     try {
-      const selectedMeeting = MEETINGS_DATA.find(m => m.id === form.meetingId)
-
-      // await addDoc(collection(db, 'attendance'), {
-      //   meetingId: form.meetingId,
-      //   meetingTitle: selectedMeeting?.title || 'Unknown',
-      //   meetingDate: selectedMeeting?.date || 'Unknown',
-      //   secretCode: form.secretCode,
-      //   studentId: form.studentId,
-      //   timestamp: serverTimestamp()
+      // TODO: Implement Supabase attendance tracking
+      // const selectedMeeting = MEETINGS_DATA.find(m => m.id === form.meetingId)
+      // await supabase.from('attendance').insert({
+      //   meeting_id: form.meetingId,
+      //   meeting_title: selectedMeeting?.title || 'Unknown',
+      //   meeting_date: selectedMeeting?.date || 'Unknown',
+      //   secret_code: form.secretCode,
+      //   student_id: form.studentId,
+      //   user_id: user?.id || null
       // })
 
       setSubmitted(true)
@@ -291,9 +289,9 @@ function Attendance() {
                     <span className="text-matrix">&gt;</span> Checking in as:
                   </p>
                   <div className="flex items-center gap-4">
-                    {user.photoURL || userProfile?.photoURL ? (
+                    {userProfile?.photo_url ? (
                       <img
-                        src={user.photoURL || userProfile?.photoURL || ''}
+                        src={userProfile.photo_url}
                         alt="Profile"
                         className="w-12 h-12 rounded-lg border border-matrix/40"
                       />
@@ -306,11 +304,11 @@ function Attendance() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-matrix font-semibold truncate">
-                        {userProfile?.displayName || user.displayName || 'Agent'}
+                        {userProfile?.display_name || 'Agent'}
                       </p>
                       <p className="text-xs text-gray-500 font-terminal">
-                        {userProfile?.studentId ? (
-                          <span>ID: {userProfile.studentId}</span>
+                        {userProfile?.student_id ? (
+                          <span>ID: {userProfile.student_id}</span>
                         ) : (
                           <span className="text-hack-yellow">Student ID not set</span>
                         )}
