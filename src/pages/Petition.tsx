@@ -1,8 +1,6 @@
-import { useState, useRef, useEffect, ChangeEvent, FormEvent } from 'react'
-import SignatureCanvas from 'react-signature-canvas'
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import Toggle from '@/components/Toggle'
 import Footer from '@/components/Footer'
 
 interface StudentForm {
@@ -11,20 +9,11 @@ interface StudentForm {
   email: string
 }
 
-interface InstructorForm {
-  name: string
-  office: string
-  phone: string
-  email: string
-}
-
 function Petition() {
-  const [isInstructor, setIsInstructor] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
-  const sigCanvas = useRef<SignatureCanvas>(null)
 
   const [studentForm, setStudentForm] = useState<StudentForm>({
     name: '',
@@ -32,78 +21,28 @@ function Petition() {
     email: ''
   })
 
-  const [instructorForm, setInstructorForm] = useState<InstructorForm>({
-    name: '',
-    office: '',
-    phone: '',
-    email: ''
-  })
-
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
   }, [])
 
-  useEffect(() => {
-    if (sigCanvas.current) {
-      const canvas = sigCanvas.current.getCanvas()
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.fillStyle = '#0a0a0a'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-      }
-    }
-  }, [])
-
-  const clearSignature = () => {
-    sigCanvas.current?.clear()
-    if (sigCanvas.current) {
-      const canvas = sigCanvas.current.getCanvas()
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.fillStyle = '#0a0a0a'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-      }
-    }
-  }
-
   const handleStudentChange = (e: ChangeEvent<HTMLInputElement>) => {
     setStudentForm({ ...studentForm, [e.target.name]: e.target.value })
-  }
-
-  const handleInstructorChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setInstructorForm({ ...instructorForm, [e.target.name]: e.target.value })
   }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
 
-    if (sigCanvas.current?.isEmpty()) {
-      setError('[ERROR] Signature required for authentication')
-      return
-    }
-
-    const signatureData = sigCanvas.current?.toDataURL('image/png')
-
     setSubmitting(true)
 
     try {
-      const collectionName = isInstructor ? 'instructor_signatures' : 'student_signatures'
-      const formData = isInstructor ? instructorForm : studentForm
-
-      await addDoc(collection(db, collectionName), {
-        ...formData,
-        signature: signatureData,
+      await addDoc(collection(db, "student_signatures"), {
+        ...studentForm,
         timestamp: serverTimestamp()
       })
 
       setSubmitted(true)
-      if (isInstructor) {
-        setInstructorForm({ name: '', office: '', phone: '', email: '' })
-      } else {
-        setStudentForm({ name: '', studentId: '', email: '' })
-      }
-      clearSignature()
+      setStudentForm({ name: '', studentId: '', email: '' })
     } catch (err) {
       setError('[ERROR] Transmission failed. Retry.')
       console.error(err)
@@ -184,18 +123,6 @@ function Petition() {
           </p>
         </header>
 
-        {/* Toggle */}
-        <div
-          className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: '200ms' }}
-        >
-          <Toggle
-            isActive={isInstructor}
-            onToggle={setIsInstructor}
-            leftLabel="STUDENT"
-            rightLabel="INSTRUCTOR"
-          />
-        </div>
 
         {/* Form */}
         <form
@@ -209,134 +136,48 @@ function Petition() {
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
               <span className="ml-4 text-xs text-gray-500 font-terminal">
-                {isInstructor ? 'instructor_data.sh' : 'student_data.sh'}
+                student_data.sh
               </span>
             </div>
             <div className="terminal-body">
-              {!isInstructor ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm mb-2 text-gray-500 font-terminal">--name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={studentForm.name}
-                      onChange={handleStudentChange}
-                      required
-                      className="input-hack w-full rounded-lg"
-                      placeholder="Full name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-2 text-gray-500 font-terminal">--student-id</label>
-                    <input
-                      type="text"
-                      name="studentId"
-                      value={studentForm.studentId}
-                      onChange={handleStudentChange}
-                      required
-                      className="input-hack w-full rounded-lg"
-                      placeholder="e.g. 12345678"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-2 text-gray-500 font-terminal">--email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={studentForm.email}
-                      onChange={handleStudentChange}
-                      required
-                      className="input-hack w-full rounded-lg"
-                      placeholder="your@email.com"
-                    />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm mb-2 text-gray-500 font-terminal">--name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={studentForm.name}
+                    onChange={handleStudentChange}
+                    required
+                    className="input-hack w-full rounded-lg"
+                    placeholder="Full name"
+                  />
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm mb-2 text-gray-500 font-terminal">--name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={instructorForm.name}
-                      onChange={handleInstructorChange}
-                      required
-                      className="input-hack w-full rounded-lg"
-                      placeholder="Full name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-2 text-gray-500 font-terminal">--office</label>
-                    <input
-                      type="text"
-                      name="office"
-                      value={instructorForm.office}
-                      onChange={handleInstructorChange}
-                      required
-                      className="input-hack w-full rounded-lg"
-                      placeholder="Office location"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-2 text-gray-500 font-terminal">--phone</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={instructorForm.phone}
-                      onChange={handleInstructorChange}
-                      required
-                      className="input-hack w-full rounded-lg"
-                      placeholder="(xxx) xxx-xxxx"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-2 text-gray-500 font-terminal">--email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={instructorForm.email}
-                      onChange={handleInstructorChange}
-                      required
-                      className="input-hack w-full rounded-lg"
-                      placeholder="your@email.com"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm mb-2 text-gray-500 font-terminal">--student-id</label>
+                  <input
+                    type="text"
+                    name="studentId"
+                    value={studentForm.studentId}
+                    onChange={handleStudentChange}
+                    required
+                    className="input-hack w-full rounded-lg"
+                    placeholder="e.g. 12345678"
+                  />
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Signature */}
-          <div className="terminal-window">
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">signature_capture.sh</span>
-              <button
-                type="button"
-                onClick={clearSignature}
-                className="ml-auto text-xs text-gray-500 hover:text-matrix transition-colors font-terminal"
-              >
-                [CLEAR]
-              </button>
-            </div>
-            <div className="p-4">
-              <div className="border border-matrix/30 rounded-lg overflow-hidden bg-terminal-bg">
-                <SignatureCanvas
-                  ref={sigCanvas}
-                  canvasProps={{
-                    className: 'w-full h-32 cursor-crosshair',
-                    style: { width: '100%', height: '128px' }
-                  }}
-                  backgroundColor="#0a0a0a"
-                  penColor="#00ff41"
-                />
+                <div>
+                  <label className="block text-sm mb-2 text-gray-500 font-terminal">--email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={studentForm.email}
+                    onChange={handleStudentChange}
+                    required
+                    className="input-hack w-full rounded-lg"
+                    placeholder="your@email.com"
+                  />
+                </div>
               </div>
-              <p className="text-xs mt-2 text-gray-600 font-terminal">
-                <span className="text-matrix">&gt;</span> Draw signature above to authenticate
-              </p>
             </div>
           </div>
 
