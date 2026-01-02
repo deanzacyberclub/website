@@ -239,9 +239,10 @@ function Auth() {
         </div>
 
         <button
-          onClick={handleGoogleSignIn}
+          // onClick={handleGoogleSignIn}
           disabled={loading}
           className="w-full group card-hack rounded-lg p-4 text-left transition-all hover:scale-[1.02] disabled:opacity-50"
+          onClick={() => alert("Google auth temporarily unavailable. Please contact Aaron or Stanley for a fix.")}
         >
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center group-hover:neon-box transition-shadow">
@@ -258,6 +259,20 @@ function Auth() {
             </div>
           </div>
         </button>
+
+        {/* Sign In Link */}
+        <div className="mt-6 text-center">
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-2 text-gray-500 hover:text-matrix transition-colors font-terminal text-sm group"
+          >
+            <span>Have an account?</span>
+            <span className="text-matrix group-hover:underline">Sign in</span>
+            <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
       </div>
     </div>
   )
@@ -582,9 +597,8 @@ function Auth() {
         {steps.map((s, i) => (
           <div
             key={s}
-            className={`w-2 h-2 rounded-full transition-all ${
-              i <= currentIndex ? 'bg-matrix neon-box' : 'bg-gray-700'
-            }`}
+            className={`w-2 h-2 rounded-full transition-all ${i <= currentIndex ? 'bg-matrix neon-box' : 'bg-gray-700'
+              }`}
           />
         ))}
         <span className="ml-2 text-xs text-gray-600 font-terminal">

@@ -7,10 +7,14 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
-  fetchSignInMethodsForEmail
+  fetchSignInMethodsForEmail,
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup
 } from 'firebase/auth'
-import { doc, setDoc, getDoc } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore'
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { auth, googleProvider, db, storage } from '@/lib/firebase'
 
 export interface UserProfile {
@@ -37,6 +41,12 @@ interface AuthContextType {
   ) => Promise<void>
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
+  updateUserProfile: (
+    displayName: string,
+    studentId: string,
+    profilePicture?: File | null
+  ) => Promise<void>
+  deleteAccount: (password?: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -111,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const userProfile: UserProfile = {
       uid: user.uid,
-      email: user.email!,
+      email: user.email!.toLowerCase(),
       displayName,
       studentId,
       photoURL,
@@ -130,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!existingProfile) {
       const userProfile: UserProfile = {
         uid: user.uid,
-        email: user.email!,
+        email: user.email!.toLowerCase(),
         displayName: user.displayName || 'User',
         studentId: '',
         photoURL: user.photoURL,
@@ -146,6 +156,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserProfile(null)
   }
 
+  const updateUserProfile = async (
+    displayName: string,
+    studentId: string,
+    profilePicture?: File | null
+  ) => {
+    if (!user || !userProfile) throw new Error('No user logged in')
+
+    let photoURL = userProfile.photoURL
+
+    // Handle profile picture update
+    if (profilePicture) {
+      const storageRef = ref(storage, `profile-pictures/${user.uid}`)
+      await uploadBytes(storageRef, profilePicture)
+      photoURL = await getDownloadURL(storageRef)
+    } else if (profilePicture === null && userProfile.photoURL) {
+      // User wants to remove profile picture
+      try {
+        const storageRef = ref(storage, `profile-pictures/${user.uid}`)
+        await deleteObject(storageRef)
+      } catch {
+        // File might not exist, ignore
+      }
+      photoURL = null
+    }
+
+    // Update Firebase Auth profile
+    await updateProfile(user, {
+      displayName,
+      photoURL
+    })
+
+    // Update Firestore profile
+    const updatedProfile: UserProfile = {
+      ...userProfile,
+      displayName,
+      studentId,
+      photoURL
+    }
+
+    await setDoc(doc(db, 'users', user.uid), updatedProfile)
+    setUserProfile(updatedProfile)
+  }
+
+  const deleteAccount = async (password?: string) => {
+    if (!user) throw new Error('No user logged in')
+
+    // Re-authenticate user before deletion
+    const providerId = user.providerData[0]?.providerId
+    if (providerId === 'google.com') {
+      await reauthenticateWithPopup(user, googleProvider)
+    } else if (providerId === 'password' && password) {
+      const credential = EmailAuthProvider.credential(user.email!, password)
+      await reauthenticateWithCredential(user, credential)
+    } else {
+      throw new Error('Password required for re-authentication')
+    }
+
+    // Delete profile picture from storage
+    try {
+      const storageRef = ref(storage, `profile-pictures/${user.uid}`)
+      await deleteObject(storageRef)
+    } catch {
+      // File might not exist, ignore
+    }
+
+    // Delete user document from Firestore
+    await deleteDoc(doc(db, 'users', user.uid))
+
+    // Delete Firebase Auth user
+    await deleteUser(user)
+
+    setUserProfile(null)
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -156,7 +240,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithEmail,
         signUpWithEmail,
         signInWithGoogle,
-        signOut
+        signOut,
+        updateUserProfile,
+        deleteAccount
       }}
     >
       {children}

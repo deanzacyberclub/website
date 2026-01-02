@@ -13,7 +13,9 @@ const Meetings = lazy(() => import('@/pages/Meetings'))
 const MeetingDetails = lazy(() => import('@/pages/MeetingDetails'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 const Auth = lazy(() => import('@/pages/Auth'))
+const Login = lazy(() => import('@/pages/Login'))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const Settings = lazy(() => import('@/pages/Settings'))
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -37,7 +39,9 @@ ReactDOM.createRoot(document.getElementById('deanzacybersecurityclub')!).render(
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

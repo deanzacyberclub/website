@@ -2,6 +2,7 @@ import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import { useAuth } from '@/contexts/AuthContext'
 import Footer from '@/components/Footer'
 import { MEETINGS_DATA, TYPE_COLORS, TYPE_LABELS } from './Meetings'
 
@@ -17,6 +18,8 @@ function Attendance() {
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
 
+  const { user, userProfile } = useAuth()
+
   const [form, setForm] = useState<AttendanceForm>({
     meetingId: '',
     secretCode: '',
@@ -26,6 +29,13 @@ function Attendance() {
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
   }, [])
+
+  // Prefill student ID from user profile
+  useEffect(() => {
+    if (userProfile?.studentId && !form.studentId) {
+      setForm(prev => ({ ...prev, studentId: userProfile.studentId }))
+    }
+  }, [userProfile])
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -273,6 +283,52 @@ function Attendance() {
                   </p>
                 </div>
               </div>
+
+              {/* User Identity Section */}
+              {user && (
+                <div className="mt-6 pt-6 border-t border-matrix/20">
+                  <p className="text-xs text-gray-500 font-terminal mb-3">
+                    <span className="text-matrix">&gt;</span> Checking in as:
+                  </p>
+                  <div className="flex items-center gap-4">
+                    {user.photoURL || userProfile?.photoURL ? (
+                      <img
+                        src={user.photoURL || userProfile?.photoURL || ''}
+                        alt="Profile"
+                        className="w-12 h-12 rounded-lg border border-matrix/40"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-matrix/10 border border-matrix/40 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-matrix/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-matrix font-semibold truncate">
+                        {userProfile?.displayName || user.displayName || 'Agent'}
+                      </p>
+                      <p className="text-xs text-gray-500 font-terminal">
+                        {userProfile?.studentId ? (
+                          <span>ID: {userProfile.studentId}</span>
+                        ) : (
+                          <span className="text-hack-yellow">Student ID not set</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/settings"
+                    className="inline-flex items-center gap-1 mt-3 text-xs text-gray-500 hover:text-matrix transition-colors font-terminal"
+                  >
+                    <span>Info not right?</span>
+                    <span className="text-matrix hover:underline">Update profile</span>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
 
