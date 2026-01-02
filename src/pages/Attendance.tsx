@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import Footer from '@/components/Footer'
 import { MEETINGS_DATA, TYPE_COLORS, TYPE_LABELS } from './Meetings'
@@ -7,7 +7,6 @@ import { MEETINGS_DATA, TYPE_COLORS, TYPE_LABELS } from './Meetings'
 interface AttendanceForm {
   meetingId: string
   secretCode: string
-  studentId: string
 }
 
 function Attendance() {
@@ -16,35 +15,27 @@ function Attendance() {
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
 
-  const { user, userProfile } = useAuth()
+  const navigate = useNavigate()
+  const { user, userProfile, loading } = useAuth()
 
   const [form, setForm] = useState<AttendanceForm>({
     meetingId: '',
-    secretCode: '',
-    studentId: ''
+    secretCode: ''
   })
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
   }, [])
 
-  // Prefill student ID from user profile
+  // Redirect to auth if not logged in
   useEffect(() => {
-    if (userProfile?.student_id && !form.studentId) {
-      setForm(prev => ({ ...prev, studentId: userProfile.student_id || '' }))
+    if (!loading && !user) {
+      navigate('/auth')
     }
-  }, [userProfile])
+  }, [user, loading, navigate])
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-
-    // For studentId, only allow digits and limit to 8 characters
-    if (name === 'studentId') {
-      const digitsOnly = value.replace(/\D/g, '').slice(0, 8)
-      setForm({ ...form, [name]: digitsOnly })
-      return
-    }
-
     setForm({ ...form, [name]: value })
   }
 
@@ -63,8 +54,8 @@ function Attendance() {
       return
     }
 
-    if (form.studentId.length !== 8) {
-      setError('[ERROR] Student ID must be exactly 8 digits')
+    if (!userProfile?.student_id) {
+      setError('[ERROR] Student ID not found. Please update your profile.')
       return
     }
 
@@ -78,12 +69,12 @@ function Attendance() {
       //   meeting_title: selectedMeeting?.title || 'Unknown',
       //   meeting_date: selectedMeeting?.date || 'Unknown',
       //   secret_code: form.secretCode,
-      //   student_id: form.studentId,
+      //   student_id: userProfile.student_id,
       //   user_id: user?.id || null
       // })
 
       setSubmitted(true)
-      setForm({ meetingId: '', secretCode: '', studentId: '' })
+      setForm({ meetingId: '', secretCode: '' })
     } catch (err) {
       setError('[ERROR] Transmission failed. Retry.')
       console.error(err)
@@ -93,6 +84,27 @@ function Attendance() {
   }
 
   const selectedMeeting = MEETINGS_DATA.find(m => m.id === form.meetingId)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+        <div className="crt-overlay" />
+        <div className="text-center relative z-10">
+          <div className="flex items-center gap-3 justify-center">
+            <svg className="animate-spin h-6 w-6 text-matrix" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span className="font-terminal text-lg neon-pulse">Loading...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user || !userProfile) {
+    return null
+  }
 
   if (submitted) {
     return (
@@ -120,7 +132,7 @@ function Attendance() {
               </p>
               <div className="text-xs text-gray-600 mb-4">
                 <span className="text-matrix">STATUS:</span> CONFIRMED |
-                <span className="text-matrix ml-2">TX:</span> COMPLETE
+                <span className="text-matrix ml-2">ID:</span> {userProfile.student_id}
               </div>
             </div>
           </div>
@@ -135,13 +147,13 @@ function Attendance() {
               CHECK IN AGAIN
             </button>
             <Link
-              to="/"
+              to="/dashboard"
               className="btn-hack-filled rounded-lg inline-flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              RETURN TO BASE
+              BACK TO DASHBOARD
             </Link>
           </div>
         </div>
@@ -157,13 +169,13 @@ function Attendance() {
         {/* Header */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <Link
-            to="/"
+            to="/dashboard"
             className="inline-flex items-center gap-2 text-gray-500 hover:text-matrix transition-colors mb-6 group"
           >
             <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="font-terminal text-sm">cd ..</span>
+            <span className="font-terminal text-sm">cd ../dashboard</span>
           </Link>
 
           <div className="flex items-center gap-3 mb-4">
@@ -183,6 +195,48 @@ function Attendance() {
           className={`space-y-6 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           style={{ transitionDelay: '200ms' }}
         >
+          {/* User Identity Section - Now at the top */}
+          <div className="terminal-window">
+            <div className="terminal-header">
+              <div className="terminal-dot red" />
+              <div className="terminal-dot yellow" />
+              <div className="terminal-dot green" />
+              <span className="ml-4 text-xs text-gray-500 font-terminal">user_session.sh</span>
+              <span className="ml-auto text-xs text-hack-cyan font-terminal">AUTHENTICATED</span>
+            </div>
+            <div className="terminal-body">
+              <p className="text-xs text-gray-500 font-terminal mb-3">
+                <span className="text-matrix">&gt;</span> Checking in as:
+              </p>
+              <div className="flex items-center gap-4">
+                {userProfile.photo_url ? (
+                  <img
+                    src={userProfile.photo_url}
+                    alt="Profile"
+                    className="w-14 h-14 rounded-lg border border-matrix/40"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-lg bg-matrix/10 border border-matrix/40 flex items-center justify-center">
+                    <svg className="w-7 h-7 text-matrix/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-matrix font-semibold text-lg truncate">
+                    {userProfile.display_name}
+                  </p>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="text-gray-500 font-terminal">
+                      <span className="text-matrix">ID:</span> {userProfile.student_id}
+                    </span>
+                    <span className="text-gray-600 truncate">{user.email}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Meeting Selection */}
           <div className="terminal-window">
             <div className="terminal-header">
@@ -237,96 +291,29 @@ function Attendance() {
             </div>
           </div>
 
-          {/* Secret Code & Student ID */}
+          {/* Secret Code */}
           <div className="terminal-window">
             <div className="terminal-header">
               <div className="terminal-dot red" />
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">verify_identity.sh</span>
+              <span className="ml-4 text-xs text-gray-500 font-terminal">verify_code.sh</span>
             </div>
             <div className="terminal-body">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm mb-2 text-gray-500 font-terminal">--secret-code</label>
-                  <input
-                    type="text"
-                    name="secretCode"
-                    value={form.secretCode}
-                    onChange={handleChange}
-                    required
-                    className="input-hack w-full rounded-lg"
-                    placeholder="Enter code from meeting"
-                    autoComplete="off"
-                  />
-                  <p className="text-xs mt-1 text-gray-600 font-terminal">
-                    <span className="text-matrix">&gt;</span> Code provided during the meeting
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm mb-2 text-gray-500 font-terminal">--student-id</label>
-                  <input
-                    type="text"
-                    name="studentId"
-                    value={form.studentId}
-                    onChange={handleChange}
-                    required
-                    className="input-hack w-full rounded-lg"
-                    placeholder="e.g. 12345678"
-                    maxLength={8}
-                    inputMode="numeric"
-                  />
-                  <p className="text-xs mt-1 text-gray-600 font-terminal">
-                    <span className="text-matrix">&gt;</span> 8-digit student ID ({form.studentId.length}/8)
-                  </p>
-                </div>
-              </div>
-
-              {/* User Identity Section */}
-              {user && (
-                <div className="mt-6 pt-6 border-t border-matrix/20">
-                  <p className="text-xs text-gray-500 font-terminal mb-3">
-                    <span className="text-matrix">&gt;</span> Checking in as:
-                  </p>
-                  <div className="flex items-center gap-4">
-                    {userProfile?.photo_url ? (
-                      <img
-                        src={userProfile.photo_url}
-                        alt="Profile"
-                        className="w-12 h-12 rounded-lg border border-matrix/40"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-matrix/10 border border-matrix/40 flex items-center justify-center">
-                        <svg className="w-6 h-6 text-matrix/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-matrix font-semibold truncate">
-                        {userProfile?.display_name || 'Agent'}
-                      </p>
-                      <p className="text-xs text-gray-500 font-terminal">
-                        {userProfile?.student_id ? (
-                          <span>ID: {userProfile.student_id}</span>
-                        ) : (
-                          <span className="text-hack-yellow">Student ID not set</span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  <Link
-                    to="/settings"
-                    className="inline-flex items-center gap-1 mt-3 text-xs text-gray-500 hover:text-matrix transition-colors font-terminal"
-                  >
-                    <span>Info not right?</span>
-                    <span className="text-matrix hover:underline">Update profile</span>
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </div>
-              )}
+              <label className="block text-sm mb-2 text-gray-500 font-terminal">--secret-code</label>
+              <input
+                type="text"
+                name="secretCode"
+                value={form.secretCode}
+                onChange={handleChange}
+                required
+                className="input-hack w-full rounded-lg"
+                placeholder="Enter code from meeting"
+                autoComplete="off"
+              />
+              <p className="text-xs mt-2 text-gray-600 font-terminal">
+                <span className="text-matrix">&gt;</span> Enter the secret code provided during the meeting
+              </p>
             </div>
           </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import Footer from '@/components/Footer'
+import { MEETINGS_DATA, TYPE_COLORS, TYPE_LABELS } from './Meetings'
 
 function Dashboard() {
   const [loaded, setLoaded] = useState(false)
@@ -22,6 +23,27 @@ function Dashboard() {
     await signOut()
     navigate('/')
   }
+
+  // Get auth provider from user metadata
+  const getAuthProvider = () => {
+    const provider = user?.app_metadata?.provider
+    switch (provider) {
+      case 'github':
+        return 'GITHUB'
+      case 'discord':
+        return 'DISCORD'
+      case 'twitter':
+        return 'X'
+      default:
+        return provider?.toUpperCase() || 'OAUTH'
+    }
+  }
+
+  // Get upcoming meetings (next 3)
+  const upcomingMeetings = MEETINGS_DATA
+    .filter(m => new Date(m.date) >= new Date())
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 3)
 
   if (loading) {
     return (
@@ -61,11 +83,6 @@ function Dashboard() {
               <span className="font-terminal text-sm">cd ..</span>
             </Link>
 
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-matrix neon-text-subtle text-lg">$</span>
-              <span className="text-gray-400 font-terminal">./dashboard --user</span>
-            </div>
-
             <h1 className="text-3xl font-bold neon-text tracking-tight mb-2">PROFILE REQUIRED</h1>
             <p className="text-gray-500">
               <span className="text-hack-yellow">[WARNING]</span> Complete your profile to access the dashboard
@@ -90,15 +107,12 @@ function Dashboard() {
               </div>
               <h3 className="text-hack-yellow font-bold text-lg mb-2">PROFILE NOT FOUND</h3>
               <p className="text-gray-500 text-sm mb-6">
-                Your account is authenticated but you haven't set up your profile yet. Complete your profile to access all features.
+                Complete your profile to access all features.
               </p>
               <Link
                 to="/auth"
                 className="btn-hack-filled rounded-lg inline-flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
                 SETUP PROFILE
               </Link>
               <div className="mt-4">
@@ -122,8 +136,8 @@ function Dashboard() {
     <div className="min-h-screen bg-terminal-bg text-matrix">
       <div className="crt-overlay" />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
-        {/* Header */}
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-12">
+        {/* Header with user info */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <Link
             to="/"
@@ -135,178 +149,202 @@ function Dashboard() {
             <span className="font-terminal text-sm">cd ..</span>
           </Link>
 
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">./dashboard --user</span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold neon-text tracking-tight mb-1">
+                Welcome, {userProfile.display_name}
+              </h1>
+              <p className="text-gray-500 text-sm font-terminal">
+                <span className="text-hack-cyan">[{getAuthProvider()}]</span> {user.email}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/settings"
+                className="btn-hack rounded-lg inline-flex items-center gap-2 text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Settings
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="text-gray-500 hover:text-hack-red text-sm font-terminal transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
-
-          <h1 className="text-3xl font-bold neon-text tracking-tight mb-2">DASHBOARD</h1>
-          <p className="text-gray-500">
-            <span className="text-hack-cyan">[INFO]</span> Welcome to your member portal
-          </p>
         </header>
 
-        {/* User Info Terminal Window */}
+        {/* Main Action: Check-in */}
         <div
-          className={`terminal-window mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: '200ms' }}
+          className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          style={{ transitionDelay: '100ms' }}
         >
-          <div className="terminal-header">
-            <div className="terminal-dot red" />
-            <div className="terminal-dot yellow" />
-            <div className="terminal-dot green" />
-            <span className="ml-4 text-xs text-gray-500 font-terminal">user_session.sh</span>
-            <span className="ml-auto text-xs text-gray-600 font-terminal status-online">ACTIVE</span>
-          </div>
-          <div className="terminal-body">
-            <div className="flex items-start gap-4 mb-6">
-              {userProfile?.photo_url ? (
-                <img
-                  src={userProfile.photo_url}
-                  alt="Profile"
-                  className="w-16 h-16 rounded-lg border border-matrix/40 neon-box"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-lg bg-matrix/10 border border-matrix/40 flex items-center justify-center neon-box">
+          <Link
+            to="/live"
+            className="block terminal-window group hover:scale-[1.01] transition-transform"
+          >
+            <div className="terminal-header">
+              <div className="terminal-dot red" />
+              <div className="terminal-dot yellow" />
+              <div className="terminal-dot green" />
+              <span className="ml-4 text-xs text-gray-500 font-terminal">attendance_check_in.sh</span>
+              <span className="ml-auto text-xs text-hack-cyan font-terminal animate-pulse">READY</span>
+            </div>
+            <div className="terminal-body">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center group-hover:neon-box transition-shadow shrink-0">
                   <svg className="w-8 h-8 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-matrix font-semibold text-lg truncate">
-                  {userProfile?.display_name || 'Agent'}
-                </p>
-                <p className="text-gray-500 text-sm truncate">{user.email}</p>
-                <div className="mt-2 text-xs text-gray-600 font-terminal">
-                  <span className="text-matrix">UID:</span> {user.id.slice(0, 12)}...
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-matrix/20 pt-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-terminal">
-                <div>
-                  <span className="text-gray-600">STATUS</span>
-                  <p className="text-matrix mt-1">AUTHENTICATED</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">AUTH_METHOD</span>
-                  <p className="text-matrix mt-1">EMAIL</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">STUDENT_ID</span>
-                  <p className={`mt-1 ${userProfile?.student_id ? 'text-matrix' : 'text-gray-600'}`}>
-                    {userProfile?.student_id || 'NOT SET'}
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-matrix mb-1">Mark Attendance</h2>
+                  <p className="text-gray-500 text-sm">
+                    At a meeting? Enter the secret code to check in and record your attendance.
                   </p>
                 </div>
-                <div>
-                  <span className="text-gray-600">CREATED</span>
-                  <p className="text-matrix mt-1">
-                    {userProfile?.created_at
-                      ? new Date(userProfile.created_at).toLocaleDateString()
-                      : 'N/A'}
-                  </p>
-                </div>
+                <svg className="w-6 h-6 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
-          </div>
+          </Link>
         </div>
 
-        {/* Quick Links */}
+        {/* Upcoming Events */}
+        <div
+          className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          style={{ transitionDelay: '200ms' }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-matrix">Upcoming Events</h2>
+            <Link
+              to="/meetings"
+              className="text-sm text-gray-500 hover:text-matrix font-terminal transition-colors inline-flex items-center gap-1"
+            >
+              View all
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+
+          {upcomingMeetings.length > 0 ? (
+            <div className="space-y-3">
+              {upcomingMeetings.map((meeting) => (
+                <Link
+                  key={meeting.id}
+                  to={`/meetings/${meeting.id}`}
+                  className="block card-hack rounded-lg p-4 group hover:scale-[1.01] transition-transform"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="text-center shrink-0 w-14">
+                      <div className="text-2xl font-bold text-matrix">
+                        {new Date(meeting.date).getDate()}
+                      </div>
+                      <div className="text-xs text-gray-500 uppercase font-terminal">
+                        {new Date(meeting.date).toLocaleDateString('en-US', { month: 'short' })}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
+                          {TYPE_LABELS[meeting.type]}
+                        </span>
+                      </div>
+                      <h3 className="text-matrix font-semibold truncate group-hover:neon-text-subtle transition-all">
+                        {meeting.title}
+                      </h3>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {meeting.time}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          </svg>
+                          {meeting.location}
+                        </span>
+                      </div>
+                    </div>
+                    <svg className="w-5 h-5 text-matrix/30 group-hover:text-matrix group-hover:translate-x-1 transition-all shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="terminal-window">
+              <div className="terminal-header">
+                <div className="terminal-dot red" />
+                <div className="terminal-dot yellow" />
+                <div className="terminal-dot green" />
+              </div>
+              <div className="terminal-body text-center py-8">
+                <p className="text-gray-500">No upcoming events scheduled</p>
+                <Link to="/meetings" className="text-matrix text-sm hover:underline mt-2 inline-block">
+                  View past events
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Browse All Events CTA */}
         <div
           className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           style={{ transitionDelay: '300ms' }}
         >
-          <div className="text-sm text-gray-500 font-terminal mb-4">
-            <span className="text-matrix">&gt;</span> Quick navigation:
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link
-              to="/meetings"
-              className="card-hack rounded-lg p-4 group transition-all hover:scale-[1.02]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center group-hover:neon-box transition-shadow">
-                  <svg className="w-5 h-5 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-matrix font-semibold text-sm">MEETINGS</p>
-                  <p className="text-xs text-gray-600">View upcoming events</p>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              to="/live"
-              className="card-hack rounded-lg p-4 group transition-all hover:scale-[1.02]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center group-hover:neon-box transition-shadow">
-                  <svg className="w-5 h-5 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-matrix font-semibold text-sm">ATTENDANCE</p>
-                  <p className="text-xs text-gray-600">Check in to events</p>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              to="/petition"
-              className="card-hack rounded-lg p-4 group transition-all hover:scale-[1.02]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center group-hover:neon-box transition-shadow">
-                  <svg className="w-5 h-5 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-matrix font-semibold text-sm">PETITION</p>
-                  <p className="text-xs text-gray-600">Sign club petition</p>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              to="/settings"
-              className="card-hack rounded-lg p-4 group transition-all hover:scale-[1.02]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center group-hover:neon-box transition-shadow">
-                  <svg className="w-5 h-5 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-matrix font-semibold text-sm">SETTINGS</p>
-                  <p className="text-xs text-gray-600">Edit your profile</p>
-                </div>
-              </div>
-            </Link>
-          </div>
+          <Link
+            to="/meetings"
+            className="block card-hack rounded-lg p-6 group hover:scale-[1.01] transition-transform text-center"
+          >
+            <div className="flex items-center justify-center gap-3">
+              <svg className="w-6 h-6 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-matrix font-semibold">Browse All Events & Meetings</span>
+              <svg className="w-5 h-5 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </Link>
         </div>
 
-        {/* Sign Out Button */}
+        {/* Quick Stats */}
         <div
-          className={`transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           style={{ transitionDelay: '400ms' }}
         >
-          <button
-            onClick={handleSignOut}
-            className="btn-hack rounded-lg inline-flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            TERMINATE SESSION
-          </button>
+          <div className="card-hack rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-matrix">{MEETINGS_DATA.length}</div>
+            <div className="text-xs text-gray-500 font-terminal mt-1">TOTAL EVENTS</div>
+          </div>
+          <div className="card-hack rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-matrix">{upcomingMeetings.length}</div>
+            <div className="text-xs text-gray-500 font-terminal mt-1">UPCOMING</div>
+          </div>
+          <div className="card-hack rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-matrix">
+              {userProfile.student_id ? '1' : '0'}
+            </div>
+            <div className="text-xs text-gray-500 font-terminal mt-1">CHECK-INS</div>
+          </div>
+          <div className="card-hack rounded-lg p-4 text-center">
+            <div className={`text-2xl font-bold ${userProfile.student_id ? 'text-matrix' : 'text-hack-yellow'}`}>
+              {userProfile.student_id ? 'SET' : 'N/A'}
+            </div>
+            <div className="text-xs text-gray-500 font-terminal mt-1">STUDENT ID</div>
+          </div>
         </div>
 
         <Footer />

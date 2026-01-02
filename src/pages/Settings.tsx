@@ -64,19 +64,10 @@ function Settings() {
     setRemovePhoto(true)
   }
 
-  const handleStudentIdChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 8)
-    setStudentId(value)
-  }
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!displayName.trim()) {
       setError('[ERROR] Display name required')
-      return
-    }
-    if (studentId && studentId.length !== 8) {
-      setError('[ERROR] Student ID must be 8 digits')
       return
     }
 
@@ -86,6 +77,7 @@ function Settings() {
 
     try {
       const pictureToUpload = removePhoto ? null : profilePicture
+      // Student ID is passed but won't be changed (read-only)
       await updateUserProfile(displayName.trim(), studentId, pictureToUpload)
       setSuccess('[SUCCESS] Profile updated')
       setProfilePicture(null)
@@ -232,20 +224,17 @@ function Settings() {
                 />
               </div>
 
-              {/* Student ID */}
+              {/* Student ID (read-only) */}
               <div>
-                <label className="block text-sm mb-2 text-gray-500 font-terminal">--student-id</label>
+                <label className="block text-sm mb-2 text-gray-500 font-terminal">--student-id (read-only)</label>
                 <input
                   type="text"
                   value={studentId}
-                  onChange={handleStudentIdChange}
-                  className="input-hack w-full rounded-lg"
-                  placeholder="8-digit De Anza ID"
-                  maxLength={8}
-                  inputMode="numeric"
+                  disabled
+                  className="input-hack w-full rounded-lg opacity-50 cursor-not-allowed"
                 />
                 <p className="text-xs text-gray-600 font-terminal mt-1">
-                  <span className="text-matrix">&gt;</span> {studentId.length}/8 digits
+                  <span className="text-matrix">&gt;</span> Student ID cannot be changed after account creation
                 </p>
               </div>
 

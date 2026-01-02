@@ -29,7 +29,8 @@ interface AuthContextType {
   createProfile: (
     displayName: string,
     studentId: string,
-    profilePicture?: File
+    profilePicture?: File,
+    avatarUrl?: string
   ) => Promise<void>
 }
 
@@ -131,13 +132,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const createProfile = async (
     displayName: string,
     studentId: string,
-    profilePicture?: File
+    profilePicture?: File,
+    avatarUrl?: string
   ) => {
     if (!user) throw new Error('No user logged in')
 
     let photoUrl: string | null = null
 
-    // Upload profile picture if provided
+    // Use OAuth avatar URL if provided and no custom picture
+    if (avatarUrl && !profilePicture) {
+      photoUrl = avatarUrl
+    }
+
+    // Upload profile picture if provided (overrides OAuth avatar)
     if (profilePicture) {
       const fileExt = profilePicture.name.split('.').pop()
       const filePath = `${user.id}/avatar.${fileExt}`

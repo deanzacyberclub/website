@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent, ChangeEvent, useRef } from 'react'
+import { useState, useEffect, FormEvent, ChangeEvent, useRef, KeyboardEvent, ClipboardEvent } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import Footer from '@/components/Footer'
@@ -12,11 +12,13 @@ function Auth() {
   const [studentId, setStudentId] = useState('')
   const [profilePicture, setProfilePicture] = useState<File | null>(null)
   const [profilePreview, setProfilePreview] = useState<string | null>(null)
+  const [oauthAvatarUrl, setOauthAvatarUrl] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const studentIdRefs = useRef<(HTMLInputElement | null)[]>([])
   const navigate = useNavigate()
   const { user, userProfile, loading: authLoading, signInWithGitHub, signInWithDiscord, signInWithTwitter, createProfile } = useAuth()
 
@@ -37,6 +39,22 @@ function Auth() {
     // If user is logged in but no profile, show profile step
     if (user && !userProfile) {
       setStep('profile')
+      // Get OAuth avatar from provider metadata
+      const avatarUrl = user.user_metadata?.avatar_url ||
+        user.user_metadata?.picture ||
+        user.user_metadata?.avatar
+      if (avatarUrl && !profilePreview) {
+        setOauthAvatarUrl(avatarUrl)
+        setProfilePreview(avatarUrl)
+      }
+      // Pre-fill display name from OAuth if available
+      const oauthName = user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.user_metadata?.user_name ||
+        user.user_metadata?.preferred_username
+      if (oauthName && !displayName) {
+        setDisplayName(oauthName)
+      }
       return
     }
 
@@ -48,7 +66,7 @@ function Auth() {
         navigate('/auth', { replace: true })
       }
     }
-  }, [user, userProfile, authLoading, navigate, searchParams])
+  }, [user, userProfile, authLoading, navigate, searchParams, profilePreview, displayName])
 
   const handleGitHubSignIn = async () => {
     setLoading(true)
@@ -89,14 +107,20 @@ function Auth() {
       setError('[ERROR] Display name required')
       return
     }
-    if (studentId && studentId.length !== 8) {
-      setError('[ERROR] Student ID must be 8 digits')
+    if (!studentId || studentId.length !== 8) {
+      setError('[ERROR] Student ID is required (8 digits)')
       return
     }
     setLoading(true)
     setError('')
     try {
-      await createProfile(displayName, studentId, profilePicture || undefined)
+      // Pass custom file if uploaded, otherwise pass OAuth avatar URL
+      await createProfile(
+        displayName,
+        studentId,
+        profilePicture || undefined,
+        !profilePicture && oauthAvatarUrl ? oauthAvatarUrl : undefined
+      )
       navigate('/dashboard')
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
@@ -121,6 +145,7 @@ function Auth() {
         return
       }
       setProfilePicture(file)
+      // When uploading custom file, clear OAuth avatar (we'll use the file instead)
       const reader = new FileReader()
       reader.onloadend = () => {
         setProfilePreview(reader.result as string)
@@ -129,9 +154,58 @@ function Auth() {
     }
   }
 
-  const handleStudentIdChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 8)
-    setStudentId(value)
+  const handleRemovePhoto = () => {
+    setProfilePicture(null)
+    setProfilePreview(null)
+    setOauthAvatarUrl(null)
+  }
+
+  const handleStudentIdDigitChange = (index: number, value: string) => {
+    // Only allow single digit
+    const digit = value.replace(/\D/g, '').slice(-1)
+    const newId = studentId.split('')
+
+    // Pad with empty strings if needed
+    while (newId.length < 8) newId.push('')
+
+    newId[index] = digit
+    setStudentId(newId.join(''))
+
+    // Move to next input if digit entered
+    if (digit && index < 7) {
+      studentIdRefs.current[index + 1]?.focus()
+    }
+  }
+
+  const handleStudentIdKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace') {
+      if (!studentId[index] && index > 0) {
+        // If current box is empty, move to previous and clear it
+        e.preventDefault()
+        const newId = studentId.split('')
+        while (newId.length < 8) newId.push('')
+        newId[index - 1] = ''
+        setStudentId(newId.join(''))
+        studentIdRefs.current[index - 1]?.focus()
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault()
+      studentIdRefs.current[index - 1]?.focus()
+    } else if (e.key === 'ArrowRight' && index < 7) {
+      e.preventDefault()
+      studentIdRefs.current[index + 1]?.focus()
+    }
+  }
+
+  const handleStudentIdPaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 8)
+    if (pastedData) {
+      setStudentId(pastedData)
+      // Focus on the last filled input or the next empty one
+      const focusIndex = Math.min(pastedData.length, 7)
+      studentIdRefs.current[focusIndex]?.focus()
+    }
   }
 
   // Show loading while checking auth state
@@ -247,7 +321,9 @@ function Auth() {
             </div>
             <div className="flex-1">
               <p className="text-sm text-matrix font-terminal">Profile Picture</p>
-              <p className="text-xs text-gray-600">(Optional) Max 5MB</p>
+              <p className="text-xs text-gray-600">
+                {oauthAvatarUrl && !profilePicture ? 'From your account' : '(Optional) Max 5MB'}
+              </p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -255,18 +331,24 @@ function Auth() {
                 onChange={handleFileChange}
                 className="hidden"
               />
-              {profilePreview && (
+              <div className="flex gap-2 mt-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    setProfilePicture(null)
-                    setProfilePreview(null)
-                  }}
-                  className="text-xs text-hack-red hover:underline mt-1"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs text-matrix hover:underline"
                 >
-                  Remove
+                  {profilePreview ? 'Change' : 'Upload'}
                 </button>
-              )}
+                {profilePreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    className="text-xs text-hack-red hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -284,18 +366,37 @@ function Auth() {
           </div>
 
           <div>
-            <label className="block text-sm mb-2 text-gray-500 font-terminal">--student-id</label>
+            <label className="block text-sm mb-2 text-gray-500 font-terminal">--student-id *</label>
+            {/* 8 separate boxes for larger screens */}
+            <div className="hidden sm:flex gap-2 justify-between">
+              {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
+                <input
+                  key={index}
+                  ref={(el) => { studentIdRefs.current[index] = el }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={studentId[index] || ''}
+                  onChange={(e) => handleStudentIdDigitChange(index, e.target.value)}
+                  onKeyDown={(e) => handleStudentIdKeyDown(index, e)}
+                  onPaste={handleStudentIdPaste}
+                  className="w-10 h-12 text-center text-lg font-terminal bg-terminal-bg border border-matrix/30 rounded-lg text-matrix focus:border-matrix focus:neon-box outline-none transition-all"
+                />
+              ))}
+            </div>
+            {/* Single input for mobile */}
             <input
               type="text"
-              value={studentId}
-              onChange={handleStudentIdChange}
-              className="input-hack w-full rounded-lg"
-              placeholder="8-digit De Anza ID (optional)"
-              maxLength={8}
               inputMode="numeric"
+              maxLength={8}
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value.replace(/\D/g, '').slice(0, 8))}
+              placeholder="8-digit De Anza ID"
+              className="sm:hidden input-hack w-full rounded-lg"
             />
-            <p className="text-xs text-gray-600 font-terminal mt-1">
-              <span className="text-matrix">&gt;</span> Optional: {studentId.length}/8 digits
+            <p className="text-xs text-gray-600 font-terminal mt-2">
+              <span className="text-matrix">&gt;</span> De Anza Student ID
+              <span className="text-hack-yellow ml-2">(cannot be changed later)</span>
             </p>
           </div>
 
@@ -305,7 +406,7 @@ function Auth() {
 
           <button
             type="submit"
-            disabled={loading || !displayName.trim()}
+            disabled={loading || !displayName.trim() || studentId.length !== 8}
             className="btn-hack-filled rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
@@ -353,7 +454,7 @@ function Auth() {
           </h1>
           <p className="text-gray-500">
             <span className="text-hack-cyan">[INFO]</span>{' '}
-            {step === 'signin' && 'Sign in with your GitHub or Discord account'}
+            {step === 'signin' && 'Securely sign in with a supported provider'}
             {step === 'profile' && 'Complete your profile to finish registration'}
           </p>
         </header>
@@ -366,15 +467,6 @@ function Auth() {
           {step === 'signin' && renderSignInStep()}
           {step === 'profile' && renderProfileStep()}
         </div>
-
-        {step === 'signin' && (
-          <div className="text-center text-xs text-gray-600 font-terminal mt-6">
-            <span className="text-matrix">[INFO]</span> By signing in, you agree to our{' '}
-            <Link to="/terms" className="text-matrix hover:underline">Terms</Link>
-            {' '}and{' '}
-            <Link to="/privacy" className="text-matrix hover:underline">Privacy Policy</Link>
-          </div>
-        )}
 
         <Footer />
       </div>

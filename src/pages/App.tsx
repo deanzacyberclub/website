@@ -126,7 +126,7 @@ function App() {
       <section className={`mb-16 transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <div className="flex items-center gap-3 mb-6">
           <span className="text-matrix neon-text-subtle text-lg">$</span>
-          <span className="text-gray-400 font-terminal">./sign_petition.sh --urgent</span>
+          <span className="text-gray-400 font-terminal">./sign_petition.sh</span>
         </div>
 
         <div
@@ -142,7 +142,7 @@ function App() {
               </div>
               <div className="text-center md:text-left">
                 <h3 className="text-xl font-bold text-matrix neon-text tracking-wide mb-1">
-                  THANK YOU FOR SIGNING
+                  THANK YOU FOR SIGNING!
                 </h3>
                 <p className="text-gray-400 text-sm md:text-base">Petition is now being reviewed by ICC!</p>
               </div>
@@ -314,7 +314,7 @@ function App() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">Officer</p>
+                    <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">Outreach Manager</p>
                     <p className="text-matrix font-semibold">Thant Thu Hein</p>
                   </div>
                 </div>
@@ -334,7 +334,7 @@ function App() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">Officer</p>
+                    <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">Curriculum Lead</p>
                     <p className="text-matrix font-semibold">Mobin Norouzi</p>
                   </div>
                 </div>
