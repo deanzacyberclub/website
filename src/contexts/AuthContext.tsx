@@ -16,8 +16,9 @@ interface AuthContextType {
   session: Session | null
   userProfile: UserProfile | null
   loading: boolean
-  signInWithMagicLink: (email: string) => Promise<void>
-  verifyOtp: (email: string, token: string) => Promise<void>
+  signInWithGitHub: () => Promise<void>
+  signInWithDiscord: () => Promise<void>
+  signInWithTwitter: () => Promise<void>
   signOut: () => Promise<void>
   updateUserProfile: (
     displayName: string,
@@ -41,31 +42,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id)
+        setSession(session)
+        setUser(session?.user ?? null)
+
+        if (session?.user) {
+          // Use setTimeout to avoid Supabase deadlock issues
+          setTimeout(() => {
+            fetchUserProfile(session.user.id)
+          }, 0)
+        } else {
+          setUserProfile(null)
+          setLoading(false)
+        }
+      }
+    )
+
+    // THEN get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session?.user?.id)
       setSession(session)
       setUser(session?.user ?? null)
+
       if (session?.user) {
         fetchUserProfile(session.user.id)
       } else {
         setLoading(false)
       }
     })
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session)
-        setUser(session?.user ?? null)
-
-        if (session?.user) {
-          await fetchUserProfile(session.user.id)
-        } else {
-          setUserProfile(null)
-        }
-        setLoading(false)
-      }
-    )
 
     return () => subscription.unsubscribe()
   }, [])
@@ -91,21 +98,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const signInWithMagicLink = async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
+  const signInWithGitHub = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback`
       }
     })
     if (error) throw error
   }
 
-  const verifyOtp = async (email: string, token: string) => {
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email'
+  const signInWithDiscord = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'discord',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+    if (error) throw error
+  }
+
+  const signInWithTwitter = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'twitter',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
     })
     if (error) throw error
   }
@@ -150,7 +168,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select()
       .single()
 
-    if (profileError) throw profileError
+    if (profileError) {
+      // Check for common setup issues
+      if (profileError.code === '42P01' || profileError.message?.includes('does not exist')) {
+        throw new Error('Database not configured. Please run supabase/setup.sql')
+      }
+      throw profileError
+    }
     setUserProfile(data)
   }
 
@@ -253,8 +277,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         userProfile,
         loading,
-        signInWithMagicLink,
-        verifyOtp,
+        signInWithGitHub,
+        signInWithDiscord,
+        signInWithTwitter,
         signOut,
         updateUserProfile,
         deleteAccount,
