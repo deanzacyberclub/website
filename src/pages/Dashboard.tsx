@@ -5,7 +5,7 @@ import Footer from '@/components/Footer'
 
 function Dashboard() {
   const [loaded, setLoaded] = useState(false)
-  const { user, signOut, loading } = useAuth()
+  const { user, userProfile, signOut, loading } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -123,9 +123,9 @@ function Dashboard() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-gray-600">EMAIL_VERIFIED</span>
-                  <p className={`mt-1 ${user.emailVerified ? 'text-matrix' : 'text-hack-yellow'}`}>
-                    {user.emailVerified ? 'TRUE' : 'FALSE'}
+                  <span className="text-gray-600">STUDENT_ID</span>
+                  <p className={`mt-1 ${userProfile?.studentId ? 'text-matrix' : 'text-gray-600'}`}>
+                    {userProfile?.studentId || 'NOT SET'}
                   </p>
                 </div>
                 <div>
