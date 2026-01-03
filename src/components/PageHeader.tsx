@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import ProfileMenu from './ProfileMenu'
+import { ChevronLeft } from '@/lib/cyberIcon'
 
 interface PageHeaderProps {
   backTo?: string
@@ -14,9 +15,7 @@ function PageHeader({ backTo, backText }: PageHeaderProps) {
           to={backTo}
           className="inline-flex items-center gap-2 text-gray-500 hover:text-matrix transition-colors group"
         >
-          <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span className="font-terminal text-sm">{backText}</span>
         </Link>
       ) : (

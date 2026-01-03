@@ -4,6 +4,11 @@ import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Meeting, MeetingType, Announcement, Photo, Resource } from '@/types/database.types'
+import {
+  Spinner, Close, Edit, Plus, Trash, Calendar, Clock, MapPin,
+  Star, Key, Eye, EyeOff, Fullscreen, Megaphone, Photo as PhotoIcon,
+  Download, Link as LinkIcon, Slides, Play, ExternalLink
+} from '@/lib/cyberIcon'
 
 type TabType = 'announcements' | 'photos' | 'resources'
 
@@ -329,10 +334,7 @@ function MeetingDetails() {
       <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
         <div className="text-center">
           <div className="flex items-center gap-3 justify-center">
-            <svg className="animate-spin h-6 w-6 text-matrix" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
+            <Spinner className="animate-spin h-6 w-6 text-matrix" />
             <span className="font-terminal text-lg">Loading meeting...</span>
           </div>
         </div>
@@ -400,9 +402,7 @@ function MeetingDetails() {
             }}
             className="absolute top-6 right-6 p-3 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <Close className="w-6 h-6" />
           </button>
         </div>
       )}
@@ -431,9 +431,7 @@ function MeetingDetails() {
                   onClick={startEditing}
                   className="ml-auto text-xs text-hack-cyan hover:text-hack-cyan/80 font-terminal flex items-center gap-1 transition-colors"
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
+                  <Edit className="w-3 h-3" />
                   EDIT
                 </button>
               )}
@@ -457,12 +455,7 @@ function MeetingDetails() {
                         disabled={saving}
                         className="px-4 py-2 text-sm font-terminal bg-matrix/20 text-matrix border border-matrix rounded-lg hover:bg-matrix/30 transition-colors disabled:opacity-50 flex items-center gap-2"
                       >
-                        {saving && (
-                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                        )}
+                        {saving && <Spinner className="animate-spin h-4 w-4" />}
                         {saving ? 'SAVING...' : 'SAVE'}
                       </button>
                     </div>
@@ -613,9 +606,7 @@ function MeetingDetails() {
                         onClick={addAnnouncement}
                         className="text-xs font-terminal text-hack-cyan hover:text-hack-cyan/80 flex items-center gap-1"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
+                        <Plus className="w-4 h-4" />
                         ADD
                       </button>
                     </div>
@@ -638,9 +629,7 @@ function MeetingDetails() {
                                 onClick={() => deleteAnnouncement(announcement.id)}
                                 className="ml-2 p-1 text-gray-500 hover:text-hack-red transition-colors"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                                <Trash className="w-5 h-5" />
                               </button>
                             </div>
                             <textarea
@@ -670,9 +659,7 @@ function MeetingDetails() {
                         onClick={addPhoto}
                         className="text-xs font-terminal text-hack-cyan hover:text-hack-cyan/80 flex items-center gap-1"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
+                        <Plus className="w-4 h-4" />
                         ADD
                       </button>
                     </div>
@@ -695,9 +682,7 @@ function MeetingDetails() {
                                 onClick={() => deletePhoto(photo.id)}
                                 className="ml-2 p-1 text-gray-500 hover:text-hack-red transition-colors"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                                <Trash className="w-5 h-5" />
                               </button>
                             </div>
                             <input
@@ -732,9 +717,7 @@ function MeetingDetails() {
                         onClick={addResource}
                         className="text-xs font-terminal text-hack-yellow hover:text-hack-yellow/80 flex items-center gap-1"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
+                        <Plus className="w-4 h-4" />
                         ADD
                       </button>
                     </div>
@@ -757,9 +740,7 @@ function MeetingDetails() {
                                 onClick={() => deleteResource(resource.id)}
                                 className="ml-2 p-1 text-gray-500 hover:text-hack-red transition-colors"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                                <Trash className="w-5 h-5" />
                               </button>
                             </div>
                             <div className="grid gap-3 md:grid-cols-2">
@@ -776,7 +757,7 @@ function MeetingDetails() {
                                 className="input-hack w-full rounded-lg text-sm"
                               >
                                 <option value="link">Link</option>
-                                <option value="slides">Slides</option>
+                                <option value="slides"></option>
                                 <option value="video">Video</option>
                                 <option value="file">File</option>
                               </select>
@@ -797,9 +778,7 @@ function MeetingDetails() {
                     </span>
                     {meeting.featured && (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded text-sm font-terminal bg-matrix/20 text-matrix border border-matrix/50">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
+                        <Star className="w-4 h-4" />
                         FEATURED
                       </span>
                     )}
@@ -825,9 +804,7 @@ function MeetingDetails() {
                     {/* Date */}
                     <div className="flex items-start gap-4 p-4 rounded-lg bg-terminal-alt border border-gray-800">
                       <div className="p-2 rounded-lg bg-matrix/10 text-matrix">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                        <Calendar className="w-6 h-6" />
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 uppercase font-terminal mb-1">Date</div>
@@ -840,9 +817,7 @@ function MeetingDetails() {
                     {/* Time */}
                     <div className="flex items-start gap-4 p-4 rounded-lg bg-terminal-alt border border-gray-800">
                       <div className="p-2 rounded-lg bg-matrix/10 text-matrix">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <Clock className="w-6 h-6" />
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 uppercase font-terminal mb-1">Time</div>
@@ -853,10 +828,7 @@ function MeetingDetails() {
                     {/* Location */}
                     <div className="flex items-start gap-4 p-4 rounded-lg bg-terminal-alt border border-gray-800 md:col-span-2">
                       <div className="p-2 rounded-lg bg-matrix/10 text-matrix">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                        <MapPin className="w-6 h-6" />
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 uppercase font-terminal mb-1">Location</div>
@@ -868,9 +840,7 @@ function MeetingDetails() {
                     {isOfficer && meeting.secret_code && (
                       <div className="relative flex items-start gap-4 p-4 rounded-lg bg-hack-purple/10 border border-hack-purple/50 md:col-span-2">
                         <div className="p-2 rounded-lg bg-hack-purple/20 text-hack-purple">
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                          </svg>
+                          <Key className="w-6 h-6" />
                         </div>
                         <div className="flex-1">
                           <div className="text-xs text-hack-purple uppercase font-terminal mb-1">Attendance Code</div>
@@ -886,16 +856,7 @@ function MeetingDetails() {
                             className="p-2 rounded-lg bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors"
                             title={codeRevealed ? 'Hide code' : 'Reveal code'}
                           >
-                            {codeRevealed ? (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                              </svg>
-                            ) : (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            )}
+                            {codeRevealed ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                           </button>
                           <button
                             onClick={() => {
@@ -905,9 +866,7 @@ function MeetingDetails() {
                             className="p-2 rounded-lg bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors"
                             title="Fullscreen"
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                            </svg>
+                            <Fullscreen className="w-5 h-5" />
                           </button>
                         </div>
                       </div>
@@ -975,9 +934,7 @@ function MeetingDetails() {
                   : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-matrix/50'
                   }`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                </svg>
+                <Megaphone className="w-4 h-4" />
                 ANNOUNCEMENTS
                 {meeting.announcements?.length ? (
                   <span className="px-1.5 py-0.5 rounded text-xs bg-matrix/30">{meeting.announcements.length}</span>
@@ -990,9 +947,7 @@ function MeetingDetails() {
                   : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-cyan/50'
                   }`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                <PhotoIcon className="w-4 h-4" />
                 PHOTOS
                 {meeting.photos?.length ? (
                   <span className="px-1.5 py-0.5 rounded text-xs bg-hack-cyan/30">{meeting.photos.length}</span>
@@ -1005,9 +960,7 @@ function MeetingDetails() {
                   : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-yellow/50'
                   }`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+                <Download className="w-4 h-4" />
                 RESOURCES
                 {meeting.resources?.length ? (
                   <span className="px-1.5 py-0.5 rounded text-xs bg-hack-yellow/30">{meeting.resources.length}</span>
@@ -1058,9 +1011,7 @@ function MeetingDetails() {
                       ))
                     ) : (
                       <div className="text-center py-8">
-                        <svg className="w-12 h-12 mx-auto text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                        </svg>
+                        <Megaphone className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                         <p className="text-gray-500 text-sm">No announcements yet</p>
                       </div>
                     )}
@@ -1092,9 +1043,7 @@ function MeetingDetails() {
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <svg className="w-12 h-12 mx-auto text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                        <PhotoIcon className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                         <p className="text-gray-500 text-sm">No photos yet</p>
                       </div>
                     )}
@@ -1114,42 +1063,21 @@ function MeetingDetails() {
                           className="flex items-center gap-4 p-4 rounded-lg bg-terminal-alt border border-gray-800 hover:border-hack-yellow/50 transition-colors group"
                         >
                           <div className="p-2 rounded-lg bg-hack-yellow/10 text-hack-yellow">
-                            {resource.type === 'slides' && (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              </svg>
-                            )}
-                            {resource.type === 'video' && (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            )}
-                            {resource.type === 'link' && (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                              </svg>
-                            )}
-                            {resource.type === 'file' && (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            )}
+                            {resource.type === 'slides' && <Slides className="w-5 h-5" />}
+                            {resource.type === 'video' && <Play className="w-5 h-5" />}
+                            {resource.type === 'link' && <LinkIcon className="w-5 h-5" />}
+                            {resource.type === 'file' && <Download className="w-5 h-5" />}
                           </div>
                           <div className="flex-1">
                             <h4 className="font-semibold text-gray-200 group-hover:text-hack-yellow transition-colors">{resource.title}</h4>
                             <p className="text-xs text-gray-500 uppercase">{resource.type}</p>
                           </div>
-                          <svg className="w-5 h-5 text-gray-500 group-hover:text-hack-yellow group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
+                          <ExternalLink className="w-5 h-5 text-gray-500 group-hover:text-hack-yellow group-hover:translate-x-1 transition-all" />
                         </a>
                       ))
                     ) : (
                       <div className="text-center py-8">
-                        <svg className="w-12 h-12 mx-auto text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                        <Download className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                         <p className="text-gray-500 text-sm">No resources yet</p>
                       </div>
                     )}

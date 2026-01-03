@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Meeting, MeetingType } from '@/types/database.types'
+import { Spinner, Close, Plus, Calendar, Clock, MapPin, Star } from '@/lib/cyberIcon'
 
 type FilterType = 'all' | 'upcoming' | 'past'
 type TypeFilter = 'all' | MeetingType
@@ -236,10 +237,7 @@ function Meetings() {
       <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
         <div className="text-center">
           <div className="flex items-center gap-3 justify-center">
-            <svg className="animate-spin h-6 w-6 text-matrix" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
+            <Spinner className="animate-spin h-6 w-6 text-matrix" />
             <span className="font-terminal text-lg">Loading meetings...</span>
           </div>
         </div>
@@ -266,9 +264,7 @@ function Meetings() {
                 }}
                 className="ml-auto text-gray-500 hover:text-white transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <Close className="w-5 h-5" />
               </button>
             </div>
             <div className="terminal-body space-y-6">
@@ -425,12 +421,7 @@ function Meetings() {
                   disabled={creating}
                   className="px-4 py-2 text-sm font-terminal bg-matrix/20 text-matrix border border-matrix rounded-lg hover:bg-matrix/30 transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
-                  {creating && (
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  )}
+                  {creating && <Spinner className="animate-spin h-4 w-4" />}
                   {creating ? 'CREATING...' : 'CREATE MEETING'}
                 </button>
               </div>
@@ -461,9 +452,7 @@ function Meetings() {
                 onClick={() => setShowCreateModal(true)}
                 className="btn-hack-filled px-4 py-2 flex items-center gap-2 self-start sm:self-auto"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <Plus className="w-5 h-5" />
                 New Meeting
               </button>
             )}
@@ -487,9 +476,7 @@ function Meetings() {
                 >
                   <div className="absolute top-3 right-3">
                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-terminal bg-matrix/20 text-matrix border border-matrix/50">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                      </svg>
+                      <Star className="w-3 h-3" />
                       FEATURED
                     </span>
                   </div>
@@ -509,22 +496,15 @@ function Meetings() {
 
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-gray-500">
-                      <svg className="w-4 h-4 text-matrix/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
+                      <Calendar className="w-4 h-4 text-matrix/70" />
                       {formatDate(meeting.date)}
                     </div>
                     <div className="flex items-center gap-2 text-gray-500">
-                      <svg className="w-4 h-4 text-matrix/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <Clock className="w-4 h-4 text-matrix/70" />
                       {meeting.time}
                     </div>
                     <div className="flex items-center gap-2 text-gray-500">
-                      <svg className="w-4 h-4 text-matrix/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                      <MapPin className="w-4 h-4 text-matrix/70" />
                       {meeting.location}
                     </div>
                   </div>
@@ -746,16 +726,11 @@ function Meetings() {
 
                       <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-matrix/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                          <Clock className="w-4 h-4 text-matrix/50" />
                           {meeting.time}
                         </div>
                         <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-matrix/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
+                          <MapPin className="w-4 h-4 text-matrix/50" />
                           {meeting.location}
                         </div>
                       </div>

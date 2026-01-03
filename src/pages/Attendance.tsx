@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import type { Meeting } from '@/types/database.types'
+import { Spinner, Check, Plus, ArrowLeft, User, Calendar, MapPin } from '@/lib/cyberIcon'
 
 interface AttendanceForm {
   meetingId: string
@@ -139,10 +140,7 @@ function Attendance() {
         <div className="crt-overlay" />
         <div className="text-center relative z-10">
           <div className="flex items-center gap-3 justify-center">
-            <svg className="animate-spin h-6 w-6 text-matrix" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
+            <Spinner className="animate-spin h-6 w-6 text-matrix" />
             <span className="font-terminal text-lg neon-pulse">Loading...</span>
           </div>
         </div>
@@ -160,9 +158,7 @@ function Attendance() {
         <div className="crt-overlay" />
         <div className="text-center relative z-10">
           <div className="w-20 h-20 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center mx-auto mb-6 neon-box">
-            <svg className="w-10 h-10 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+            <Check className="w-10 h-10 text-matrix" />
           </div>
           <div className="terminal-window max-w-md mx-auto">
             <div className="terminal-header">
@@ -189,18 +185,14 @@ function Attendance() {
               onClick={() => setSubmitted(false)}
               className="btn-hack rounded-lg inline-flex items-center justify-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
+              <Plus className="w-4 h-4" />
               CHECK IN AGAIN
             </button>
             <Link
               to="/dashboard"
               className="btn-hack-filled rounded-lg inline-flex items-center justify-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
+              <ArrowLeft className="w-4 h-4" />
               BACK TO DASHBOARD
             </Link>
           </div>
@@ -255,9 +247,7 @@ function Attendance() {
                   />
                 ) : (
                   <div className="w-14 h-14 rounded-lg bg-matrix/10 border border-matrix/40 flex items-center justify-center">
-                    <svg className="w-7 h-7 text-matrix/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    <User className="w-7 h-7 text-matrix/50" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -312,16 +302,11 @@ function Attendance() {
                   <h3 className="text-matrix font-semibold mb-1">{selectedMeeting.title}</h3>
                   <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4 text-matrix/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
+                      <Calendar className="w-4 h-4 text-matrix/50" />
                       {new Date(selectedMeeting.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                     <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4 text-matrix/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                      <MapPin className="w-4 h-4 text-matrix/50" />
                       {selectedMeeting.location}
                     </div>
                   </div>
@@ -367,10 +352,7 @@ function Attendance() {
           >
             {submitting ? (
               <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
+                <Spinner className="animate-spin h-4 w-4" />
                 VERIFYING...
               </span>
             ) : (

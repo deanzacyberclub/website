@@ -44,7 +44,7 @@ interface AuthContextType {
     profilePicture?: File,
     avatarUrl?: string
   ) => Promise<void>
-  linkIdentity: (provider: 'github' | 'discord' | 'twitter' | 'linkedin_oidc') => Promise<void>
+  linkIdentity: (provider: 'github' | 'discord' | 'x' | 'linkedin_oidc') => Promise<void>
   unlinkIdentity: (provider: string) => Promise<void>
 }
 
@@ -218,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithTwitter = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'twitter',
+      provider: 'x',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`
       }
@@ -236,7 +236,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }
 
-  const linkIdentity = async (provider: 'github' | 'discord' | 'twitter' | 'linkedin_oidc') => {
+  const linkIdentity = async (provider: 'github' | 'discord' | 'x' | 'linkedin_oidc') => {
     // Store that we're linking so AuthCallback knows to redirect back to settings
     sessionStorage.setItem('linking_provider', provider)
 

@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import type { Meeting } from '@/types/database.types'
+import { Spinner, Warning, CheckCircle, ChevronRight, Clock, MapPin, Calendar } from '@/lib/cyberIcon'
 
 function Dashboard() {
   const [loaded, setLoaded] = useState(false)
@@ -65,7 +66,7 @@ function Dashboard() {
         return 'GITHUB'
       case 'discord':
         return 'DISCORD'
-      case 'twitter':
+      case 'x':
         return 'X'
       default:
         return provider?.toUpperCase() || 'OAUTH'
@@ -86,10 +87,7 @@ function Dashboard() {
         <div className="crt-overlay" />
         <div className="text-center relative z-10">
           <div className="flex items-center gap-3 justify-center">
-            <svg className="animate-spin h-6 w-6 text-matrix" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
+            <Spinner className="animate-spin h-6 w-6 text-matrix" />
             <span className="font-terminal text-lg neon-pulse">Loading session...</span>
           </div>
         </div>
@@ -126,9 +124,7 @@ function Dashboard() {
             </div>
             <div className="terminal-body text-center">
               <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-hack-yellow/10 border border-hack-yellow/30 flex items-center justify-center">
-                <svg className="w-8 h-8 text-hack-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+                <Warning className="w-8 h-8 text-hack-yellow" />
               </div>
               <h3 className="text-hack-yellow font-bold text-lg mb-2">PROFILE NOT FOUND</h3>
               <p className="text-gray-500 text-sm mb-6">
@@ -191,9 +187,7 @@ function Dashboard() {
             <div className="terminal-body">
               <div className="flex items-center gap-6">
                 <div className="w-16 h-16 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center group-hover:neon-box transition-shadow shrink-0">
-                  <svg className="w-8 h-8 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <CheckCircle className="w-8 h-8 text-matrix" />
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-bold text-matrix mb-1">Mark Attendance</h2>
@@ -201,9 +195,7 @@ function Dashboard() {
                     At a meeting? Enter the secret code to check in and record your attendance.
                   </p>
                 </div>
-                <svg className="w-6 h-6 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRight className="w-6 h-6 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all" />
               </div>
             </div>
           </Link>
@@ -221,9 +213,7 @@ function Dashboard() {
               className="text-sm text-gray-500 hover:text-matrix font-terminal transition-colors inline-flex items-center gap-1"
             >
               View all
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
@@ -255,22 +245,16 @@ function Dashboard() {
                       </h3>
                       <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                          <Clock className="w-3 h-3" />
                           {meeting.time}
                         </span>
                         <span className="flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          </svg>
+                          <MapPin className="w-3 h-3" />
                           {meeting.location}
                         </span>
                       </div>
                     </div>
-                    <svg className="w-5 h-5 text-matrix/30 group-hover:text-matrix group-hover:translate-x-1 transition-all shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <ChevronRight className="w-5 h-5 text-matrix/30 group-hover:text-matrix group-hover:translate-x-1 transition-all shrink-0" />
                   </div>
                 </Link>
               ))}
@@ -302,13 +286,9 @@ function Dashboard() {
             className="block card-hack rounded-lg p-6 group hover:scale-[1.01] transition-transform text-center"
           >
             <div className="flex items-center justify-center gap-3">
-              <svg className="w-6 h-6 text-matrix" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+              <Calendar className="w-6 h-6 text-matrix" />
               <span className="text-matrix font-semibold">Browse All Events & Meetings</span>
-              <svg className="w-5 h-5 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <ChevronRight className="w-5 h-5 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all" />
             </div>
           </Link>
         </div>
