@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import Footer from '@/components/Footer'
-import PageHeader from '@/components/PageHeader'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Meeting, MeetingType } from '@/types/database.types'
@@ -441,11 +439,9 @@ function Meetings() {
         </div>
       )}
 
-      <div className="relative max-w-5xl mx-auto px-6 py-16 md:py-24">
+      <div className="relative max-w-5xl mx-auto px-6">
         {/* Header */}
         <header className={`mb-12 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <PageHeader backTo="/" backText="cd ~/" />
-
           <div className="flex items-center gap-3 mb-6">
             <span className="text-matrix neon-text-subtle">$</span>
             <span className="text-gray-400 font-terminal">cat /var/log/meetings.log</span>
@@ -824,8 +820,6 @@ function Meetings() {
           </div>
         </section>
 
-        {/* Footer */}
-        <Footer className={`transition-all duration-700 delay-500 border-matrix/20 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} />
       </div>
     </div>
   )

@@ -23,13 +23,6 @@ function PageHeader({ backTo, backText }: PageHeaderProps) {
         <div />
       )}
 
-      <Link
-        to="/"
-        className="font-terminal text-sm text-gray-600 hover:text-matrix transition-colors tracking-wider glitch neon-text"
-      >
-        [DACC]
-      </Link>
-
       <ProfileMenu />
     </div>
   )

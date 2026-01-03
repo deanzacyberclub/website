@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import Footer from '@/components/Footer'
-import PageHeader from '@/components/PageHeader'
 
 const prefetchMeetings = () => import('./Meetings')
 
@@ -62,9 +60,7 @@ function App() {
   }
 
   const renderContent = () => (
-    <div className="relative max-w-4xl mx-auto px-6 py-16 md:py-24">
-      <PageHeader />
-
+    <div className="relative max-w-4xl mx-auto px-6">
       {/* ASCII Header */}
       <header className={`mb-16 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <pre className="ascii-border text-xs mb-6 hidden md:block opacity-50">
@@ -347,7 +343,7 @@ function App() {
       </section>
 
       {/* Modules Section */}
-      <section className={`mb-16 transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      <section className={`transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <div className="flex items-center gap-3 mb-6">
           <span className="text-matrix neon-text-subtle text-lg">$</span>
           <span className="text-gray-400 font-terminal">ls -la ./what-youll-learn/</span>
@@ -412,8 +408,6 @@ function App() {
         </div>
       </section>
 
-      {/* Footer */}
-      <Footer className={`mt-0 transition-all duration-700 delay-500 border-matrix/20 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} />
     </div>
   )
 

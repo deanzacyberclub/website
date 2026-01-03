@@ -1,22 +1,10 @@
-import { Link } from 'react-router-dom'
-import Footer from '@/components/Footer'
-
 function Privacy() {
   return (
     <div className="bg-terminal-bg text-matrix min-h-screen">
-      <div className="relative max-w-4xl mx-auto px-6 py-16 md:py-24">
+      <div className="relative max-w-4xl mx-auto px-6">
+
         {/* Header */}
         <header className="mb-12">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-matrix transition-colors mb-8"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Home
-          </Link>
-
           <div className="flex items-center gap-3 mb-6">
             <span className="text-matrix neon-text-subtle text-lg">$</span>
             <span className="text-gray-400 font-terminal">cat /etc/privacy-policy.txt</span>
@@ -73,10 +61,6 @@ function Privacy() {
                 <li className="flex items-start gap-2">
                   <span className="text-hack-cyan">-</span>
                   <span>Tracking meeting attendance and member participation</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-hack-cyan">-</span>
-                  <span>Processing petition signatures to establish DACC as an official De Anza club</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-hack-cyan">-</span>
@@ -170,8 +154,6 @@ function Privacy() {
           </div>
         </div>
 
-        {/* Footer */}
-        <Footer className="mt-0 border-matrix/20" />
       </div>
     </div>
   )

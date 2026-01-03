@@ -1,28 +1,28 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 interface FooterProps {
   className?: string
 }
 
 function Footer({ className = '' }: FooterProps) {
+  const location = useLocation()
+  const fullUrl = `${window.location.origin.replace('https://', '').replace('http://', '')}${location.pathname}`
+  const maxLength = 30
+  const displayUrl = fullUrl.length > maxLength
+    ? fullUrl.slice(0, maxLength) + '...'
+    : fullUrl
+
   return (
-    <footer className={`mt-16 pt-8 border-t border-terminal-border ${className}`}>
+    <footer className={`mt-16 pb-10 pt-8 border-t border-terminal-border ${className}`}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <p className="text-sm text-gray-600 font-terminal">
             <span className="text-matrix neon-text-subtle">$</span> ping{' '}
-            <a
-              href="https://www.deanza.edu"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all"
-            >
-              https://deanza.edu
-            </a>
+            <span className="text-matrix/70" title={fullUrl}>{displayUrl}</span>
           </p>
-          <div className="text-xs text-gray-700 font-terminal">
+          <div className="text-sm text-gray-600 font-terminal">
             <span className="text-matrix/50">[</span>
-            SYSTEM ACTIVE
+            <span className="text-matrix neon-text">200</span> OK
             <span className="text-matrix/50">]</span>
           </div>
         </div>

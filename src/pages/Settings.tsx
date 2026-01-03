@@ -1,8 +1,6 @@
 import { useState, useEffect, FormEvent, ChangeEvent, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import Footer from '@/components/Footer'
-import PageHeader from '@/components/PageHeader'
 import ConfirmDialog from '@/components/ConfirmDialog'
 
 function Settings() {
@@ -241,11 +239,9 @@ function Settings() {
     <div className="min-h-screen bg-terminal-bg text-matrix">
       <div className="crt-overlay" />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-4xl mx-auto px-6">
         {/* Header */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <PageHeader backTo="/dashboard" backText="cd ../dashboard" />
-
           <div className="flex items-center gap-3 mb-4">
             <span className="text-matrix neon-text-subtle text-lg">$</span>
             <span className="text-gray-400 font-terminal">./settings --edit-profile</span>
@@ -495,8 +491,6 @@ function Settings() {
             </div>
           </div>
         </div>
-
-        <Footer />
       </div>
 
       {/* Unlink Confirmation Dialog */}

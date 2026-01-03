@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import ConfirmDialog from './ConfirmDialog'
 
 function ProfileMenu() {
   const navigate = useNavigate()
-  const { userProfile, signOut } = useAuth()
+  const { userProfile, signOut, loading } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -19,12 +22,55 @@ function ProfileMenu() {
   }, [])
 
   const handleSignOut = async () => {
+    setLoggingOut(true)
     await signOut()
+    setLoggingOut(false)
+    setShowLogoutConfirm(false)
+    setShowMenu(false)
     navigate('/')
   }
 
-  if (!userProfile) return null
+  // Loading state - show skeleton
+  if (loading) {
+    return (
+      <div className="w-10 h-10 rounded-full bg-terminal-alt border-2 border-gray-700 animate-pulse" />
+    )
+  }
 
+  // Signed out state
+  if (!userProfile) {
+    return (
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setShowMenu(!showMenu)}
+          className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-600 hover:border-matrix transition-colors focus:outline-none focus:ring-2 focus:ring-matrix/50"
+        >
+          <div className="w-full h-full bg-terminal-alt flex items-center justify-center">
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+        </button>
+
+        {showMenu && (
+          <div className="absolute right-0 mt-2 w-48 py-2 bg-terminal-alt border border-gray-700 rounded-lg shadow-lg z-50">
+            <Link
+              to="/auth"
+              onClick={() => setShowMenu(false)}
+              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-matrix/10 hover:text-matrix transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Sign in
+            </Link>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Signed in state
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -71,8 +117,12 @@ function ProfileMenu() {
             </svg>
             Settings
           </Link>
+          <div className="border-t border-gray-700 my-1" />
           <button
-            onClick={handleSignOut}
+            onClick={() => {
+              setShowMenu(false)
+              setShowLogoutConfirm(true)
+            }}
             className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-hack-red/10 hover:text-hack-red transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,6 +132,23 @@ function ProfileMenu() {
           </button>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleSignOut}
+        title="Sign Out"
+        message="Are you sure you want to sign out of your account?"
+        confirmText="SIGN OUT"
+        cancelText="CANCEL"
+        loading={loggingOut}
+        variant="warning"
+        icon={
+          <svg className="w-8 h-8 text-hack-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        }
+      />
     </div>
   )
 }

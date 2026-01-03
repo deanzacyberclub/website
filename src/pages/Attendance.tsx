@@ -1,7 +1,6 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import type { Meeting } from '@/types/database.types'
@@ -214,19 +213,9 @@ function Attendance() {
     <div className="min-h-screen bg-terminal-bg text-matrix">
       <div className="crt-overlay" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-5xl mx-auto px-6">
         {/* Header */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-matrix transition-colors mb-6 group"
-          >
-            <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="font-terminal text-sm">cd ../dashboard</span>
-          </Link>
-
           <div className="flex items-center gap-3 mb-4">
             <span className="text-matrix neon-text-subtle text-lg">$</span>
             <span className="text-gray-400 font-terminal">./attendance --check-in</span>
@@ -389,8 +378,6 @@ function Attendance() {
             )}
           </button>
         </form>
-
-        <Footer />
       </div>
     </div>
   )

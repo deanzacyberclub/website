@@ -2,9 +2,10 @@ import React, { Suspense, lazy } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
+import Layout from '@/components/Layout'
+import ScrollToTop from '@/components/ScrollToTop'
 import App from '@/pages/App'
 import './index.css'
-import Footer from './components/Footer'
 
 const Attendance = lazy(() => import('@/pages/Attendance'))
 const Terms = lazy(() => import('@/pages/Terms'))
@@ -29,19 +30,22 @@ ReactDOM.createRoot(document.getElementById('deanzacybersecurityclub')!).render(
   <React.StrictMode>
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
-            <Route path="/" element={<App />} />
-            <Route path="/live" element={<Attendance />} />
-            <Route path="/meetings" element={<Meetings />} />
-            <Route path="/meetings/:slug" element={<MeetingDetails />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
+            <Route element={<Layout />}>
+              <Route path="/" element={<App />} />
+              <Route path="/live" element={<Attendance />} />
+              <Route path="/meetings" element={<Meetings />} />
+              <Route path="/meetings/:slug" element={<MeetingDetails />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
           </Routes>
         </Suspense>
       </BrowserRouter>

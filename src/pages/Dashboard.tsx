@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import Footer from '@/components/Footer'
-import PageHeader from '@/components/PageHeader'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import type { Meeting } from '@/types/database.types'
@@ -108,10 +106,8 @@ function Dashboard() {
     return (
       <div className="min-h-screen bg-terminal-bg text-matrix">
         <div className="crt-overlay" />
-        <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
+        <div className="relative z-10 max-w-4xl mx-auto px-6">
           <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <PageHeader backTo="/" backText="cd ~/" />
-
             <h1 className="text-3xl font-bold neon-text tracking-tight mb-2">PROFILE REQUIRED</h1>
             <p className="text-gray-500">
               <span className="text-hack-yellow">[WARNING]</span> Complete your profile to access the dashboard
@@ -154,8 +150,6 @@ function Dashboard() {
               </div>
             </div>
           </div>
-
-          <Footer />
         </div>
       </div>
     )
@@ -165,11 +159,9 @@ function Dashboard() {
     <div className="min-h-screen bg-terminal-bg text-matrix">
       <div className="crt-overlay" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-5xl mx-auto px-6">
         {/* Header with user info */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <PageHeader backTo="/" backText="cd ~/" />
-
           <div>
             <h1 className="text-3xl font-bold neon-text tracking-tight mb-1">
               Welcome, {userProfile.display_name}
@@ -345,8 +337,6 @@ function Dashboard() {
             <div className="text-xs text-gray-500 font-terminal mt-1">STUDENT ID</div>
           </div>
         </div>
-
-        <Footer />
       </div>
     </div>
   )

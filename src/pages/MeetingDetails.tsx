@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import Footer from '@/components/Footer'
-import PageHeader from '@/components/PageHeader'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import { useAuth } from '@/contexts/AuthContext'
@@ -345,10 +343,8 @@ function MeetingDetails() {
   if (!meeting) {
     return (
       <div className="bg-terminal-bg text-matrix min-h-screen">
-        <div className="relative max-w-4xl mx-auto px-6 py-16 md:py-24">
+        <div className="relative max-w-4xl mx-auto px-6">
           <header className="mb-12">
-            <PageHeader backTo="/meetings" backText="cd ../meetings" />
-
             <div className="terminal-window">
               <div className="terminal-header">
                 <div className="terminal-dot red" />
@@ -411,11 +407,9 @@ function MeetingDetails() {
         </div>
       )}
 
-      <div className="relative max-w-4xl mx-auto px-6 py-16 md:py-24">
+      <div className="relative max-w-4xl mx-auto px-6">
         {/* Header */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <PageHeader backTo="/meetings" backText="cd ../meetings" />
-
           <div className="flex items-center gap-3 mb-6">
             <span className="text-matrix neon-text-subtle">$</span>
             <span className="text-gray-400 font-terminal">cat ./meetings/{slug}/README.md</span>
@@ -1211,8 +1205,6 @@ function MeetingDetails() {
           </section>
         )}
 
-        {/* Footer */}
-        <Footer className={`transition-all duration-700 delay-300 border-matrix/20 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} />
       </div>
     </div>
   )
