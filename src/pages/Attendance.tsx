@@ -2,7 +2,9 @@ import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import Footer from '@/components/Footer'
-import { MEETINGS_DATA, TYPE_COLORS, TYPE_LABELS } from './Meetings'
+import { supabase } from '@/lib/supabase'
+import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
+import type { Meeting } from '@/types/database.types'
 
 interface AttendanceForm {
   meetingId: string
@@ -14,6 +16,8 @@ function Attendance() {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [meetings, setMeetings] = useState<Meeting[]>([])
+  const [loadingMeetings, setLoadingMeetings] = useState(true)
 
   const navigate = useNavigate()
   const { user, userProfile, loading } = useAuth()
@@ -25,6 +29,26 @@ function Attendance() {
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
+  }, [])
+
+  useEffect(() => {
+    async function fetchMeetings() {
+      try {
+        const { data, error } = await supabase
+          .from('meetings')
+          .select('*')
+          .order('date', { ascending: false })
+
+        if (error) throw error
+        setMeetings(data || [])
+      } catch (err) {
+        console.error('Error fetching meetings:', err)
+      } finally {
+        setLoadingMeetings(false)
+      }
+    }
+
+    fetchMeetings()
   }, [])
 
   // Redirect to auth if not logged in
@@ -62,16 +86,41 @@ function Attendance() {
     setSubmitting(true)
 
     try {
-      // TODO: Implement Supabase attendance tracking
-      // const selectedMeeting = MEETINGS_DATA.find(m => m.id === form.meetingId)
-      // await supabase.from('attendance').insert({
-      //   meeting_id: form.meetingId,
-      //   meeting_title: selectedMeeting?.title || 'Unknown',
-      //   meeting_date: selectedMeeting?.date || 'Unknown',
-      //   secret_code: form.secretCode,
-      //   student_id: userProfile.student_id,
-      //   user_id: user?.id || null
-      // })
+      // Find the selected meeting and verify the secret code
+      const selectedMeeting = meetings.find(m => m.id === form.meetingId)
+
+      if (!selectedMeeting) {
+        setError('[ERROR] Meeting not found')
+        return
+      }
+
+      // Verify secret code (case-insensitive)
+      if (selectedMeeting.secret_code?.toLowerCase() !== form.secretCode.trim().toLowerCase()) {
+        setError('[ERROR] Invalid secret code')
+        return
+      }
+
+      // Check if user already checked in
+      const { data: existingAttendance } = await supabase
+        .from('attendance')
+        .select('id')
+        .eq('meeting_id', form.meetingId)
+        .eq('user_id', user.id)
+        .single()
+
+      if (existingAttendance) {
+        setError('[ERROR] You have already checked in to this meeting')
+        return
+      }
+
+      // Record attendance
+      const { error: insertError } = await supabase.from('attendance').insert({
+        meeting_id: form.meetingId,
+        user_id: user.id,
+        student_id: userProfile.student_id
+      })
+
+      if (insertError) throw insertError
 
       setSubmitted(true)
       setForm({ meetingId: '', secretCode: '' })
@@ -83,7 +132,7 @@ function Attendance() {
     }
   }
 
-  const selectedMeeting = MEETINGS_DATA.find(m => m.id === form.meetingId)
+  const selectedMeeting = meetings.find(m => m.id === form.meetingId)
 
   if (loading) {
     return (
@@ -252,10 +301,11 @@ function Attendance() {
                 value={form.meetingId}
                 onChange={handleChange}
                 required
-                className="input-hack w-full rounded-lg cursor-pointer"
+                disabled={loadingMeetings}
+                className="input-hack w-full rounded-lg cursor-pointer disabled:opacity-50"
               >
-                <option value="">Select a meeting...</option>
-                {MEETINGS_DATA.map((meeting) => (
+                <option value="">{loadingMeetings ? 'Loading meetings...' : 'Select a meeting...'}</option>
+                {meetings.map((meeting) => (
                   <option key={meeting.id} value={meeting.id}>
                     {meeting.title} ({new Date(meeting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})
                   </option>

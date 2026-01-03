@@ -1,17 +1,52 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import Footer from '@/components/Footer'
-import { MEETINGS_DATA, TYPE_COLORS, TYPE_LABELS } from './Meetings'
+import PageHeader from '@/components/PageHeader'
+import { supabase } from '@/lib/supabase'
+import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
+import type { Meeting } from '@/types/database.types'
 
 function Dashboard() {
   const [loaded, setLoaded] = useState(false)
+  const [meetings, setMeetings] = useState<Meeting[]>([])
+  const [attendanceCount, setAttendanceCount] = useState(0)
   const { user, userProfile, signOut, loading } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
   }, [])
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // Fetch meetings
+        const { data: meetingsData } = await supabase
+          .from('meetings')
+          .select('*')
+          .order('date', { ascending: true })
+
+        if (meetingsData) setMeetings(meetingsData)
+
+        // Fetch user's attendance count
+        if (user) {
+          const { count } = await supabase
+            .from('attendance')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+
+          setAttendanceCount(count || 0)
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err)
+      }
+    }
+
+    if (user) {
+      fetchData()
+    }
+  }, [user])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,10 +75,12 @@ function Dashboard() {
   }
 
   // Get upcoming meetings (next 3)
-  const upcomingMeetings = MEETINGS_DATA
-    .filter(m => new Date(m.date) >= new Date())
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 3)
+  const upcomingMeetings = useMemo(() => {
+    return meetings
+      .filter(m => new Date(m.date) >= new Date())
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 3)
+  }, [meetings])
 
   if (loading) {
     return (
@@ -73,15 +110,7 @@ function Dashboard() {
         <div className="crt-overlay" />
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
           <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-gray-500 hover:text-matrix transition-colors mb-6 group"
-            >
-              <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="font-terminal text-sm">cd ..</span>
-            </Link>
+            <PageHeader backTo="/" backText="cd ~/" />
 
             <h1 className="text-3xl font-bold neon-text tracking-tight mb-2">PROFILE REQUIRED</h1>
             <p className="text-gray-500">
@@ -139,43 +168,15 @@ function Dashboard() {
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-12">
         {/* Header with user info */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-matrix transition-colors mb-6 group"
-          >
-            <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="font-terminal text-sm">cd ..</span>
-          </Link>
+          <PageHeader backTo="/" backText="cd ~/" />
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold neon-text tracking-tight mb-1">
-                Welcome, {userProfile.display_name}
-              </h1>
-              <p className="text-gray-500 text-sm font-terminal">
-                <span className="text-hack-cyan">[{getAuthProvider()}]</span> {user.email}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link
-                to="/settings"
-                className="btn-hack rounded-lg inline-flex items-center gap-2 text-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Settings
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-gray-500 hover:text-hack-red text-sm font-terminal transition-colors"
-              >
-                Sign out
-              </button>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold neon-text tracking-tight mb-1">
+              Welcome, {userProfile.display_name}
+            </h1>
+            <p className="text-gray-500 text-sm font-terminal">
+              <span className="text-hack-cyan">[{getAuthProvider()}]</span> {user.email}
+            </p>
           </div>
         </header>
 
@@ -239,7 +240,7 @@ function Dashboard() {
               {upcomingMeetings.map((meeting) => (
                 <Link
                   key={meeting.id}
-                  to={`/meetings/${meeting.id}`}
+                  to={`/meetings/${meeting.slug}`}
                   className="block card-hack rounded-lg p-4 group hover:scale-[1.01] transition-transform"
                 >
                   <div className="flex items-start gap-4">
@@ -326,7 +327,7 @@ function Dashboard() {
           style={{ transitionDelay: '400ms' }}
         >
           <div className="card-hack rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-matrix">{MEETINGS_DATA.length}</div>
+            <div className="text-2xl font-bold text-matrix">{meetings.length}</div>
             <div className="text-xs text-gray-500 font-terminal mt-1">TOTAL EVENTS</div>
           </div>
           <div className="card-hack rounded-lg p-4 text-center">
@@ -334,9 +335,7 @@ function Dashboard() {
             <div className="text-xs text-gray-500 font-terminal mt-1">UPCOMING</div>
           </div>
           <div className="card-hack rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-matrix">
-              {userProfile.student_id ? '1' : '0'}
-            </div>
+            <div className="text-2xl font-bold text-matrix">{attendanceCount}</div>
             <div className="text-xs text-gray-500 font-terminal mt-1">CHECK-INS</div>
           </div>
           <div className="card-hack rounded-lg p-4 text-center">

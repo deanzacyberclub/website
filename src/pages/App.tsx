@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Footer from '@/components/Footer'
+import PageHeader from '@/components/PageHeader'
 
 const prefetchMeetings = () => import('./Meetings')
 
@@ -46,7 +47,6 @@ function MatrixRain() {
 
 function App() {
   const [loaded, setLoaded] = useState(false)
-  const pingAudioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
     setLoaded(true)
@@ -63,6 +63,8 @@ function App() {
 
   const renderContent = () => (
     <div className="relative max-w-4xl mx-auto px-6 py-16 md:py-24">
+      <PageHeader />
+
       {/* ASCII Header */}
       <header className={`mb-16 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <pre className="ascii-border text-xs mb-6 hidden md:block opacity-50">
@@ -422,9 +424,6 @@ function App() {
 
       {/* CRT Scanline Overlay */}
       <div className="crt-overlay" />
-
-      {/* Audio */}
-      <audio ref={pingAudioRef} src="/discord_ping_sound_effect.mp3" preload="auto" />
 
       {/* Main Content */}
       <div className="relative z-10">

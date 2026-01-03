@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import App from '@/pages/App'
 import './index.css'
+import Footer from './components/Footer'
 
 const Attendance = lazy(() => import('@/pages/Attendance'))
 const Terms = lazy(() => import('@/pages/Terms'))
@@ -33,7 +34,7 @@ ReactDOM.createRoot(document.getElementById('deanzacybersecurityclub')!).render(
             <Route path="/" element={<App />} />
             <Route path="/live" element={<Attendance />} />
             <Route path="/meetings" element={<Meetings />} />
-            <Route path="/meetings/:id" element={<MeetingDetails />} />
+            <Route path="/meetings/:slug" element={<MeetingDetails />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/auth" element={<Auth />} />

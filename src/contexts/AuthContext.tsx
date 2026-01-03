@@ -18,6 +18,7 @@ export interface UserProfile {
   student_id: string | null
   photo_url: string | null
   linked_accounts: LinkedAccount[]
+  is_officer: boolean
   created_at: string
 }
 
@@ -113,7 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Ensure linked_accounts is always an array
       let profile: UserProfile = {
         ...data,
-        linked_accounts: data.linked_accounts || []
+        linked_accounts: data.linked_accounts || [],
+        is_officer: data.is_officer || false
       }
 
       // Check if current auth identities need to be synced
@@ -135,7 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (updatedData) {
             profile = {
               ...updatedData,
-              linked_accounts: updatedData.linked_accounts || []
+              linked_accounts: updatedData.linked_accounts || [],
+              is_officer: updatedData.is_officer || false
             }
           }
         }
