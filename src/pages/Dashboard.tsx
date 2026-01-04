@@ -91,8 +91,6 @@ function Dashboard() {
         return 'GITHUB'
       case 'discord':
         return 'DISCORD'
-      case 'x':
-        return 'X'
       default:
         return provider?.toUpperCase() || 'OAUTH'
     }

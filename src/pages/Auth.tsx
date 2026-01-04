@@ -1,7 +1,7 @@
 import { useState, useEffect, FormEvent, ChangeEvent, useRef, KeyboardEvent, ClipboardEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Spinner, GitHubAlt, Discord, X, LinkedIn, Plus } from '@/lib/cyberIcon'
+import { Spinner, GitHubAlt, Discord, LinkedIn, Plus } from '@/lib/cyberIcon'
 
 type AuthStep = 'signin' | 'profile'
 
@@ -20,7 +20,7 @@ function Auth() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const studentIdRefs = useRef<(HTMLInputElement | null)[]>([])
   const navigate = useNavigate()
-  const { user, userProfile, loading: authLoading, signInWithGitHub, signInWithDiscord, signInWithTwitter, signInWithLinkedIn, createProfile } = useAuth()
+  const { user, userProfile, loading: authLoading, signInWithGitHub, signInWithDiscord, signInWithLinkedIn, createProfile } = useAuth()
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
@@ -86,17 +86,6 @@ function Auth() {
       await signInWithDiscord()
     } catch {
       setError('[ERROR] Failed to sign in with Discord. Retry.')
-      setLoading(false)
-    }
-  }
-
-  const handleTwitterSignIn = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      await signInWithTwitter()
-    } catch {
-      setError('[ERROR] Failed to sign in with X. Retry.')
       setLoading(false)
     }
   }
@@ -264,15 +253,6 @@ function Auth() {
           >
             <Discord className="w-5 h-5 shrink-0" />
             <span className="font-medium flex-1 text-center">Continue with Discord</span>
-          </button>
-
-          <button
-            onClick={handleTwitterSignIn}
-            disabled={loading}
-            className="w-full flex items-center px-4 py-3 bg-black hover:bg-zinc-900 border border-zinc-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <X className="w-5 h-5 shrink-0" />
-            <span className="font-medium flex-1 text-center">Continue with X</span>
           </button>
 
           <button

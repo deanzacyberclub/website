@@ -29,7 +29,6 @@ interface AuthContextType {
   loading: boolean
   signInWithGitHub: () => Promise<void>
   signInWithDiscord: () => Promise<void>
-  signInWithTwitter: () => Promise<void>
   signInWithLinkedIn: () => Promise<void>
   signOut: () => Promise<void>
   updateUserProfile: (
@@ -44,7 +43,7 @@ interface AuthContextType {
     profilePicture?: File,
     avatarUrl?: string
   ) => Promise<void>
-  linkIdentity: (provider: 'github' | 'discord' | 'x' | 'linkedin_oidc') => Promise<void>
+  linkIdentity: (provider: 'github' | 'discord' | 'linkedin_oidc') => Promise<void>
   unlinkIdentity: (provider: string) => Promise<void>
 }
 
@@ -216,16 +215,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }
 
-  const signInWithTwitter = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'x',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
-    })
-    if (error) throw error
-  }
-
   const signInWithLinkedIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'linkedin_oidc',
@@ -236,7 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }
 
-  const linkIdentity = async (provider: 'github' | 'discord' | 'x' | 'linkedin_oidc') => {
+  const linkIdentity = async (provider: 'github' | 'discord' | 'linkedin_oidc') => {
     // Store that we're linking so AuthCallback knows to redirect back to settings
     sessionStorage.setItem('linking_provider', provider)
 
@@ -467,7 +456,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signInWithGitHub,
         signInWithDiscord,
-        signInWithTwitter,
         signInWithLinkedIn,
         signOut,
         updateUserProfile,

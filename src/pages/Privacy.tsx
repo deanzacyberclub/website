@@ -35,7 +35,7 @@ function Privacy() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-hack-cyan">-</span>
-                  <span><strong className="text-matrix">Linked Social Accounts:</strong> When you sign in or link accounts via GitHub, Discord, X (Twitter), or LinkedIn, we receive and store your username, email, and profile picture from these services to facilitate authentication and display your profile.</span>
+                  <span><strong className="text-matrix">Linked Social Accounts:</strong> When you sign in or link accounts via GitHub, Discord, or LinkedIn, we receive and store your username, email, and profile picture from these services to facilitate authentication and display your profile.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-hack-cyan">-</span>
@@ -56,7 +56,7 @@ function Privacy() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-hack-cyan">-</span>
-                  <span>Allowing you to sign in with multiple social accounts (GitHub, Discord, X, LinkedIn)</span>
+                  <span>Allowing you to sign in with multiple social accounts (GitHub, Discord, LinkedIn)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-hack-cyan">-</span>
@@ -86,10 +86,6 @@ function Privacy() {
                 <li className="flex items-start gap-2">
                   <span className="text-hack-cyan">-</span>
                   <span><strong className="text-matrix">Discord</strong> - We receive your username, email, and avatar</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-hack-cyan">-</span>
-                  <span><strong className="text-matrix">X (Twitter)</strong> - We receive your username, email, and profile picture</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-hack-cyan">-</span>

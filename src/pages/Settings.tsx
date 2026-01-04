@@ -2,7 +2,7 @@ import { useState, useEffect, FormEvent, ChangeEvent, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import { GitHubAlt, Discord, X, LinkedIn, Spinner, User, Unlink } from '@/lib/cyberIcon'
+import { GitHubAlt, Discord, LinkedIn, Spinner, User, Unlink } from '@/lib/cyberIcon'
 
 function Settings() {
   const [loaded, setLoaded] = useState(false)
@@ -128,7 +128,7 @@ function Settings() {
     }
   }
 
-  const handleLinkAccount = async (provider: 'github' | 'discord' | 'x' | 'linkedin_oidc') => {
+  const handleLinkAccount = async (provider: 'github' | 'discord' | 'linkedin_oidc') => {
     setLinkingProvider(provider)
     setLinkError('')
     try {
@@ -179,13 +179,6 @@ function Settings() {
       bgColor: 'bg-[#5865F2]',
       hoverColor: 'hover:bg-[#4752c4]',
       borderColor: 'border-[#5865F2]'
-    },
-    x: {
-      name: 'X',
-      icon: <X className="w-5 h-5" />,
-      bgColor: 'bg-black',
-      hoverColor: 'hover:bg-zinc-900',
-      borderColor: 'border-zinc-700'
     },
     linkedin_oidc: {
       name: 'LinkedIn',
