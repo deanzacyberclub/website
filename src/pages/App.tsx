@@ -82,68 +82,134 @@ function App() {
   }
 
   const renderContent = () => (
-    <div className="relative max-w-4xl mx-auto px-6">
-      {/* ASCII Header */}
-      <header className={`mb-16 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <pre className="ascii-border text-xs mb-6 hidden md:block opacity-50">
-          {`╔══════════════════════════════════════════════════════════════════╗
-║                                                                  ║`}
-        </pre>
+    <div className="relative">
+      {/* Hero Section - Full Viewport */}
+      <section className={`min-h-screen flex items-center justify-center transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left side - Text content */}
+            <div>
+              <div className="mb-8">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+                  <span className="text-white">Learn to</span>
+                  <br />
+                  <span className="text-white">hack </span>
+                  <span className="glitch neon-text" data-text="(legally)">
+                    (legally)
+                  </span>
+                </h1>
+                <p className="text-gray-400 text-lg md:text-xl leading-relaxed mb-8">
+                  Break into cybersecurity with hands-on workshops, earn industry certifications,
+                  and join a crew of future security professionals.
+                </p>
+              </div>
 
-        <div className="flex items-center gap-5 mb-8">
-          <div className="relative">
-            <img
-              src="/logo.jpeg"
-              alt="DACC Logo"
-              className="w-16 h-16 rounded-lg border border-matrix/30"
-              style={{ filter: 'drop-shadow(0 0 10px rgba(0, 255, 65, 0.3))' }}
-            />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-matrix rounded-full animate-pulse shadow-neon" />
-          </div>
-          <div>
-            <h1
-              className="glitch text-3xl font-bold tracking-tight neon-text"
-              data-text="DACC"
-            >
-              DACC
-            </h1>
-            <p className="text-sm font-terminal text-matrix-dim tracking-widest">
-              DE ANZA CYBERSECURITY CLUB
-            </p>
+              <div className="flex flex-wrap gap-4">
+                <a
+                  href="https://discord.gg/AmjfRrJd5j"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-hack-filled rounded-lg px-8 py-4 text-lg flex items-center gap-3"
+                >
+                  <Discord className="w-5 h-5" />
+                  Join Discord
+                </a>
+                <Link
+                  to="/meetings"
+                  className="btn-hack rounded-lg px-8 py-4 text-lg flex items-center gap-3"
+                >
+                  <Calendar className="w-5 h-5" />
+                  View Events
+                </Link>
+              </div>
+            </div>
+
+            {/* Right side - Featured Events Scroll */}
+            <div className="relative">
+              {featuredMeetings.length > 0 ? (
+                <div className="relative">
+                  <h3 className="text-gray-400 text-sm font-terminal mb-4 uppercase tracking-wider">Featured Events</h3>
+                  <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-matrix/30 scrollbar-track-transparent">
+                    <div className="flex gap-4" style={{ width: 'max-content' }}>
+                      {featuredMeetings.map((meeting) => (
+                        <Link
+                          key={meeting.id}
+                          to={`/meetings/${meeting.slug}`}
+                          className="block card-hack rounded-lg p-5 group hover:scale-[1.02] transition-transform w-80 shrink-0"
+                        >
+                          {/* Date Box */}
+                          <div className="flex items-start gap-4 mb-3">
+                            <div className="text-center shrink-0 w-14">
+                              <div className="text-2xl font-bold text-matrix">
+                                {new Date(meeting.date).getDate()}
+                              </div>
+                              <div className="text-xs text-gray-500 uppercase font-terminal">
+                                {new Date(meeting.date).toLocaleDateString('en-US', { month: 'short' })}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
+                                  {TYPE_LABELS[meeting.type]}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Meeting Info */}
+                          <h3 className="text-matrix font-semibold text-lg mb-2 group-hover:neon-text-subtle transition-all line-clamp-2">
+                            {meeting.title}
+                          </h3>
+                          <p className="text-gray-500 text-sm mb-3 line-clamp-2">
+                            {meeting.description}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {meeting.time}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {meeting.location}
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                  <Link
+                    to="/meetings"
+                    className="block w-full btn-hack rounded-lg p-4 text-center group hover:scale-[1.01] transition-transform mt-4"
+                    onMouseEnter={prefetchMeetings}
+                    onFocus={prefetchMeetings}
+                  >
+                    <div className="flex items-center justify-center gap-3">
+                      <Calendar className="w-4 h-4" />
+                      <span className="font-semibold text-sm">VIEW ALL EVENTS</span>
+                    </div>
+                  </Link>
+                </div>
+              ) : (
+                <div className="relative">
+                  <img
+                    src="/logo.jpeg"
+                    alt="DACC Logo"
+                    className="w-full max-w-md mx-auto rounded-2xl border border-matrix/30"
+                    style={{ filter: 'drop-shadow(0 0 40px rgba(0, 255, 65, 0.3))' }}
+                  />
+                  <div className="absolute -top-3 -right-3 w-6 h-6 bg-matrix rounded-full animate-pulse shadow-neon" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
+      </section>
 
-        <div className="terminal-window mb-6">
-          <div className="terminal-header">
-            <div className="terminal-dot red" />
-            <div className="terminal-dot yellow" />
-            <div className="terminal-dot green" />
-            <span className="ml-4 text-xs text-gray-500 font-terminal">root@dacc:~</span>
-          </div>
-          <div className="terminal-body">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-matrix neon-text-subtle">$</span>
-              <span className="text-gray-400">cat /etc/motd</span>
-            </div>
-            <p className="text-matrix/90 leading-relaxed">
-              Learn to hack (legally). Break into cybersecurity with hands-on workshops,
-              earn industry certifications, and join a crew of future security professionals.
-            </p>
-            <div className="flex items-center gap-2 mt-4">
-              <span className="text-matrix neon-text-subtle">$</span>
-              <span className="cursor-blink text-gray-400" />
-            </div>
-          </div>
-        </div>
+      {/* All existing content sections */}
+      <div className="max-w-4xl mx-auto px-6 py-20">
 
-        <pre className="ascii-border text-xs hidden md:block opacity-50">
-          {`║                                                                  ║
-╚══════════════════════════════════════════════════════════════════╝`}
-        </pre>
-      </header>
-
-      {/* Petition Section - PROMINENT */}
-      <section className={`mb-16 transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        {/* Petition Section - PROMINENT */}
+        <section className={`mb-16 transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <div className="flex items-center gap-3 mb-6">
           <span className="text-matrix neon-text-subtle text-lg">$</span>
           <span className="text-gray-400 font-terminal">./sign_petition.sh</span>
@@ -166,86 +232,11 @@ function App() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Featured Meetings Section */}
-      {featuredMeetings.length > 0 && (
-        <section className={`mb-16 transition-all duration-700 delay-200 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">ls ./featured-events/</span>
           </div>
-
-          <div className="space-y-4 mb-6">
-            {featuredMeetings.map((meeting) => (
-              <Link
-                key={meeting.id}
-                to={`/meetings/${meeting.slug}`}
-                className="block card-hack rounded-lg p-5 group hover:scale-[1.01] transition-transform"
-              >
-                <div className="flex items-start gap-4">
-                  {/* Date Box */}
-                  <div className="text-center shrink-0 w-16">
-                    <div className="text-2xl font-bold text-matrix">
-                      {new Date(meeting.date).getDate()}
-                    </div>
-                    <div className="text-xs text-gray-500 uppercase font-terminal">
-                      {new Date(meeting.date).toLocaleDateString('en-US', { month: 'short' })}
-                    </div>
-                  </div>
-
-                  {/* Meeting Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
-                        {TYPE_LABELS[meeting.type]}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-terminal bg-matrix/20 text-matrix border border-matrix/50">
-                        FEATURED
-                      </span>
-                    </div>
-                    <h3 className="text-matrix font-semibold text-lg mb-2 group-hover:neon-text-subtle transition-all">
-                      {meeting.title}
-                    </h3>
-                    <p className="text-gray-500 text-sm mb-3 line-clamp-2">
-                      {meeting.description}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {meeting.time}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {meeting.location}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Arrow */}
-                  <ChevronRight className="w-5 h-5 text-matrix/30 group-hover:text-matrix group-hover:translate-x-1 transition-all shrink-0" />
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <Link
-            to="/meetings"
-            className="block w-full btn-hack rounded-lg p-5 text-center group hover:scale-[1.01] transition-transform"
-            onMouseEnter={prefetchMeetings}
-            onFocus={prefetchMeetings}
-          >
-            <div className="flex items-center justify-center gap-3">
-              <Calendar className="w-5 h-5" />
-              <span className="font-semibold">VIEW ALL EVENTS</span>
-            </div>
-          </Link>
         </section>
-      )}
 
-      {/* Access Section */}
-      <section className={`mb-16 transition-all duration-700 delay-300 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        {/* Access Section */}
+        <section className={`mb-16 transition-all duration-700 delay-300 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <div className="flex items-center gap-3 mb-6">
           <span className="text-matrix neon-text-subtle text-lg">$</span>
           <span className="text-gray-400 font-terminal">./join --no-experience-required</span>
@@ -289,12 +280,12 @@ function App() {
           >
             <Document className="w-5 h-5" />
             CONSTITUTION
-          </a>
-        </div>
-      </section>
+            </a>
+          </div>
+        </section>
 
-      {/* Club Officers Section */}
-      <section className={`mb-16 transition-all duration-700 delay-375 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        {/* Club Officers Section */}
+        <section className={`mb-16 transition-all duration-700 delay-375 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <div className="flex items-center gap-3 mb-6">
           <span className="text-matrix neon-text-subtle text-lg">$</span>
           <span className="text-gray-400 font-terminal">cat /etc/officers.conf</span>
@@ -412,13 +403,13 @@ function App() {
                   </div>
                 </div>
               </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Modules Section */}
-      <section className={`transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        {/* Modules Section */}
+        <section className={`transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <div className="flex items-center gap-3 mb-6">
           <span className="text-matrix neon-text-subtle text-lg">$</span>
           <span className="text-gray-400 font-terminal">ls -la ./what-youll-learn/</span>
@@ -478,11 +469,11 @@ function App() {
                   Compete in capture-the-flag events. Solve puzzles. Win bragging rights (and prizes).
                 </p>
               </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
+        </section>
+      </div>
     </div>
   )
 
