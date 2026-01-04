@@ -49,27 +49,25 @@ function MatrixRain() {
 
 function App() {
   const [loaded, setLoaded] = useState(false)
-  const [featuredMeetings, setFeaturedMeetings] = useState<Meeting[]>([])
+  const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([])
 
   useEffect(() => {
     setLoaded(true)
     trackVisit()
-    fetchFeaturedMeetings()
+    fetchRecentMeetings()
   }, [])
 
-  const fetchFeaturedMeetings = async () => {
+  const fetchRecentMeetings = async () => {
     try {
       const { data } = await supabase
         .from('meetings')
         .select('*')
-        .eq('featured', true)
-        .gte('date', new Date().toISOString().split('T')[0])
-        .order('date', { ascending: true })
-        .limit(3)
+        .order('date', { ascending: false })
+        .limit(4)
 
-      if (data) setFeaturedMeetings(data)
+      if (data) setRecentMeetings(data)
     } catch (err) {
-      console.error('Error fetching featured meetings:', err)
+      console.error('Error fetching recent meetings:', err)
     }
   }
 
@@ -90,6 +88,11 @@ function App() {
             {/* Left side - Text content */}
             <div>
               <div className="mb-8">
+                <div className="mb-4">
+                  <span className="text-matrix font-terminal text-sm uppercase tracking-wider border border-matrix/40 px-3 py-1.5 rounded-md inline-block">
+                    De Anza's Cybersecurity Club
+                  </span>
+                </div>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
                   <span className="text-white">Learn to</span>
                   <br />
@@ -114,127 +117,79 @@ function App() {
                   <Discord className="w-5 h-5" />
                   Join Discord
                 </a>
-                <Link
-                  to="/meetings"
-                  className="btn-hack rounded-lg px-8 py-4 text-lg flex items-center gap-3"
-                >
-                  <Calendar className="w-5 h-5" />
-                  View Events
-                </Link>
               </div>
             </div>
 
-            {/* Right side - Featured Events Scroll */}
-            <div className="relative">
-              {featuredMeetings.length > 0 ? (
-                <div className="relative">
-                  <h3 className="text-gray-400 text-sm font-terminal mb-4 uppercase tracking-wider">Featured Events</h3>
-                  <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-matrix/30 scrollbar-track-transparent">
-                    <div className="flex gap-4" style={{ width: 'max-content' }}>
-                      {featuredMeetings.map((meeting) => (
-                        <Link
-                          key={meeting.id}
-                          to={`/meetings/${meeting.slug}`}
-                          className="block card-hack rounded-lg p-5 group hover:scale-[1.02] transition-transform w-80 shrink-0"
-                        >
-                          {/* Date Box */}
-                          <div className="flex items-start gap-4 mb-3">
-                            <div className="text-center shrink-0 w-14">
-                              <div className="text-2xl font-bold text-matrix">
-                                {new Date(meeting.date).getDate()}
-                              </div>
-                              <div className="text-xs text-gray-500 uppercase font-terminal">
-                                {new Date(meeting.date).toLocaleDateString('en-US', { month: 'short' })}
-                              </div>
+            {/* Right side - Recent Events Scroll */}
+            <div className="relative w-full min-w-0">
+              <div className="relative">
+                <h3 className="text-gray-400 text-sm font-terminal mb-4 uppercase tracking-wider">Recent Events</h3>
+                <div className="overflow-x-auto overflow-y-visible pb-4 py-2 scrollbar-thin scrollbar-thumb-matrix/30 scrollbar-track-transparent -mx-1">
+                  <div className="flex gap-4 px-1" style={{ width: 'max-content' }}>
+                    {recentMeetings.map((meeting) => (
+                      <Link
+                        key={meeting.id}
+                        to={`/meetings/${meeting.slug}`}
+                        className="block card-hack rounded-lg p-5 group hover:scale-[1.02] transition-transform w-80 shrink-0"
+                      >
+                        {/* Date Box */}
+                        <div className="flex items-start gap-4 mb-3">
+                          <div className="text-center shrink-0 w-14">
+                            <div className="text-2xl font-bold text-matrix">
+                              {new Date(meeting.date).getDate()}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
-                                  {TYPE_LABELS[meeting.type]}
-                                </span>
-                              </div>
+                            <div className="text-xs text-gray-500 uppercase font-terminal">
+                              {new Date(meeting.date).toLocaleDateString('en-US', { month: 'short' })}
                             </div>
                           </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
+                                {TYPE_LABELS[meeting.type]}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
 
-                          {/* Meeting Info */}
-                          <h3 className="text-matrix font-semibold text-lg mb-2 group-hover:neon-text-subtle transition-all line-clamp-2">
-                            {meeting.title}
-                          </h3>
-                          <p className="text-gray-500 text-sm mb-3 line-clamp-2">
-                            {meeting.description}
-                          </p>
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {meeting.time}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {meeting.location}
-                            </span>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
+                        {/* Meeting Info */}
+                        <h3 className="text-matrix font-semibold text-lg mb-2 group-hover:neon-text-subtle transition-all line-clamp-2">
+                          {meeting.title}
+                        </h3>
+                        <p className="text-gray-500 text-sm mb-3 line-clamp-2">
+                          {meeting.description}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {meeting.time}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {meeting.location}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                  <Link
-                    to="/meetings"
-                    className="block w-full btn-hack rounded-lg p-4 text-center group hover:scale-[1.01] transition-transform mt-4"
-                    onMouseEnter={prefetchMeetings}
-                    onFocus={prefetchMeetings}
-                  >
-                    <div className="flex items-center justify-center gap-3">
-                      <Calendar className="w-4 h-4" />
-                      <span className="font-semibold text-sm">VIEW ALL EVENTS</span>
-                    </div>
-                  </Link>
                 </div>
-              ) : (
-                <div className="relative">
-                  <img
-                    src="/logo.jpeg"
-                    alt="DACC Logo"
-                    className="w-full max-w-md mx-auto rounded-2xl border border-matrix/30"
-                    style={{ filter: 'drop-shadow(0 0 40px rgba(0, 255, 65, 0.3))' }}
-                  />
-                  <div className="absolute -top-3 -right-3 w-6 h-6 bg-matrix rounded-full animate-pulse shadow-neon" />
-                </div>
-              )}
+                <Link
+                  to="/meetings"
+                  className="block w-full btn-hack rounded-lg p-4 text-center group hover:scale-[1.01] transition-transform mt-4"
+                  onMouseEnter={prefetchMeetings}
+                  onFocus={prefetchMeetings}
+                >
+                  <div className="flex items-center justify-center gap-3">
+                    <Calendar className="w-4 h-4" />
+                    <span className="font-semibold text-sm">VIEW ALL EVENTS</span>
+                  </div>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* All existing content sections */}
       <div className="max-w-4xl mx-auto px-6 py-20">
-
-        {/* Petition Section - PROMINENT */}
-        <section className={`mb-16 transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">./sign_petition.sh</span>
-          </div>
-
-          <div
-            className="group block relative overflow-hidden rounded-xl border-2 border-matrix bg-gradient-to-br from-matrix/10 via-terminal-bg to-matrix/5 p-8 transition-all duration-300 hover:shadow-neon-strong hover:scale-[1.02]"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-matrix/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex flex-col md:flex-row items-center gap-4 md:gap-5">
-                <div className="w-16 h-16 rounded-xl bg-matrix/20 border border-matrix/50 flex items-center justify-center shadow-neon flex-shrink-0">
-                  <Pencil className="w-8 h-8 text-matrix neon-text" />
-                </div>
-                <div className="text-center md:text-left">
-                  <h3 className="text-xl font-bold text-matrix neon-text tracking-wide mb-1">
-                    THANK YOU FOR SIGNING!
-                  </h3>
-                  <p className="text-gray-400 text-sm md:text-base">Petition is now being reviewed by ICC!</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Club Officers Section */}
         <section className={`mb-16 transition-all duration-700 delay-375 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="flex items-center gap-3 mb-6">

@@ -27,9 +27,9 @@ interface AuthContextType {
   session: Session | null
   userProfile: UserProfile | null
   loading: boolean
-  signInWithGitHub: () => Promise<void>
-  signInWithDiscord: () => Promise<void>
-  signInWithLinkedIn: () => Promise<void>
+  signInWithGitHub: (returnTo?: string) => Promise<void>
+  signInWithDiscord: (returnTo?: string) => Promise<void>
+  signInWithLinkedIn: (returnTo?: string) => Promise<void>
   signOut: () => Promise<void>
   updateUserProfile: (
     displayName: string,
@@ -195,31 +195,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const signInWithGitHub = async () => {
+  const signInWithGitHub = async (returnTo?: string) => {
+    const redirectUrl = returnTo
+      ? `${window.location.origin}/auth/callback?to=${encodeURIComponent(returnTo)}`
+      : `${window.location.origin}/auth/callback`
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: redirectUrl
       }
     })
     if (error) throw error
   }
 
-  const signInWithDiscord = async () => {
+  const signInWithDiscord = async (returnTo?: string) => {
+    const redirectUrl = returnTo
+      ? `${window.location.origin}/auth/callback?to=${encodeURIComponent(returnTo)}`
+      : `${window.location.origin}/auth/callback`
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: redirectUrl
       }
     })
     if (error) throw error
   }
 
-  const signInWithLinkedIn = async () => {
+  const signInWithLinkedIn = async (returnTo?: string) => {
+    const redirectUrl = returnTo
+      ? `${window.location.origin}/auth/callback?to=${encodeURIComponent(returnTo)}`
+      : `${window.location.origin}/auth/callback`
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'linkedin_oidc',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: redirectUrl
       }
     })
     if (error) throw error

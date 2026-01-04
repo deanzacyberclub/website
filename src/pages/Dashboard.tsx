@@ -74,26 +74,13 @@ function Dashboard() {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/auth')
+      navigate('/auth?to=/dashboard')
     }
   }, [user, loading, navigate])
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
-  }
-
-  // Get auth provider from user metadata
-  const getAuthProvider = () => {
-    const provider = user?.app_metadata?.provider
-    switch (provider) {
-      case 'github':
-        return 'GITHUB'
-      case 'discord':
-        return 'DISCORD'
-      default:
-        return provider?.toUpperCase() || 'OAUTH'
-    }
   }
 
   // Get upcoming meetings
@@ -226,9 +213,6 @@ function Dashboard() {
             <h1 className="text-3xl font-bold neon-text tracking-tight mb-1">
               Welcome, {userProfile.display_name}
             </h1>
-            <p className="text-gray-500 text-sm font-terminal">
-              <span className="text-hack-cyan">[{getAuthProvider()}]</span> {user.email}
-            </p>
           </div>
         </header>
 

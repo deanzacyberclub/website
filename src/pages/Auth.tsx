@@ -30,9 +30,10 @@ function Auth() {
     // Wait for auth to finish loading
     if (authLoading) return
 
-    // If user is logged in and has a profile, go to dashboard
+    // If user is logged in and has a profile, go to return URL or dashboard
     if (user && userProfile) {
-      navigate('/dashboard')
+      const returnTo = searchParams.get('to') || '/dashboard'
+      navigate(returnTo)
       return
     }
 
@@ -72,7 +73,8 @@ function Auth() {
     setLoading(true)
     setError('')
     try {
-      await signInWithGitHub()
+      const returnTo = searchParams.get('to') || undefined
+      await signInWithGitHub(returnTo)
     } catch {
       setError('[ERROR] Failed to sign in with GitHub. Retry.')
       setLoading(false)
@@ -83,7 +85,8 @@ function Auth() {
     setLoading(true)
     setError('')
     try {
-      await signInWithDiscord()
+      const returnTo = searchParams.get('to') || undefined
+      await signInWithDiscord(returnTo)
     } catch {
       setError('[ERROR] Failed to sign in with Discord. Retry.')
       setLoading(false)
@@ -94,7 +97,8 @@ function Auth() {
     setLoading(true)
     setError('')
     try {
-      await signInWithLinkedIn()
+      const returnTo = searchParams.get('to') || undefined
+      await signInWithLinkedIn(returnTo)
     } catch {
       setError('[ERROR] Failed to sign in with LinkedIn. Retry.')
       setLoading(false)
@@ -121,7 +125,8 @@ function Auth() {
         profilePicture || undefined,
         !profilePicture && oauthAvatarUrl ? oauthAvatarUrl : undefined
       )
-      navigate('/dashboard')
+      const returnTo = searchParams.get('to') || '/dashboard'
+      navigate(returnTo)
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       console.error('Profile creation error:', err)

@@ -197,7 +197,7 @@ function MeetingDetails() {
 
   const handleRegister = async () => {
     if (!meeting || !user) {
-      navigate('/auth')
+      navigate(`/auth?to=/meetings/${slug}`)
       return
     }
 

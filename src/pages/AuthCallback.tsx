@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Spinner } from '@/lib/cyberIcon'
 
 function AuthCallback() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -100,7 +101,9 @@ function AuthCallback() {
           // New user - redirect to profile setup
           navigate('/auth?step=profile')
         } else {
-          navigate('/dashboard')
+          // Get the return URL from the 'to' parameter
+          const returnTo = searchParams.get('to') || '/dashboard'
+          navigate(returnTo)
         }
       } else {
         navigate('/auth')
@@ -108,7 +111,7 @@ function AuthCallback() {
     }
 
     handleCallback()
-  }, [navigate])
+  }, [navigate, searchParams])
 
   return (
     <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">

@@ -51,7 +51,7 @@ function Settings() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/auth')
+      navigate('/auth?to=/settings')
     }
   }, [user, authLoading, navigate])
 
