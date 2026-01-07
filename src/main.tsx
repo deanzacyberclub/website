@@ -18,6 +18,7 @@ const AuthCallback = lazy(() => import('@/pages/AuthCallback'))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Settings = lazy(() => import('@/pages/Settings'))
 const CTF = lazy(() => import('@/pages/CTF'))
+const Study = lazy(() => import('@/pages/Study'))
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -40,6 +41,7 @@ ReactDOM.createRoot(document.getElementById('deanzacybersecurityclub')!).render(
               <Route path="/meetings" element={<Meetings />} />
               <Route path="/meetings/:slug" element={<MeetingDetails />} />
               <Route path="/ctf" element={<CTF />} />
+              <Route path="/study" element={<Study />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/auth" element={<Auth />} />

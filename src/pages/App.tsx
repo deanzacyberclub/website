@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Pencil, Discord, Calendar, Document, GitHub, Instagram, Globe, LinkedIn, Mail, Code, Clock, MapPin, ChevronRight } from '@/lib/cyberIcon'
+import { Pencil, Discord, Calendar, Document, GitHub, Instagram, Globe, LinkedIn, Mail, Code, Clock, MapPin, ChevronRight, X } from '@/lib/cyberIcon'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import type { Meeting } from '@/types/database.types'
@@ -249,6 +249,9 @@ function App() {
                     <a href="https://github.com/aaronhma" target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500">
                       <GitHub className="w-4 h-4" />
                     </a>
+                    <a href="https://x.com/aaronhma" target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500">
+                      <X className="w-4 h-4" />
+                    </a>
                     <a href="https://www.linkedin.com/in/air-rn/" target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500">
                       <LinkedIn className="w-4 h-4" />
                     </a>
@@ -258,21 +261,6 @@ function App() {
                     <a href="https://aaronhma.com/" target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500">
                       <Globe className="w-4 h-4" />
                     </a>
-                  </div>
-                </div>
-
-                {/* Secretary */}
-                <div className="card-hack p-4 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <img
-                      src="/ricardo-villasenor.jpeg"
-                      alt="Ricardo Villasenor"
-                      className="w-10 h-10 rounded-lg border border-matrix/40 object-cover"
-                    />
-                    <div>
-                      <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">Secretary</p>
-                      <p className="text-matrix font-semibold">Ricardo Villasenor</p>
-                    </div>
                   </div>
                 </div>
 
