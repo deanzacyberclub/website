@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { fetchPathways, fetchPathwayLessons, fetchUserProgress } from '@/lib/study'
 import type { Pathway, Lesson, UserProgress, PathwayProgress } from '@/types/database.types'
-import PathwaySelector from '@/components/study/PathwaySelector'
+import { Tabs } from '@/components/Tabs'
 import ProgressTracker from '@/components/study/ProgressTracker'
 import PathwayMap from '@/components/study/PathwayMap'
 import LessonModal from '@/components/study/LessonModal'
@@ -108,9 +108,8 @@ function Study() {
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-12">
         {/* Page Header */}
         <div
-          className={`transition-all duration-700 ${
-            loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          }`}
+          className={`transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-matrix neon-text">
             <span className="glitch" data-text="Study Pathways">
@@ -124,22 +123,24 @@ function Study() {
 
         {/* Pathway Selector */}
         <div
-          className={`transition-all duration-700 delay-100 ${
-            loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          } mb-8`}
+          className={`transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            } mb-8 flex justify-center`}
         >
-          <PathwaySelector
-            activePathway={activePathway}
-            onPathwayChange={(slug) => setActivePathway(slug)}
+          <Tabs
+            tabs={[
+              { id: 'security-plus', label: 'Security+' },
+              { id: 'professional-ethical-hacker', label: 'PEH' }
+            ]}
+            activeTab={activePathway}
+            onTabChange={(tab) => setActivePathway(tab as 'security-plus' | 'professional-ethical-hacker')}
           />
         </div>
 
         {/* Progress Tracker */}
         {user && pathwayProgress && (
           <div
-            className={`transition-all duration-700 delay-200 ${
-              loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            } mb-8`}
+            className={`transition-all duration-700 delay-200 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              } mb-8`}
           >
             <ProgressTracker
               pathway={currentPathway}
@@ -158,14 +159,14 @@ function Study() {
         {/* Pathway Map */}
         {!loading && lessons.length > 0 && (
           <div
-            className={`transition-all duration-700 delay-300 ${
-              loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
+            className={`transition-all duration-700 delay-300 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
           >
             <PathwayMap
               pathway={currentPathway}
               lessons={lessons}
               userProgress={userProgress}
+              pathwayProgress={pathwayProgress}
               onLessonClick={(lesson) => setSelectedLesson(lesson)}
             />
           </div>
@@ -191,9 +192,8 @@ function Study() {
         {/* Login Prompt for Non-Authenticated Users */}
         {!user && (
           <div
-            className={`terminal-window mt-8 transition-all duration-700 delay-400 ${
-              loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
+            className={`terminal-window mt-8 transition-all duration-700 delay-400 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
           >
             <div className="terminal-header">
               <div className="terminal-dot red" />
@@ -206,7 +206,7 @@ function Study() {
                 Sign in to track your progress and unlock achievements
               </p>
               <a
-                href="/auth"
+                href="/auth?to=/study"
                 className="btn-hack-filled inline-block px-6 py-2 text-sm font-terminal"
               >
                 Sign In

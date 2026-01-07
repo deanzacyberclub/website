@@ -53,7 +53,7 @@ export async function fetchPathwayLessons(pathwayId: string): Promise<Lesson[]> 
     throw error
   }
 
-  return data || []
+  return (data as Lesson[]) || []
 }
 
 /**
@@ -71,7 +71,7 @@ export async function fetchLessonById(lessonId: string): Promise<Lesson | null> 
     throw error
   }
 
-  return data
+  return data as Lesson | null
 }
 
 /**

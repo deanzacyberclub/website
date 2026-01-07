@@ -24,6 +24,7 @@ function Attendance() {
 
   const { user, userProfile, loading } = useAuth()
   const studentIdRefs = useRef<(HTMLInputElement | null)[]>([])
+  const meetingSelectRef = useRef<HTMLDivElement>(null)
 
   const [form, setForm] = useState<AttendanceForm>({
     meetingId: '',
@@ -155,6 +156,24 @@ function Attendance() {
 
   const handleMeetingChange = (value: string) => {
     setForm({ ...form, meetingId: value })
+  }
+
+  const handleMeetingDropdownClick = () => {
+    // Scroll to position the dropdown so both the select and options are visible
+    if (meetingSelectRef.current) {
+      const element = meetingSelectRef.current
+      const rect = element.getBoundingClientRect()
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+
+      // Calculate target scroll position
+      // Position the element near the top with some padding (80px for header space)
+      const targetPosition = rect.top + scrollTop - 80
+
+      window.scrollTo({
+        top: Math.max(0, targetPosition),
+        behavior: 'smooth'
+      })
+    }
   }
 
   const handleStudentIdDigitChange = (index: number, value: string) => {
@@ -547,7 +566,7 @@ function Attendance() {
           )}
 
           {/* Meeting Selection */}
-          <div className="terminal-window overflow-visible">
+          <div ref={meetingSelectRef} className="terminal-window overflow-visible">
             <div className="terminal-header">
               <div className="terminal-dot red" />
               <div className="terminal-dot yellow" />
@@ -566,26 +585,28 @@ function Attendance() {
                   </p>
                 </div>
               ) : (
-                <CustomSelect
-                  options={meetings.map((meeting) => ({
-                    value: meeting.id,
-                    label: meeting.title,
-                    badge: {
-                      text: TYPE_LABELS[meeting.type],
-                      color: TYPE_COLORS[meeting.type]
-                    },
-                    metadata: new Date(meeting.date).toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    }) + ' • ' + meeting.location
-                  }))}
-                  value={form.meetingId}
-                  onChange={handleMeetingChange}
-                  placeholder={loadingMeetings ? 'Loading meetings...' : 'Select a meeting...'}
-                  disabled={loadingMeetings}
-                />
+                <div onClick={handleMeetingDropdownClick}>
+                  <CustomSelect
+                    options={meetings.map((meeting) => ({
+                      value: meeting.id,
+                      label: meeting.title,
+                      badge: {
+                        text: TYPE_LABELS[meeting.type],
+                        color: TYPE_COLORS[meeting.type]
+                      },
+                      metadata: new Date(meeting.date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      }) + ' • ' + meeting.location
+                    }))}
+                    value={form.meetingId}
+                    onChange={handleMeetingChange}
+                    placeholder={loadingMeetings ? 'Loading meetings...' : 'Select a meeting...'}
+                    disabled={loadingMeetings}
+                  />
+                </div>
               )}
             </div>
           </div>

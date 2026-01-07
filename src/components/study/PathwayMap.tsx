@@ -1,16 +1,21 @@
-import { useMemo } from 'react'
-import type { Pathway, Lesson, UserProgress } from '@/types/database.types'
+import { useMemo, useState } from 'react'
+import type { Pathway, Lesson, UserProgress, PathwayProgress } from '@/types/database.types'
 import { calculateLessonStatus } from '@/lib/progress'
 import LessonNode from './LessonNode'
+import CertificateModal from './CertificateModal'
+import { Award, Lock } from 'lucide-react'
 
 interface PathwayMapProps {
   pathway: Pathway | undefined
   lessons: Lesson[]
   userProgress: UserProgress[]
+  pathwayProgress: PathwayProgress | null
   onLessonClick: (lesson: Lesson) => void
 }
 
-function PathwayMap({ pathway, lessons, userProgress, onLessonClick }: PathwayMapProps) {
+function PathwayMap({ pathway, lessons, userProgress, pathwayProgress, onLessonClick }: PathwayMapProps) {
+  const [showCertificate, setShowCertificate] = useState(false)
+
   // Calculate lesson statuses
   const lessonStatuses = useMemo(() => {
     return lessons.map((lesson) => ({
@@ -19,6 +24,11 @@ function PathwayMap({ pathway, lessons, userProgress, onLessonClick }: PathwayMa
       progress: userProgress.find((p) => p.lesson_id === lesson.id)
     }))
   }, [lessons, userProgress])
+
+  // Check if all lessons are completed
+  const allLessonsCompleted = useMemo(() => {
+    return pathwayProgress?.completion_percentage === 100 && lessons.length > 0
+  }, [pathwayProgress, lessons])
 
   if (!pathway || lessons.length === 0) {
     return null
@@ -115,9 +125,89 @@ function PathwayMap({ pathway, lessons, userProgress, onLessonClick }: PathwayMa
                 </div>
               </div>
             ))}
+
+            {/* Certificate of Accomplishment */}
+            <div className="flex gap-6 items-start mt-8">
+              {/* Timeline column with dotted line */}
+              <div className="flex flex-col items-center shrink-0 pt-4">
+                {/* Connector line above */}
+                <div className="border-l-2 border-dotted border-matrix/30 h-8 mb-2" />
+
+                {/* Certificate dot indicator */}
+                <div
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    allLessonsCompleted
+                      ? 'bg-hack-yellow border-2 border-hack-yellow shadow-lg'
+                      : 'bg-gray-800 border-2 border-gray-700'
+                  }`}
+                />
+              </div>
+
+              {/* Certificate Card */}
+              <div className="flex-1 pb-4">
+                <button
+                  onClick={() => allLessonsCompleted && setShowCertificate(true)}
+                  disabled={!allLessonsCompleted}
+                  className={`w-full p-6 rounded-lg border-2 transition-all ${
+                    allLessonsCompleted
+                      ? 'bg-hack-yellow/10 border-hack-yellow hover:bg-hack-yellow/20 hover:scale-[1.02] cursor-pointer'
+                      : 'bg-gray-900/50 border-gray-800 opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    {/* Icon */}
+                    <div
+                      className={`w-16 h-16 rounded-lg border-2 flex items-center justify-center ${
+                        allLessonsCompleted
+                          ? 'bg-hack-yellow/20 border-hack-yellow'
+                          : 'bg-gray-800 border-gray-700'
+                      }`}
+                    >
+                      {allLessonsCompleted ? (
+                        <Award className="w-8 h-8 text-hack-yellow" />
+                      ) : (
+                        <Lock className="w-8 h-8 text-gray-600" />
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 text-left">
+                      <h3
+                        className={`text-lg font-bold mb-1 ${
+                          allLessonsCompleted ? 'text-hack-yellow' : 'text-gray-600'
+                        }`}
+                      >
+                        {allLessonsCompleted
+                          ? 'Certificate of Accomplishment'
+                          : 'Certificate Locked'}
+                      </h3>
+                      <p className="text-xs text-gray-500 font-terminal">
+                        {allLessonsCompleted
+                          ? 'Tap to view and download your certificate'
+                          : `Complete all ${lessons.length} lessons to unlock`}
+                      </p>
+                      {allLessonsCompleted && (
+                        <div className="mt-2 text-xs text-hack-yellow font-terminal">
+                          🎉 Congratulations! You've completed the pathway
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Certificate Modal */}
+      {showCertificate && pathwayProgress && (
+        <CertificateModal
+          pathway={pathway}
+          progress={pathwayProgress}
+          onClose={() => setShowCertificate(false)}
+        />
+      )}
 
       {/* Legend */}
       <div className="mt-4 p-4 bg-terminal-alt rounded-lg border border-gray-800">

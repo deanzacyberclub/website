@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
-import type { Meeting, Registration } from '@/types/database.types'
+import type { Meeting, Registration, PathwayProgress } from '@/types/database.types'
 import { Spinner, Warning, CheckCircle, ChevronRight, Clock, MapPin, Calendar } from '@/lib/cyberIcon'
 import { Tabs } from '@/components/Tabs'
 
@@ -16,6 +16,7 @@ function Dashboard() {
   const [meetings, setMeetings] = useState<MeetingWithRegistration[]>([])
   const [attendanceCount, setAttendanceCount] = useState(0)
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
+  const [pathwayProgress, setPathwayProgress] = useState<PathwayProgress[]>([])
   const { user, userProfile, signOut, loading } = useAuth()
   const navigate = useNavigate()
 
@@ -61,6 +62,17 @@ function Dashboard() {
             .eq('user_id', user.id)
 
           setAttendanceCount(count || 0)
+
+          // Fetch pathway progress
+          const { data: pathwayData } = await supabase
+            .from('pathway_progress')
+            .select('*, pathways!inner(*)')
+            .eq('user_id', user.id)
+            .eq('pathways.is_active', true)
+
+          if (pathwayData) {
+            setPathwayProgress(pathwayData as PathwayProgress[])
+          }
         }
       } catch (err) {
         console.error('Error fetching dashboard data:', err)
@@ -249,10 +261,107 @@ function Dashboard() {
           </Link>
         </div>
 
-        {/* Events */}
+        {/* My Learning */}
         <div
           className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           style={{ transitionDelay: '200ms' }}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-matrix">My Learning</h2>
+            <Link
+              to="/study"
+              className="text-sm font-terminal text-matrix hover:neon-text-subtle transition-all flex items-center gap-1"
+            >
+              View All Pathways
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {pathwayProgress.length > 0 ? (
+            <div className="grid md:grid-cols-2 gap-4">
+              {pathwayProgress.map((progress) => {
+                const pathway = (progress as any).pathways
+                return (
+                  <Link
+                    key={progress.id}
+                    to="/study"
+                    className="card-hack rounded-lg p-5 group hover:scale-[1.01] transition-transform"
+                  >
+                    <div className="flex items-start gap-4">
+                      {pathway?.icon && (
+                        <div className="text-3xl shrink-0">{pathway.icon}</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-matrix mb-1 group-hover:neon-text-subtle transition-all">
+                          {pathway?.title || 'Pathway'}
+                        </h3>
+                        <p className="text-xs text-gray-500 font-terminal mb-3">
+                          {progress.lessons_completed} / {progress.total_lessons} lessons completed
+                        </p>
+
+                        {/* Progress Bar */}
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between mb-1 text-xs font-terminal">
+                            <span className="text-gray-500">Progress</span>
+                            <span className="text-matrix">{progress.completion_percentage}%</span>
+                          </div>
+                          <div className="h-1.5 bg-terminal-bg rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-matrix transition-all duration-500"
+                              style={{ width: `${progress.completion_percentage}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="flex gap-4 text-xs font-terminal text-gray-500">
+                          {progress.current_streak_days > 0 && (
+                            <span>
+                              🔥 {progress.current_streak_days} day streak
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all shrink-0" />
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <Link
+              to="/study"
+              className="block terminal-window group hover:scale-[1.01] transition-transform"
+            >
+              <div className="terminal-header">
+                <div className="terminal-dot red" />
+                <div className="terminal-dot yellow" />
+                <div className="terminal-dot green" />
+                <span className="ml-4 text-xs text-gray-500 font-terminal">learning_pathways.sh</span>
+              </div>
+              <div className="terminal-body text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center">
+                    <span className="text-3xl">📚</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-matrix mb-3">Start Your Learning Journey</h3>
+                  <p className="text-gray-500 text-sm mb-6">
+                    Choose from Security+ or Professional Ethical Hacker pathways and start learning with interactive lessons, quizzes, and hands-on challenges.
+                  </p>
+                  <div className="inline-flex items-center gap-2 text-matrix font-terminal text-sm group-hover:neon-text-subtle transition-all">
+                    Browse Study Pathways
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )}
+        </div>
+
+        {/* Events */}
+        <div
+          className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          style={{ transitionDelay: '300ms' }}
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-matrix">My Events</h2>
@@ -370,7 +479,7 @@ function Dashboard() {
         {/* My Stats */}
         <div
           className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: '300ms' }}
+          style={{ transitionDelay: '400ms' }}
         >
           <h2 className="text-2xl font-bold text-matrix mb-6">My Stats</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -400,7 +509,7 @@ function Dashboard() {
         {/* Browse All Events CTA */}
         <div
           className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: '400ms' }}
+          style={{ transitionDelay: '500ms' }}
         >
           <Link
             to="/meetings"
@@ -417,7 +526,7 @@ function Dashboard() {
         {/* Quick Stats */}
         <div
           className={`grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: '500ms' }}
+          style={{ transitionDelay: '600ms' }}
         >
           <div className="card-hack rounded-lg p-4 text-center">
             <div className="text-2xl font-bold text-matrix">{meetings.length}</div>
