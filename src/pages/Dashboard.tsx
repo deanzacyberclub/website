@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import type { Meeting, Registration, PathwayProgress } from '@/types/database.types'
-import { Spinner, Warning, CheckCircle, ChevronRight, Clock, MapPin, Calendar } from '@/lib/cyberIcon'
+import { Spinner, Warning, CheckCircle, ChevronRight, Clock, MapPin, Calendar, Shield } from '@/lib/cyberIcon'
 import { Tabs } from '@/components/Tabs'
 
 interface MeetingWithRegistration extends Meeting {
@@ -260,6 +260,41 @@ function Dashboard() {
             </div>
           </Link>
         </div>
+
+        {/* Officer Dashboard - Only for officers */}
+        {userProfile.is_officer && (
+          <div
+            className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+            style={{ transitionDelay: '150ms' }}
+          >
+            <Link
+              to="/officer"
+              className="block terminal-window group hover:scale-[1.01] transition-transform"
+            >
+              <div className="terminal-header">
+                <div className="terminal-dot red" />
+                <div className="terminal-dot yellow" />
+                <div className="terminal-dot green" />
+                <span className="ml-4 text-xs text-gray-500 font-terminal">officer_dashboard.sh</span>
+                <span className="ml-auto text-xs text-hack-purple font-terminal">ADMIN</span>
+              </div>
+              <div className="terminal-body">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-lg bg-hack-purple/10 border border-hack-purple/30 flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-shadow shrink-0">
+                    <Shield className="w-8 h-8 text-hack-purple" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-hack-purple mb-1">Officer Dashboard</h2>
+                    <p className="text-gray-500 text-sm">
+                      Manage members, view registrations, and access admin tools.
+                    </p>
+                  </div>
+                  <ChevronRight className="w-6 h-6 text-hack-purple/50 group-hover:text-hack-purple group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
 
         {/* My Learning */}
         <div

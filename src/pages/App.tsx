@@ -398,15 +398,14 @@ function App() {
               <div className="mb-8">
                 <div className="mb-4">
                   <span className="text-matrix font-terminal text-sm uppercase tracking-wider border border-matrix/40 px-3 py-1.5 rounded-md inline-block">
-                    De Anza's Cybersecurity Club
+                    De Anza Cybersecurity Club
                   </span>
                 </div>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
                   <span className="text-white">Learn to</span>
                   <br />
-                  <span className="text-white">hack </span>
-                  <span className="glitch neon-text" data-text="(legally)">
-                    (legally)
+                  <span className="glitch neon-text" data-text="hack">
+                    hack
                   </span>
                 </h1>
                 <p className="text-gray-400 text-lg md:text-xl leading-relaxed mb-8">

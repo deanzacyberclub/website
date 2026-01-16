@@ -25,6 +25,7 @@ const CTFJoinTeam = lazy(() => import('@/pages/ctf/JoinTeam'))
 const CTFLeaderboard = lazy(() => import('@/pages/ctf/Leaderboard'))
 const CTFChallengeEditor = lazy(() => import('@/pages/ctf/ChallengeEditor'))
 const Study = lazy(() => import('@/pages/Study'))
+const Officer = lazy(() => import('@/pages/Officer'))
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -62,6 +63,7 @@ ReactDOM.createRoot(document.getElementById('deanzacybersecurityclub')!).render(
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/officer" element={<Officer />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
