@@ -1,19 +1,19 @@
-import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import ProfileMenu from './ProfileMenu'
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import ProfileMenu from "./ProfileMenu";
 
 function PageHeader() {
-  const location = useLocation()
-  const { user } = useAuth()
-  const isEventsActive = location.pathname.startsWith('/meetings')
-  const isStudyActive = location.pathname === '/study'
-  const isCTFActive = location.pathname.startsWith('/ctf')
-  const isCheckInActive = location.pathname === '/live'
+  const location = useLocation();
+  const { user } = useAuth();
+  const isEventsActive = location.pathname.startsWith("/meetings");
+  const isStudyActive = location.pathname === "/study";
+  const isCTFActive = location.pathname.startsWith("/ctf");
+  const isCheckInActive = location.pathname === "/live";
 
   return (
     <div className="flex items-center justify-between mb-8">
       <Link
-        to={user ? '/dashboard' : '/'}
+        to={user ? "/dashboard" : "/"}
         className="glitch text-matrix hover:text-matrix transition-colors font-terminal text-sm tracking-tight neon-text-subtle"
         data-text="[dacc]"
       >
@@ -23,14 +23,15 @@ function PageHeader() {
       <div className="flex items-center gap-6">
         <Link
           to="/meetings"
-          className={`${isEventsActive
-            ? 'text-matrix neon-text-subtle'
-            : 'text-gray-500 hover:text-matrix'
-            } transition-colors font-terminal text-sm`}
+          className={`${
+            isEventsActive
+              ? "text-matrix neon-text-subtle"
+              : "text-gray-500 hover:text-matrix"
+          } transition-colors font-terminal text-sm`}
         >
           events
         </Link>
-        <Link
+        {/*<Link
           to="/study"
           className={`${isStudyActive
             ? 'text-matrix neon-text-subtle'
@@ -38,22 +39,24 @@ function PageHeader() {
             } transition-colors font-terminal text-sm`}
         >
           study
-        </Link>
+        </Link>*/}
         <Link
           to="/ctf"
-          className={`${isCTFActive
-            ? 'text-matrix neon-text-subtle'
-            : 'text-gray-500 hover:text-matrix'
-            } transition-colors font-terminal text-sm`}
+          className={`${
+            isCTFActive
+              ? "text-matrix neon-text-subtle"
+              : "text-gray-500 hover:text-matrix"
+          } transition-colors font-terminal text-sm`}
         >
           ctf
         </Link>
         <Link
           to="/live"
-          className={`${isCheckInActive
-            ? 'text-matrix neon-text-subtle'
-            : 'text-gray-500 hover:text-matrix'
-            } transition-colors font-terminal text-sm`}
+          className={`${
+            isCheckInActive
+              ? "text-matrix neon-text-subtle"
+              : "text-gray-500 hover:text-matrix"
+          } transition-colors font-terminal text-sm`}
         >
           check-in
         </Link>
@@ -61,7 +64,7 @@ function PageHeader() {
 
       <ProfileMenu />
     </div>
-  )
+  );
 }
 
-export default PageHeader
+export default PageHeader;
