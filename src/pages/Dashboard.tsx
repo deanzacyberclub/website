@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
-import type { Meeting, Registration, PathwayProgress } from '@/types/database.types'
-import { Spinner, Warning, CheckCircle, ChevronRight, Clock, MapPin, Calendar, Shield } from '@/lib/cyberIcon'
+import type { Meeting, Registration } from '@/types/database.types'
+import { Spinner, Warning, CheckCircle, ChevronRight, MapPin, Calendar, Shield } from '@/lib/cyberIcon'
 import { Tabs } from '@/components/Tabs'
 
 interface MeetingWithRegistration extends Meeting {
@@ -16,7 +16,6 @@ function Dashboard() {
   const [meetings, setMeetings] = useState<MeetingWithRegistration[]>([])
   const [attendanceCount, setAttendanceCount] = useState(0)
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
-  const [pathwayProgress, setPathwayProgress] = useState<PathwayProgress[]>([])
   const { user, userProfile, signOut, loading } = useAuth()
   const navigate = useNavigate()
 
@@ -62,17 +61,6 @@ function Dashboard() {
             .eq('user_id', user.id)
 
           setAttendanceCount(count || 0)
-
-          // Fetch pathway progress
-          const { data: pathwayData } = await supabase
-            .from('pathway_progress')
-            .select('*, pathways!inner(*)')
-            .eq('user_id', user.id)
-            .eq('pathways.is_active', true)
-
-          if (pathwayData) {
-            setPathwayProgress(pathwayData as PathwayProgress[])
-          }
         }
       } catch (err) {
         console.error('Error fetching dashboard data:', err)
@@ -296,103 +284,6 @@ function Dashboard() {
           </div>
         )}
 
-        {/* My Learning */}
-        <div
-          className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: '200ms' }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-matrix">My Learning</h2>
-            <Link
-              to="/study"
-              className="text-sm font-terminal text-matrix hover:neon-text-subtle transition-all flex items-center gap-1"
-            >
-              View All Pathways
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {pathwayProgress.length > 0 ? (
-            <div className="grid md:grid-cols-2 gap-4">
-              {pathwayProgress.map((progress) => {
-                const pathway = (progress as any).pathways
-                return (
-                  <Link
-                    key={progress.id}
-                    to="/study"
-                    className="card-hack rounded-lg p-5 group hover:scale-[1.01] transition-transform"
-                  >
-                    <div className="flex items-start gap-4">
-                      {pathway?.icon && (
-                        <div className="text-3xl shrink-0">{pathway.icon}</div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-matrix mb-1 group-hover:neon-text-subtle transition-all">
-                          {pathway?.title || 'Pathway'}
-                        </h3>
-                        <p className="text-xs text-gray-500 font-terminal mb-3">
-                          {progress.lessons_completed} / {progress.total_lessons} lessons completed
-                        </p>
-
-                        {/* Progress Bar */}
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between mb-1 text-xs font-terminal">
-                            <span className="text-gray-500">Progress</span>
-                            <span className="text-matrix">{progress.completion_percentage}%</span>
-                          </div>
-                          <div className="h-1.5 bg-terminal-bg rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-matrix transition-all duration-500"
-                              style={{ width: `${progress.completion_percentage}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Stats */}
-                        <div className="flex gap-4 text-xs font-terminal text-gray-500">
-                          {progress.current_streak_days > 0 && (
-                            <span>
-                              🔥 {progress.current_streak_days} day streak
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all shrink-0" />
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          ) : (
-            <Link
-              to="/study"
-              className="block terminal-window group hover:scale-[1.01] transition-transform"
-            >
-              <div className="terminal-header">
-                <div className="terminal-dot red" />
-                <div className="terminal-dot yellow" />
-                <div className="terminal-dot green" />
-                <span className="ml-4 text-xs text-gray-500 font-terminal">learning_pathways.sh</span>
-              </div>
-              <div className="terminal-body text-center py-12">
-                <div className="max-w-md mx-auto">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center">
-                    <span className="text-3xl">📚</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-matrix mb-3">Start Your Learning Journey</h3>
-                  <p className="text-gray-500 text-sm mb-6">
-                    Choose from Security+ or Professional Ethical Hacker pathways and start learning with interactive lessons, quizzes, and hands-on challenges.
-                  </p>
-                  <div className="inline-flex items-center gap-2 text-matrix font-terminal text-sm group-hover:neon-text-subtle transition-all">
-                    Browse Study Pathways
-                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          )}
-        </div>
-
         {/* Events */}
         <div
           className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
@@ -517,26 +408,178 @@ function Dashboard() {
           style={{ transitionDelay: '400ms' }}
         >
           <h2 className="text-2xl font-bold text-matrix mb-6">My Stats</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="card-hack rounded-lg p-5">
-              <div className="text-3xl font-bold text-matrix mb-2">{attendanceCount}</div>
-              <div className="text-xs text-gray-500 font-terminal uppercase">Events Attended</div>
-            </div>
-            <div className="card-hack rounded-lg p-5">
-              <div className="text-3xl font-bold text-matrix mb-2">
-                {meetings.filter(m => m.userRegistration && m.userRegistration.status !== 'cancelled').length}
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Attendance Ring */}
+            <div className="card-hack rounded-lg p-6">
+              <div className="flex items-center gap-6">
+                {/* Circular Progress */}
+                <div className="relative w-28 h-28 shrink-0">
+                  <svg className="w-28 h-28 transform -rotate-90" viewBox="0 0 100 100">
+                    {/* Background circle */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="8"
+                      className="text-gray-800"
+                    />
+                    {/* Progress circle */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      className="text-matrix"
+                      strokeDasharray={`${(attendanceCount / Math.max(pastMeetings.length + attendanceCount, 1)) * 251.2} 251.2`}
+                      style={{ transition: 'stroke-dasharray 1s ease-out' }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold text-matrix">{attendanceCount}</span>
+                    <span className="text-[10px] text-gray-500 font-terminal">ATTENDED</span>
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-matrix mb-3">Attendance</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Events Attended</span>
+                      <span className="text-matrix font-terminal">{attendanceCount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Total Events</span>
+                      <span className="text-gray-400 font-terminal">{meetings.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Attendance Rate</span>
+                      <span className="text-matrix font-terminal">
+                        {meetings.length > 0 ? Math.round((attendanceCount / meetings.length) * 100) : 0}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-xs text-gray-500 font-terminal uppercase">Total Registered</div>
             </div>
-            <div className="card-hack rounded-lg p-5">
-              <div className="text-3xl font-bold text-matrix mb-2">{upcomingMeetings.filter(m => m.userRegistration).length}</div>
-              <div className="text-xs text-gray-500 font-terminal uppercase">Upcoming RSVPs</div>
-            </div>
-            <div className="card-hack rounded-lg p-5">
-              <div className={`text-3xl font-bold mb-2 ${userProfile.student_id ? 'text-matrix' : 'text-hack-yellow'}`}>
-                {userProfile.student_id ? 'Verified' : 'Pending'}
+
+            {/* Event Types Breakdown */}
+            <div className="card-hack rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-matrix mb-4">Events by Type</h3>
+              <div className="space-y-3">
+                {(() => {
+                  const typeCounts = meetings.reduce((acc, m) => {
+                    acc[m.type] = (acc[m.type] || 0) + 1
+                    return acc
+                  }, {} as Record<string, number>)
+                  const maxCount = Math.max(...Object.values(typeCounts), 1)
+
+                  return Object.entries(typeCounts).map(([type, count]) => (
+                    <div key={type}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className={`font-terminal ${TYPE_COLORS[type as keyof typeof TYPE_COLORS]?.split(' ')[1] || 'text-gray-400'}`}>
+                          {TYPE_LABELS[type as keyof typeof TYPE_LABELS] || type}
+                        </span>
+                        <span className="text-gray-500">{count}</span>
+                      </div>
+                      <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${
+                            type === 'workshop' ? 'bg-matrix' :
+                            type === 'ctf' ? 'bg-hack-cyan' :
+                            type === 'social' ? 'bg-hack-purple' :
+                            type === 'competition' ? 'bg-hack-orange' :
+                            'bg-gray-600'
+                          }`}
+                          style={{ width: `${(count / maxCount) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))
+                })()}
+                {Object.keys(meetings.reduce((acc, m) => { acc[m.type] = true; return acc }, {} as Record<string, boolean>)).length === 0 && (
+                  <p className="text-gray-500 text-sm text-center py-4">No events yet</p>
+                )}
               </div>
-              <div className="text-xs text-gray-500 font-terminal uppercase">Student Status</div>
+            </div>
+
+            {/* Activity Overview */}
+            <div className="card-hack rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-matrix mb-4">Quick Overview</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 rounded-lg bg-matrix/5 border border-matrix/20">
+                  <div className="text-2xl font-bold text-matrix">{upcomingMeetings.length}</div>
+                  <div className="text-[10px] text-gray-500 font-terminal uppercase mt-1">Upcoming</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-hack-cyan/5 border border-hack-cyan/20">
+                  <div className="text-2xl font-bold text-hack-cyan">
+                    {meetings.filter(m => m.userRegistration && m.userRegistration.status !== 'cancelled').length}
+                  </div>
+                  <div className="text-[10px] text-gray-500 font-terminal uppercase mt-1">Registered</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-hack-purple/5 border border-hack-purple/20">
+                  <div className="text-2xl font-bold text-hack-purple">
+                    {upcomingMeetings.filter(m => m.userRegistration).length}
+                  </div>
+                  <div className="text-[10px] text-gray-500 font-terminal uppercase mt-1">RSVPs</div>
+                </div>
+                <div className={`text-center p-3 rounded-lg ${userProfile.student_id ? 'bg-matrix/5 border-matrix/20' : 'bg-hack-yellow/5 border-hack-yellow/20'} border`}>
+                  <div className={`text-lg font-bold ${userProfile.student_id ? 'text-matrix' : 'text-hack-yellow'}`}>
+                    {userProfile.student_id ? '✓' : '?'}
+                  </div>
+                  <div className="text-[10px] text-gray-500 font-terminal uppercase mt-1">ID Status</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Monthly Activity Chart */}
+          <div className="card-hack rounded-lg p-6 mt-6">
+            <h3 className="text-lg font-semibold text-matrix mb-4">Monthly Activity</h3>
+            <div className="flex items-end gap-2 h-32">
+              {(() => {
+                const now = new Date()
+                const months: { label: string; count: number }[] = []
+
+                for (let i = 5; i >= 0; i--) {
+                  const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+                  const monthMeetings = meetings.filter(m => {
+                    const mDate = new Date(m.date)
+                    return mDate.getMonth() === date.getMonth() && mDate.getFullYear() === date.getFullYear()
+                  })
+                  months.push({
+                    label: date.toLocaleDateString('en-US', { month: 'short' }),
+                    count: monthMeetings.length
+                  })
+                }
+
+                const maxEvents = Math.max(...months.map(m => m.count), 1)
+
+                return months.map((month, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                    <div className="w-full flex items-end justify-center h-24">
+                      <div
+                        className={`w-full max-w-8 rounded-t transition-all duration-500 ${
+                          month.count > 0 ? 'bg-gradient-to-t from-matrix/50 to-matrix' : 'bg-gray-800'
+                        }`}
+                        style={{
+                          height: month.count > 0 ? `${Math.max((month.count / maxEvents) * 100, 15)}%` : '8px'
+                        }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-gray-500 font-terminal">{month.label}</span>
+                  </div>
+                ))
+              })()}
+            </div>
+            <div className="flex justify-between mt-4 pt-4 border-t border-gray-800 text-xs text-gray-500">
+              <span>Last 6 months</span>
+              <span className="text-matrix">{meetings.length} total events</span>
             </div>
           </div>
         </div>
@@ -556,31 +599,6 @@ function Dashboard() {
               <ChevronRight className="w-5 h-5 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all" />
             </div>
           </Link>
-        </div>
-
-        {/* Quick Stats */}
-        <div
-          className={`grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: '600ms' }}
-        >
-          <div className="card-hack rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-matrix">{meetings.length}</div>
-            <div className="text-xs text-gray-500 font-terminal mt-1">TOTAL EVENTS</div>
-          </div>
-          <div className="card-hack rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-matrix">{upcomingMeetings.length}</div>
-            <div className="text-xs text-gray-500 font-terminal mt-1">UPCOMING</div>
-          </div>
-          <div className="card-hack rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-matrix">{attendanceCount}</div>
-            <div className="text-xs text-gray-500 font-terminal mt-1">CHECK-INS</div>
-          </div>
-          <div className="card-hack rounded-lg p-4 text-center">
-            <div className={`text-2xl font-bold ${userProfile.student_id ? 'text-matrix' : 'text-hack-yellow'}`}>
-              {userProfile.student_id ? 'SET' : 'N/A'}
-            </div>
-            <div className="text-xs text-gray-500 font-terminal mt-1">STUDENT ID</div>
-          </div>
         </div>
       </div>
     </div>

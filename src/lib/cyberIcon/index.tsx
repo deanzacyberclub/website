@@ -282,7 +282,7 @@ export const Link = (props: IconProps) => (
 // Unlink
 export const Unlink = (props: IconProps) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.181 8.68l-5.629 5.629m0 0l.884 3.177 3.177.884m-4.06-4.06l-1.768-1.768a2 2 0 010-2.828l6.364-6.364a2 2 0 012.829 0l1.767 1.768" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.5 6H15a4 4 0 010 8h-1.5M10.5 6H9a4 4 0 000 8h1.5M6 12h.01M18 12h.01" />
   </svg>
 )
 

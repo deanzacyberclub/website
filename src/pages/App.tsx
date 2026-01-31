@@ -362,6 +362,50 @@ function MatrixRain() {
   );
 }
 
+const typewriterWords = ["hack", "defend", "penetrate", "attack"];
+
+function TypewriterText() {
+  const [wordIndex, setWordIndex] = useState(0);
+  const [text, setText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentWord = typewriterWords[wordIndex];
+    const typeSpeed = isDeleting ? 80 : 120;
+    const pauseTime = 1500;
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        // Typing
+        if (text.length < currentWord.length) {
+          setText(currentWord.slice(0, text.length + 1));
+        } else {
+          // Finished typing, pause then start deleting
+          setTimeout(() => setIsDeleting(true), pauseTime);
+        }
+      } else {
+        // Deleting
+        if (text.length > 0) {
+          setText(text.slice(0, -1));
+        } else {
+          // Finished deleting, move to next word
+          setIsDeleting(false);
+          setWordIndex((prev) => (prev + 1) % typewriterWords.length);
+        }
+      }
+    }, typeSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [text, isDeleting, wordIndex]);
+
+  return (
+    <span className="glitch neon-text" data-text={text || "\u00A0"}>
+      {text}
+      <span className="animate-pulse">|</span>
+    </span>
+  );
+}
+
 function App() {
   const [loaded, setLoaded] = useState(false);
   const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([]);
@@ -404,9 +448,7 @@ function App() {
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
                   <span className="text-white">Learn to</span>
                   <br />
-                  <span className="glitch neon-text" data-text="hack">
-                    hack
-                  </span>
+                  <TypewriterText />
                 </h1>
                 <p className="text-gray-400 text-lg md:text-xl leading-relaxed mb-8">
                   Break into cybersecurity with hands-on workshops, earn
@@ -734,7 +776,7 @@ function App() {
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-matrix" />
-                      TBA 2025
+                      TBA 2026
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="w-4 h-4 text-matrix" />
