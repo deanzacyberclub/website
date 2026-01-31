@@ -29,7 +29,7 @@ function Attendance() {
   const [loadingMeetings, setLoadingMeetings] = useState(true);
   const [attendanceCount, setAttendanceCount] = useState(0);
 
-  const { user, userProfile, loading } = useAuth();
+  const { user, userProfile } = useAuth();
   const meetingSelectRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState<AttendanceForm>({
@@ -310,59 +310,6 @@ function Attendance() {
   };
 
   const selectedMeeting = meetings.find((m) => m.id === form.meetingId);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
-        <div className="crt-overlay" />
-        <div className="text-center relative z-10">
-          <div className="flex items-center gap-3 justify-center">
-            <Spinner className="animate-spin h-6 w-6 text-matrix" />
-            <span className="font-terminal text-lg neon-pulse">Loading...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Require authentication
-  if (!user || !userProfile) {
-    return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center p-6">
-        <div className="crt-overlay" />
-        <div className="text-center relative z-10 max-w-md">
-          <div className="w-20 h-20 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center mx-auto mb-6">
-            <User className="w-10 h-10 text-matrix" />
-          </div>
-          <div className="terminal-window">
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
-                auth_required
-              </span>
-            </div>
-            <div className="terminal-body text-left">
-              <p className="text-matrix mb-2">
-                <span className="text-hack-cyan">[INFO]</span> Authentication
-                required
-              </p>
-              <p className="text-gray-500 text-sm mb-4">
-                Sign in to check in to meetings and track your attendance.
-              </p>
-              <Link
-                to="/auth?to=/live"
-                className="btn-hack-filled rounded-lg w-full inline-flex items-center justify-center gap-2"
-              >
-                SIGN IN TO CHECK IN
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (submitted) {
     return (

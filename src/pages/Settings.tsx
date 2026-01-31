@@ -25,7 +25,7 @@ function Settings() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { user, userProfile, loading: authLoading, updateUserProfile, deleteAccount, linkIdentity, unlinkIdentity } = useAuth()
+  const { user, userProfile, updateUserProfile, deleteAccount, linkIdentity, unlinkIdentity } = useAuth()
 
   const linkedAccounts = userProfile?.linked_accounts || []
 
@@ -48,12 +48,6 @@ function Settings() {
       setSearchParams({}, { replace: true })
     }
   }, [searchParams, setSearchParams])
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth?to=/settings')
-    }
-  }, [user, authLoading, navigate])
 
   useEffect(() => {
     if (userProfile) {
@@ -191,24 +185,6 @@ function Settings() {
 
   const isLinked = (provider: string) => linkedAccounts.some(a => a.provider === provider)
   const getLinkedAccount = (provider: string) => linkedAccounts.find(a => a.provider === provider)
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
-        <div className="crt-overlay" />
-        <div className="text-center relative z-10">
-          <div className="flex items-center gap-3 justify-center">
-            <Spinner className="animate-spin h-6 w-6 text-matrix" />
-            <span className="font-terminal text-lg neon-pulse">Loading...</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null
-  }
 
   return (
     <div className="min-h-screen bg-terminal-bg text-matrix">

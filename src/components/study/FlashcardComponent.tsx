@@ -1,17 +1,13 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { updateFlashcardMastery, checkFlashcardCompletion } from '@/lib/progress'
-import type { Lesson, UserProgress, FlashCard, FlashcardData } from '@/types/database.types'
+import type { Lesson, FlashCard, FlashcardData } from '@/types/database.types'
 import { ChevronLeft, ChevronRight, Shuffle, Star } from 'lucide-react'
 
 interface FlashcardComponentProps {
   lesson: Lesson
-  progress: UserProgress | undefined
   onComplete: () => void
 }
 
-function FlashcardComponent({ lesson, progress }: FlashcardComponentProps) {
-  const { user } = useAuth()
+function FlashcardComponent({ lesson }: FlashcardComponentProps) {
   const flashcardData = lesson.flashcard_data as FlashcardData | null
   const cards = flashcardData?.cards || []
 
@@ -19,13 +15,6 @@ function FlashcardComponent({ lesson, progress }: FlashcardComponentProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [mastery, setMastery] = useState<Record<string, number>>({})
   const [shuffledCards, setShuffledCards] = useState<FlashCard[]>(cards)
-
-  // Load existing mastery data
-  useEffect(() => {
-    if (progress?.flashcard_mastery) {
-      setMastery(progress.flashcard_mastery as Record<string, number>)
-    }
-  }, [progress])
 
   if (!flashcardData || cards.length === 0) {
     return (
@@ -69,20 +58,9 @@ function FlashcardComponent({ lesson, progress }: FlashcardComponentProps) {
     setIsFlipped(false)
   }
 
-  const handleMastery = async (level: number) => {
-    if (!user) return
-
+  const handleMastery = (level: number) => {
     const newMastery = { ...mastery, [currentCard.id]: level }
     setMastery(newMastery)
-
-    try {
-      await updateFlashcardMastery(user.id, lesson.id, currentCard.id, level)
-
-      // Check if all cards are mastered
-      await checkFlashcardCompletion(user.id, lesson.id, cards.length)
-    } catch (error) {
-      console.error('Failed to update mastery:', error)
-    }
 
     // Auto-advance to next card
     setTimeout(() => {
@@ -204,7 +182,7 @@ function FlashcardComponent({ lesson, progress }: FlashcardComponentProps) {
       </div>
 
       {/* Mastery Buttons (shown when flipped) */}
-      {isFlipped && user && (
+      {isFlipped && (
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => handleMastery(Math.max(0, currentMastery - 1))}
@@ -254,15 +232,6 @@ function FlashcardComponent({ lesson, progress }: FlashcardComponentProps) {
           Keyboard shortcuts: ← Previous | → Next | Space Flip
         </p>
       </div>
-
-      {/* Completion Status */}
-      {progress?.status === 'completed' && (
-        <div className="p-4 bg-matrix/10 border border-matrix rounded text-center">
-          <p className="text-matrix font-terminal text-sm">
-            ✓ Flashcards Completed ({masteredCount}/{cards.length} mastered)
-          </p>
-        </div>
-      )}
     </div>
   )
 }

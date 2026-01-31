@@ -1,32 +1,32 @@
-import React, { Suspense, lazy } from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from '@/contexts/AuthContext'
-import Layout from '@/components/Layout'
-import ScrollToTop from '@/components/ScrollToTop'
-import App from '@/pages/App'
-import './index.css'
+import React, { Suspense, lazy } from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import Layout from "@/components/Layout";
+import ScrollToTop from "@/components/ScrollToTop";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import App from "@/pages/App";
+import "./index.css";
 
-const Attendance = lazy(() => import('@/pages/Attendance'))
-const Terms = lazy(() => import('@/pages/Terms'))
-const Privacy = lazy(() => import('@/pages/Privacy'))
-const Meetings = lazy(() => import('@/pages/Meetings'))
-const MeetingDetails = lazy(() => import('@/pages/MeetingDetails'))
-const NotFound = lazy(() => import('@/pages/NotFound'))
-const Auth = lazy(() => import('@/pages/Auth'))
-const AuthCallback = lazy(() => import('@/pages/AuthCallback'))
-const Dashboard = lazy(() => import('@/pages/Dashboard'))
-const Settings = lazy(() => import('@/pages/Settings'))
-const CTF = lazy(() => import('@/pages/CTF'))
-const CTFChallenges = lazy(() => import('@/pages/ctf/Challenges'))
-const CTFChallengeDetail = lazy(() => import('@/pages/ctf/ChallengeDetail'))
-const CTFTeam = lazy(() => import('@/pages/ctf/Team'))
-const CTFJoinTeam = lazy(() => import('@/pages/ctf/JoinTeam'))
-const CTFLeaderboard = lazy(() => import('@/pages/ctf/Leaderboard'))
-const CTFChallengeEditor = lazy(() => import('@/pages/ctf/ChallengeEditor'))
-const Study = lazy(() => import('@/pages/Study'))
-const Officer = lazy(() => import('@/pages/Officer'))
-const UserProfile = lazy(() => import('@/pages/UserProfile'))
+const Attendance = lazy(() => import("@/pages/Attendance"));
+const Legal = lazy(() => import("@/pages/Legal"));
+const Meetings = lazy(() => import("@/pages/Meetings"));
+const MeetingDetails = lazy(() => import("@/pages/MeetingDetails"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Auth = lazy(() => import("@/pages/Auth"));
+const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const CTF = lazy(() => import("@/pages/CTF"));
+const CTFChallenges = lazy(() => import("@/pages/ctf/Challenges"));
+const CTFChallengeDetail = lazy(() => import("@/pages/ctf/ChallengeDetail"));
+const CTFTeam = lazy(() => import("@/pages/ctf/Team"));
+const CTFJoinTeam = lazy(() => import("@/pages/ctf/JoinTeam"));
+const CTFLeaderboard = lazy(() => import("@/pages/ctf/Leaderboard"));
+const CTFChallengeEditor = lazy(() => import("@/pages/ctf/ChallengeEditor"));
+const Study = lazy(() => import("@/pages/Study"));
+const Officer = lazy(() => import("@/pages/Officer"));
+const UserProfile = lazy(() => import("@/pages/UserProfile"));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -34,9 +34,9 @@ const LoadingFallback = () => (
       <div className="font-terminal text-lg neon-pulse">Loading...</div>
     </div>
   </div>
-)
+);
 
-ReactDOM.createRoot(document.getElementById('deanzacybersecurityclub')!).render(
+ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
   <React.StrictMode>
     <AuthProvider>
       <BrowserRouter>
@@ -44,28 +44,31 @@ ReactDOM.createRoot(document.getElementById('deanzacybersecurityclub')!).render(
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             <Route element={<Layout />}>
+              {/* Public routes */}
               <Route path="/" element={<App />} />
-              <Route path="/live" element={<Attendance />} />
               <Route path="/meetings" element={<Meetings />} />
               <Route path="/meetings/:slug" element={<MeetingDetails />} />
               <Route path="/ctf" element={<CTF />} />
               <Route path="/ctf/challenges" element={<CTFChallenges />} />
               <Route path="/ctf/challenge/:id" element={<CTFChallengeDetail />} />
-              <Route path="/ctf/challenge/:id/edit" element={<CTFChallengeEditor />} />
-              <Route path="/ctf/challenges/new" element={<CTFChallengeEditor />} />
-              <Route path="/ctf/team" element={<CTFTeam />} />
-              <Route path="/ctf/join" element={<CTFJoinTeam />} />
-              <Route path="/ctf/join/:code" element={<CTFJoinTeam />} />
               <Route path="/ctf/leaderboard" element={<CTFLeaderboard />} />
               <Route path="/study" element={<Study />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/legal" element={<Legal />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/officer" element={<Officer />} />
               <Route path="/@/:id" element={<UserProfile />} />
+
+              {/* Protected routes - require authentication */}
+              <Route path="/live" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/officer" element={<ProtectedRoute><Officer /></ProtectedRoute>} />
+              <Route path="/ctf/team" element={<ProtectedRoute><CTFTeam /></ProtectedRoute>} />
+              <Route path="/ctf/join" element={<ProtectedRoute><CTFJoinTeam /></ProtectedRoute>} />
+              <Route path="/ctf/join/:code" element={<ProtectedRoute><CTFJoinTeam /></ProtectedRoute>} />
+              <Route path="/ctf/challenge/:id/edit" element={<ProtectedRoute><CTFChallengeEditor /></ProtectedRoute>} />
+              <Route path="/ctf/challenges/new" element={<ProtectedRoute><CTFChallengeEditor /></ProtectedRoute>} />
+
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
@@ -73,4 +76,4 @@ ReactDOM.createRoot(document.getElementById('deanzacybersecurityclub')!).render(
       </BrowserRouter>
     </AuthProvider>
   </React.StrictMode>,
-)
+);

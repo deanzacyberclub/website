@@ -51,7 +51,7 @@ interface UserProfile {
 
 function Officer() {
   const navigate = useNavigate();
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { userProfile } = useAuth();
   const [loaded, setLoaded] = useState(false);
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
@@ -74,10 +74,10 @@ function Officer() {
 
   // Redirect non-officers
   useEffect(() => {
-    if (!authLoading && (!user || !isOfficer)) {
+    if (userProfile && !isOfficer) {
       navigate("/dashboard");
     }
-  }, [authLoading, user, isOfficer, navigate]);
+  }, [userProfile, isOfficer, navigate]);
 
   // Fetch dashboard stats
   useEffect(() => {
@@ -240,7 +240,8 @@ function Officer() {
     });
   };
 
-  if (authLoading || (!isOfficer && user)) {
+  // Show loading while checking officer status or if not an officer (will redirect)
+  if (!isOfficer) {
     return (
       <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
         <Spinner className="animate-spin h-8 w-8" />

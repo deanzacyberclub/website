@@ -1,4 +1,19 @@
+-- ============================================================
+-- DE ANZA CYBERSECURITY CLUB - DATABASE SETUP
+-- ============================================================
+-- This file contains all database schema definitions including:
+-- - Tables, columns, constraints
+-- - Indexes
+-- - Row Level Security policies
+-- - Functions and triggers
+-- - Views
+--
+-- Run this file first, then seed.sql for sample data.
+-- ============================================================
+
+-- ============================================================
 -- USERS TABLE
+-- ============================================================
 CREATE TABLE public.users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -17,7 +32,9 @@ CREATE POLICY "Users can insert own profile" ON public.users FOR INSERT WITH CHE
 CREATE POLICY "Users can update own profile" ON public.users FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Users can delete own profile" ON public.users FOR DELETE USING (auth.uid() = id);
 
--- STORAGE BUCKET
+-- ============================================================
+-- STORAGE BUCKET FOR PROFILE PICTURES
+-- ============================================================
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('profile-pictures', 'profile-pictures', true)
 ON CONFLICT (id) DO NOTHING;
@@ -27,7 +44,9 @@ CREATE POLICY "Users can upload own profile picture" ON storage.objects FOR INSE
 CREATE POLICY "Users can update own profile picture" ON storage.objects FOR UPDATE USING (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
 CREATE POLICY "Users can delete own profile picture" ON storage.objects FOR DELETE USING (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+-- ============================================================
 -- MEETINGS TABLE
+-- ============================================================
 CREATE TABLE public.meetings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     slug TEXT NOT NULL UNIQUE,
@@ -43,6 +62,10 @@ CREATE TABLE public.meetings (
     photos JSONB DEFAULT '[]'::jsonb,
     resources JSONB DEFAULT '[]'::jsonb,
     secret_code TEXT,
+    registration_type TEXT NOT NULL DEFAULT 'open' CHECK (registration_type IN ('open', 'invite_only', 'closed')),
+    registration_capacity INTEGER,
+    invite_code TEXT,
+    invite_form_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -62,7 +85,9 @@ CREATE POLICY "Officers can delete meetings" ON public.meetings FOR DELETE USING
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
 );
 
+-- ============================================================
 -- ATTENDANCE TABLE
+-- ============================================================
 CREATE TABLE public.attendance (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     meeting_id UUID NOT NULL REFERENCES public.meetings(id) ON DELETE CASCADE,
@@ -80,3 +105,502 @@ CREATE POLICY "Officers can view all attendance" ON public.attendance FOR SELECT
 );
 CREATE POLICY "Users can insert own attendance" ON public.attendance FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own attendance" ON public.attendance FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================================
+-- REGISTRATIONS TABLE
+-- ============================================================
+CREATE TABLE public.registrations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    meeting_id UUID NOT NULL REFERENCES public.meetings(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    status TEXT NOT NULL CHECK (status IN ('registered', 'waitlist', 'invited', 'attended', 'cancelled')),
+    invite_code_used TEXT,
+    registered_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(meeting_id, user_id)
+);
+
+CREATE INDEX idx_registrations_meeting_id ON public.registrations(meeting_id);
+CREATE INDEX idx_registrations_user_id ON public.registrations(user_id);
+CREATE INDEX idx_registrations_status ON public.registrations(status);
+
+ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own registrations" ON public.registrations FOR SELECT USING (
+    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+CREATE POLICY "Users can insert own registrations" ON public.registrations FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own registrations" ON public.registrations FOR UPDATE USING (
+    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+CREATE POLICY "Users can delete own registrations" ON public.registrations FOR DELETE USING (
+    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+
+-- Function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_registrations_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER registrations_updated_at
+BEFORE UPDATE ON public.registrations
+FOR EACH ROW
+EXECUTE FUNCTION update_registrations_updated_at();
+
+-- Function to mark registration as attended when attendance is recorded
+CREATE OR REPLACE FUNCTION mark_registration_attended()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE public.registrations
+    SET status = 'attended', updated_at = NOW()
+    WHERE meeting_id = NEW.meeting_id
+    AND user_id = NEW.user_id
+    AND status IN ('registered', 'waitlist', 'invited');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER attendance_marks_registration_attended
+AFTER INSERT ON public.attendance
+FOR EACH ROW
+EXECUTE FUNCTION mark_registration_attended();
+
+-- ============================================================
+-- STUDY PATHWAYS TABLE
+-- ============================================================
+CREATE TABLE public.pathways (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    icon TEXT,
+    difficulty TEXT CHECK (difficulty IN ('beginner', 'intermediate', 'advanced')),
+    estimated_hours INTEGER,
+    color TEXT,
+    order_index INTEGER NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.pathways ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Everyone can view active pathways" ON public.pathways FOR SELECT USING (
+    is_active = true OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+CREATE POLICY "Officers can manage pathways" ON public.pathways FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+
+-- ============================================================
+-- LESSONS TABLE
+-- ============================================================
+CREATE TABLE public.lessons (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    pathway_id UUID NOT NULL REFERENCES public.pathways(id) ON DELETE CASCADE,
+    slug TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    type TEXT CHECK (type IN ('course', 'workshop', 'ctf', 'quiz', 'flashcard')) NOT NULL,
+    order_index INTEGER NOT NULL,
+    content JSONB,
+    meeting_id UUID REFERENCES public.meetings(id) ON DELETE SET NULL,
+    is_self_paced BOOLEAN DEFAULT true,
+    quiz_data JSONB,
+    flashcard_data JSONB,
+    prerequisite_lesson_ids UUID[],
+    required_score INTEGER,
+    estimated_minutes INTEGER,
+    difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard', 'beginner', 'intermediate', 'advanced')),
+    topics TEXT[],
+    resources JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(pathway_id, slug)
+);
+
+CREATE INDEX idx_lessons_pathway ON public.lessons(pathway_id);
+CREATE INDEX idx_lessons_meeting ON public.lessons(meeting_id);
+CREATE INDEX idx_lessons_type ON public.lessons(type);
+
+ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Everyone can view lessons" ON public.lessons FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.pathways WHERE id = pathway_id AND is_active = true)
+    OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+CREATE POLICY "Officers can manage lessons" ON public.lessons FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+
+CREATE OR REPLACE FUNCTION update_lessons_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER lessons_updated_at
+BEFORE UPDATE ON public.lessons
+FOR EACH ROW
+EXECUTE FUNCTION update_lessons_updated_at();
+
+-- ============================================================
+-- USER PROGRESS TABLE (for study tracking)
+-- ============================================================
+CREATE TABLE public.user_progress (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    lesson_id UUID NOT NULL REFERENCES public.lessons(id) ON DELETE CASCADE,
+    status TEXT CHECK (status IN ('locked', 'unlocked', 'in_progress', 'completed')) DEFAULT 'locked',
+    progress_percentage INTEGER DEFAULT 0 CHECK (progress_percentage >= 0 AND progress_percentage <= 100),
+    quiz_score INTEGER,
+    quiz_attempts INTEGER DEFAULT 0,
+    quiz_best_score INTEGER,
+    quiz_answers JSONB,
+    flashcard_mastery JSONB,
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    last_accessed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, lesson_id)
+);
+
+CREATE INDEX idx_user_progress_user ON public.user_progress(user_id);
+CREATE INDEX idx_user_progress_lesson ON public.user_progress(lesson_id);
+CREATE INDEX idx_user_progress_status ON public.user_progress(status);
+
+ALTER TABLE public.user_progress ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own progress" ON public.user_progress FOR SELECT USING (
+    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+CREATE POLICY "Users can manage own progress" ON public.user_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own progress" ON public.user_progress FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own progress" ON public.user_progress FOR DELETE USING (
+    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+
+CREATE OR REPLACE FUNCTION update_user_progress_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER user_progress_updated_at
+BEFORE UPDATE ON public.user_progress
+FOR EACH ROW
+EXECUTE FUNCTION update_user_progress_updated_at();
+
+-- ============================================================
+-- PATHWAY PROGRESS TABLE (aggregate stats)
+-- ============================================================
+CREATE TABLE public.pathway_progress (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    pathway_id UUID NOT NULL REFERENCES public.pathways(id) ON DELETE CASCADE,
+    lessons_completed INTEGER DEFAULT 0,
+    total_lessons INTEGER DEFAULT 0,
+    completion_percentage INTEGER DEFAULT 0,
+    current_streak_days INTEGER DEFAULT 0,
+    longest_streak_days INTEGER DEFAULT 0,
+    total_time_spent_minutes INTEGER DEFAULT 0,
+    achievements JSONB DEFAULT '[]'::jsonb,
+    last_activity_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, pathway_id)
+);
+
+CREATE INDEX idx_pathway_progress_user ON public.pathway_progress(user_id);
+CREATE INDEX idx_pathway_progress_pathway ON public.pathway_progress(pathway_id);
+
+ALTER TABLE public.pathway_progress ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own pathway progress" ON public.pathway_progress FOR SELECT USING (
+    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+CREATE POLICY "Users can manage own pathway progress" ON public.pathway_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own pathway progress" ON public.pathway_progress FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own pathway progress" ON public.pathway_progress FOR DELETE USING (
+    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+
+CREATE OR REPLACE FUNCTION update_pathway_progress_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER pathway_progress_updated_at
+BEFORE UPDATE ON public.pathway_progress
+FOR EACH ROW
+EXECUTE FUNCTION update_pathway_progress_updated_at();
+
+-- Auto-complete workshop lessons when attendance is recorded
+CREATE OR REPLACE FUNCTION auto_complete_workshop_lesson()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE public.user_progress
+    SET status = 'completed',
+        progress_percentage = 100,
+        completed_at = NOW(),
+        updated_at = NOW()
+    FROM public.lessons
+    WHERE user_progress.lesson_id = lessons.id
+    AND user_progress.user_id = NEW.user_id
+    AND lessons.meeting_id = NEW.meeting_id
+    AND lessons.type = 'workshop'
+    AND user_progress.status != 'completed';
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER attendance_completes_workshop_lesson
+AFTER INSERT ON public.attendance
+FOR EACH ROW
+EXECUTE FUNCTION auto_complete_workshop_lesson();
+
+-- ============================================================
+-- CTF TEAMS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS ctf_teams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) NOT NULL,
+    invite_code VARCHAR(12) UNIQUE NOT NULL,
+    captain_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    invite_expires_at TIMESTAMPTZ DEFAULT NULL,
+    invite_max_uses INTEGER DEFAULT NULL,
+    invite_uses_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE ctf_teams ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Teams are viewable by everyone" ON ctf_teams FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can create teams" ON ctf_teams FOR INSERT WITH CHECK (auth.uid() = captain_id);
+CREATE POLICY "Captains can update their teams" ON ctf_teams FOR UPDATE USING (auth.uid() = captain_id);
+CREATE POLICY "Captains can delete their teams" ON ctf_teams FOR DELETE USING (auth.uid() = captain_id);
+
+-- ============================================================
+-- CTF TEAM MEMBERS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS ctf_team_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    team_id UUID NOT NULL REFERENCES ctf_teams(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    joined_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(team_id, user_id),
+    UNIQUE(user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ctf_team_members_team_id ON ctf_team_members(team_id);
+CREATE INDEX IF NOT EXISTS idx_ctf_team_members_user_id ON ctf_team_members(user_id);
+
+ALTER TABLE ctf_team_members ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Team members are viewable by everyone" ON ctf_team_members FOR SELECT USING (true);
+CREATE POLICY "Users can join teams" ON ctf_team_members FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can leave teams" ON ctf_team_members FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================================
+-- CTF SUBMISSIONS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS ctf_submissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    team_id UUID NOT NULL REFERENCES ctf_teams(id) ON DELETE CASCADE,
+    challenge_id VARCHAR(50) NOT NULL,
+    submitted_flag TEXT NOT NULL,
+    is_correct BOOLEAN NOT NULL DEFAULT FALSE,
+    points_awarded INTEGER NOT NULL DEFAULT 0,
+    submitted_at TIMESTAMPTZ DEFAULT NOW(),
+    submitted_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ctf_submissions_team_id ON ctf_submissions(team_id);
+CREATE INDEX IF NOT EXISTS idx_ctf_submissions_challenge_id ON ctf_submissions(challenge_id);
+CREATE INDEX IF NOT EXISTS idx_ctf_submissions_is_correct ON ctf_submissions(is_correct);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_correct_submission ON ctf_submissions(team_id, challenge_id) WHERE is_correct = TRUE;
+
+ALTER TABLE ctf_submissions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Submissions are viewable by everyone" ON ctf_submissions FOR SELECT USING (true);
+CREATE POLICY "Team members can submit flags" ON ctf_submissions FOR INSERT WITH CHECK (
+    auth.uid() = submitted_by AND
+    EXISTS (SELECT 1 FROM ctf_team_members WHERE team_id = ctf_submissions.team_id AND user_id = auth.uid())
+);
+
+-- Function to check team size before adding members
+CREATE OR REPLACE FUNCTION check_team_size()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (SELECT COUNT(*) FROM ctf_team_members WHERE team_id = NEW.team_id) >= 4 THEN
+        RAISE EXCEPTION 'Team is already at maximum capacity (4 members)';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS enforce_team_size ON ctf_team_members;
+CREATE TRIGGER enforce_team_size
+BEFORE INSERT ON ctf_team_members
+FOR EACH ROW
+EXECUTE FUNCTION check_team_size();
+
+-- Function to generate random invite code
+CREATE OR REPLACE FUNCTION generate_invite_code()
+RETURNS VARCHAR(12) AS $$
+DECLARE
+    chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    result VARCHAR(12) := '';
+    i INTEGER;
+BEGIN
+    FOR i IN 1..8 LOOP
+        result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+    END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- CTF SETTINGS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS ctf_settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL DEFAULT '{}',
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_by UUID REFERENCES users(id)
+);
+
+ALTER TABLE ctf_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read CTF settings" ON ctf_settings FOR SELECT USING (true);
+CREATE POLICY "Officers can update CTF settings" ON ctf_settings FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true)
+);
+CREATE POLICY "Officers can insert CTF settings" ON ctf_settings FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true)
+);
+
+-- Insert default leaderboard_freeze setting
+INSERT INTO ctf_settings (key, value)
+VALUES ('leaderboard_freeze', '{"is_frozen": false, "frozen_at": null}'::jsonb)
+ON CONFLICT (key) DO NOTHING;
+
+-- Function for officers to toggle leaderboard freeze
+CREATE OR REPLACE FUNCTION toggle_leaderboard_freeze(should_freeze BOOLEAN)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    new_value JSONB;
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+        RAISE EXCEPTION 'Access denied: User is not an officer';
+    END IF;
+
+    IF should_freeze THEN
+        new_value := jsonb_build_object('is_frozen', true, 'frozen_at', NOW());
+    ELSE
+        new_value := jsonb_build_object('is_frozen', false, 'frozen_at', NULL);
+    END IF;
+
+    INSERT INTO ctf_settings (key, value, updated_at, updated_by)
+    VALUES ('leaderboard_freeze', new_value, NOW(), auth.uid())
+    ON CONFLICT (key) DO UPDATE
+    SET value = new_value, updated_at = NOW(), updated_by = auth.uid();
+
+    RETURN new_value;
+END;
+$$;
+
+-- ============================================================
+-- PUBLIC PROFILES VIEW
+-- ============================================================
+CREATE OR REPLACE VIEW public.public_profiles AS
+SELECT id, display_name, photo_url
+FROM public.users;
+
+GRANT SELECT ON public.public_profiles TO anon;
+GRANT SELECT ON public.public_profiles TO authenticated;
+
+COMMENT ON VIEW public.public_profiles IS 'Public-facing user profile data for leaderboards and registration displays';
+
+-- ============================================================
+-- OFFICER FUNCTIONS
+-- ============================================================
+
+-- Function for officers to get user profiles with email
+CREATE OR REPLACE FUNCTION get_user_profiles_for_officers(user_ids UUID[])
+RETURNS TABLE (id UUID, display_name TEXT, photo_url TEXT, email TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+        RAISE EXCEPTION 'Access denied: User is not an officer';
+    END IF;
+    RETURN QUERY SELECT u.id, u.display_name, u.photo_url, u.email FROM users u WHERE u.id = ANY(user_ids);
+END;
+$$;
+
+-- Function for officers to get all users
+CREATE OR REPLACE FUNCTION get_all_users_for_officers()
+RETURNS TABLE (id UUID, display_name TEXT, email TEXT, photo_url TEXT, is_officer BOOLEAN, created_at TIMESTAMPTZ)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+        RAISE EXCEPTION 'Access denied: User is not an officer';
+    END IF;
+    RETURN QUERY SELECT u.id, u.display_name, u.email, u.photo_url, u.is_officer, u.created_at FROM users u ORDER BY u.created_at DESC;
+END;
+$$;
+
+-- Function for officers to toggle another user's officer status
+CREATE OR REPLACE FUNCTION toggle_officer_status(target_user_id UUID, new_status BOOLEAN)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+        RAISE EXCEPTION 'Access denied: User is not an officer';
+    END IF;
+    IF target_user_id = auth.uid() AND new_status = false THEN
+        RAISE EXCEPTION 'Cannot remove your own officer status';
+    END IF;
+    UPDATE users SET is_officer = new_status WHERE id = target_user_id;
+END;
+$$;
+
+-- Function for officers to get detailed user info
+CREATE OR REPLACE FUNCTION get_user_details_for_officers(target_user_id UUID)
+RETURNS TABLE (id UUID, display_name TEXT, email TEXT, photo_url TEXT, student_id TEXT, is_officer BOOLEAN, created_at TIMESTAMPTZ)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+        RAISE EXCEPTION 'Access denied: User is not an officer';
+    END IF;
+    RETURN QUERY SELECT u.id, u.display_name, u.email, u.photo_url, u.student_id, u.is_officer, u.created_at FROM users u WHERE u.id = target_user_id;
+END;
+$$;

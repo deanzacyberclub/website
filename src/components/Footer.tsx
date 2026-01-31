@@ -48,12 +48,8 @@ function Footer({ className = '' }: FooterProps) {
           .
         </p>
         <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
-          <Link to="/terms" className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all">
-            Terms of Service
-          </Link>
-          <span className="text-gray-700">|</span>
-          <Link to="/privacy" className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all">
-            Privacy Policy
+          <Link to="/legal" className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all">
+            Terms & Privacy
           </Link>
         </div>
       </div>

@@ -1,33 +1,26 @@
 import { X, Download } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Pathway, PathwayProgress } from '@/types/database.types'
+import type { Pathway } from '@/types/database.types'
 
 interface CertificateModalProps {
   pathway: Pathway
-  progress: PathwayProgress
+  lessonsCount: number
   onClose: () => void
 }
 
-function CertificateModal({ pathway, progress, onClose }: CertificateModalProps) {
+function CertificateModal({ pathway, lessonsCount, onClose }: CertificateModalProps) {
   const { userProfile } = useAuth()
 
   const handleDownload = () => {
-    // TODO: Implement certificate download/screenshot functionality
-    // For now, just trigger print dialog
+    // Trigger print dialog
     window.print()
   }
 
-  const completionDate = progress.updated_at
-    ? new Date(progress.updated_at).toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-      })
-    : new Date().toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-      })
+  const today = new Date().toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
@@ -79,7 +72,7 @@ function CertificateModal({ pathway, progress, onClose }: CertificateModalProps)
               </div>
 
               <p className="text-gray-400 font-terminal text-sm">
-                has successfully completed the
+                has engaged with the
               </p>
 
               <div className="py-3">
@@ -92,25 +85,21 @@ function CertificateModal({ pathway, progress, onClose }: CertificateModalProps)
               </div>
 
               <p className="text-gray-400 font-terminal text-sm">
-                demonstrating proficiency in cybersecurity fundamentals
+                studying cybersecurity fundamentals
                 <br />
-                and practical skills through {progress.lessons_completed} comprehensive lessons
+                and practical skills through {lessonsCount} lessons
               </p>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto mt-8 mb-6">
+            <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mt-8 mb-6">
               <div className="p-3 bg-terminal-alt rounded border border-matrix/30">
-                <div className="text-2xl font-bold text-matrix">{progress.completion_percentage}%</div>
-                <div className="text-xs text-gray-500 font-terminal">Completion</div>
-              </div>
-              <div className="p-3 bg-terminal-alt rounded border border-matrix/30">
-                <div className="text-2xl font-bold text-matrix">{progress.lessons_completed}</div>
+                <div className="text-2xl font-bold text-matrix">{lessonsCount}</div>
                 <div className="text-xs text-gray-500 font-terminal">Lessons</div>
               </div>
               <div className="p-3 bg-terminal-alt rounded border border-matrix/30">
-                <div className="text-2xl font-bold text-matrix">{Math.floor(progress.total_time_spent_minutes / 60)}h</div>
-                <div className="text-xs text-gray-500 font-terminal">Study Time</div>
+                <div className="text-2xl font-bold text-matrix">{pathway.estimated_hours || '?'}h</div>
+                <div className="text-xs text-gray-500 font-terminal">Est. Study Time</div>
               </div>
             </div>
 
@@ -118,8 +107,8 @@ function CertificateModal({ pathway, progress, onClose }: CertificateModalProps)
             <div className="mt-8 pt-6 border-t border-gray-800">
               <div className="flex items-center justify-between max-w-xl mx-auto">
                 <div className="text-left">
-                  <p className="text-gray-500 text-xs font-terminal mb-1">Date of Completion</p>
-                  <p className="text-matrix font-terminal text-sm">{completionDate}</p>
+                  <p className="text-gray-500 text-xs font-terminal mb-1">Date</p>
+                  <p className="text-matrix font-terminal text-sm">{today}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-gray-500 text-xs font-terminal mb-1">Certificate ID</p>
@@ -128,13 +117,6 @@ function CertificateModal({ pathway, progress, onClose }: CertificateModalProps)
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* Verification code */}
-            <div className="mt-6">
-              <p className="text-xs text-gray-600 font-terminal font-mono">
-                SHA256: {progress.id.slice(0, 16).toUpperCase()}...
-              </p>
             </div>
           </div>
         </div>

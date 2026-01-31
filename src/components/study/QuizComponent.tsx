@@ -1,17 +1,13 @@
 import { useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { submitQuiz } from '@/lib/progress'
-import type { Lesson, UserProgress, QuizData } from '@/types/database.types'
+import type { Lesson, QuizData } from '@/types/database.types'
 import { CheckCircle, XCircle, RotateCcw } from 'lucide-react'
 
 interface QuizComponentProps {
   lesson: Lesson
-  progress: UserProgress | undefined
   onComplete: () => void
 }
 
-function QuizComponent({ lesson, progress, onComplete }: QuizComponentProps) {
-  const { user } = useAuth()
+function QuizComponent({ lesson, onComplete }: QuizComponentProps) {
   const quizData = lesson.quiz_data as QuizData | null
   const questions = quizData?.questions || []
 
@@ -23,8 +19,6 @@ function QuizComponent({ lesson, progress, onComplete }: QuizComponentProps) {
     total: number
     percentage: number
   } | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showExplanation, setShowExplanation] = useState(false)
 
   if (!quizData || questions.length === 0) {
     return (
@@ -40,35 +34,37 @@ function QuizComponent({ lesson, progress, onComplete }: QuizComponentProps) {
 
   const handleAnswerSelect = (questionId: string, answer: string | number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }))
-    setShowExplanation(false)
   }
 
   const handleNext = () => {
     if (!isLastQuestion) {
       setCurrentQuestionIndex((prev) => prev + 1)
-      setShowExplanation(false)
     }
   }
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex((prev) => prev - 1)
-      setShowExplanation(false)
     }
   }
 
-  const handleSubmit = async () => {
-    if (!user) return
+  const handleSubmit = () => {
+    // Calculate score locally
+    let correctCount = 0
+    questions.forEach((q) => {
+      if (answers[q.id] === q.correct_answer) {
+        correctCount++
+      }
+    })
 
-    setIsSubmitting(true)
-    try {
-      const results = await submitQuiz(user.id, lesson.id, answers)
-      setQuizResults(results)
-      setShowResults(true)
-    } catch (error) {
-      console.error('Failed to submit quiz:', error)
-    }
-    setIsSubmitting(false)
+    const percentage = Math.round((correctCount / questions.length) * 100)
+
+    setQuizResults({
+      score: correctCount,
+      total: questions.length,
+      percentage
+    })
+    setShowResults(true)
   }
 
   const handleRetry = () => {
@@ -76,7 +72,6 @@ function QuizComponent({ lesson, progress, onComplete }: QuizComponentProps) {
     setCurrentQuestionIndex(0)
     setShowResults(false)
     setQuizResults(null)
-    setShowExplanation(false)
   }
 
   if (showResults && quizResults) {
@@ -171,20 +166,18 @@ function QuizComponent({ lesson, progress, onComplete }: QuizComponentProps) {
 
         {/* Actions */}
         <div className="flex gap-3 pt-4 border-t border-gray-800">
-          {!passed && (
-            <button
-              onClick={handleRetry}
-              className="btn-hack flex-1 flex items-center justify-center gap-2 px-6 py-2 text-sm font-terminal"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Retry Quiz
-            </button>
-          )}
+          <button
+            onClick={handleRetry}
+            className="btn-hack flex-1 flex items-center justify-center gap-2 px-6 py-2 text-sm font-terminal"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Retry Quiz
+          </button>
           <button
             onClick={onComplete}
             className="btn-hack-filled flex-1 px-6 py-2 text-sm font-terminal"
           >
-            {passed ? 'Continue' : 'Close'}
+            Close
           </button>
         </div>
       </div>
@@ -198,11 +191,6 @@ function QuizComponent({ lesson, progress, onComplete }: QuizComponentProps) {
         <span>
           Question {currentQuestionIndex + 1} of {questions.length}
         </span>
-        {progress?.quiz_attempts && progress.quiz_attempts > 0 && (
-          <span>
-            Attempts: {progress.quiz_attempts} | Best: {progress.quiz_best_score || 0}%
-          </span>
-        )}
       </div>
 
       {/* Progress Bar */}
@@ -261,15 +249,6 @@ function QuizComponent({ lesson, progress, onComplete }: QuizComponentProps) {
             />
           )}
         </div>
-
-        {/* Explanation (shown after answering in review mode) */}
-        {showExplanation && currentQuestion.explanation && (
-          <div className="mt-4 p-4 bg-terminal-bg rounded border border-hack-cyan/30">
-            <p className="text-xs font-terminal text-gray-400 italic">
-              💡 {currentQuestion.explanation}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Navigation */}
@@ -295,10 +274,10 @@ function QuizComponent({ lesson, progress, onComplete }: QuizComponentProps) {
         {isLastQuestion && (
           <button
             onClick={handleSubmit}
-            disabled={!hasAnswer || isSubmitting || Object.keys(answers).length !== questions.length}
+            disabled={!hasAnswer || Object.keys(answers).length !== questions.length}
             className="btn-hack-filled flex-1 px-6 py-2 text-sm font-terminal disabled:opacity-50"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
+            Submit Quiz
           </button>
         )}
       </div>

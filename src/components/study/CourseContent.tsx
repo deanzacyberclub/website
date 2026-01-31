@@ -1,34 +1,13 @@
-import { useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { completeLesson } from '@/lib/progress'
-import type { Lesson, UserProgress } from '@/types/database.types'
+import type { Lesson } from '@/types/database.types'
 import ReactMarkdown from 'react-markdown'
 
 interface CourseContentProps {
   lesson: Lesson
-  progress: UserProgress | undefined
   onComplete: () => void
 }
 
-function CourseContent({ lesson, progress, onComplete }: CourseContentProps) {
-  const { user } = useAuth()
-  const [isCompleting, setIsCompleting] = useState(false)
-
+function CourseContent({ lesson, onComplete }: CourseContentProps) {
   const content = lesson.content
-  const isCompleted = progress?.status === 'completed'
-
-  const handleMarkComplete = async () => {
-    if (!user || isCompleted) return
-
-    setIsCompleting(true)
-    try {
-      await completeLesson(user.id, lesson.id)
-      onComplete()
-    } catch (error) {
-      console.error('Failed to complete lesson:', error)
-    }
-    setIsCompleting(false)
-  }
 
   return (
     <div className="space-y-6">
@@ -140,25 +119,15 @@ function CourseContent({ lesson, progress, onComplete }: CourseContentProps) {
         </div>
       )}
 
-      {/* Complete Button */}
-      {user && !isCompleted && (
-        <div className="flex justify-end pt-4 border-t border-gray-800">
-          <button
-            onClick={handleMarkComplete}
-            disabled={isCompleting}
-            className="btn-hack-filled px-6 py-2 text-sm font-terminal disabled:opacity-50"
-          >
-            {isCompleting ? 'Completing...' : 'Mark as Complete'}
-          </button>
-        </div>
-      )}
-
-      {/* Completed Badge */}
-      {isCompleted && (
-        <div className="p-4 bg-matrix/10 border border-matrix rounded text-center">
-          <p className="text-matrix font-terminal text-sm">✓ Lesson Completed</p>
-        </div>
-      )}
+      {/* Close Button */}
+      <div className="flex justify-end pt-4 border-t border-gray-800">
+        <button
+          onClick={onComplete}
+          className="btn-hack-filled px-6 py-2 text-sm font-terminal"
+        >
+          Close
+        </button>
+      </div>
     </div>
   )
 }

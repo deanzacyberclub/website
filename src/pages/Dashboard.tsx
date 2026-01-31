@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import type { Meeting, Registration } from '@/types/database.types'
-import { Spinner, Warning, CheckCircle, ChevronRight, MapPin, Calendar, Shield } from '@/lib/cyberIcon'
+import { CheckCircle, ChevronRight, MapPin, Calendar, Shield } from '@/lib/cyberIcon'
 import { Tabs } from '@/components/Tabs'
 
 interface MeetingWithRegistration extends Meeting {
@@ -16,8 +16,7 @@ function Dashboard() {
   const [meetings, setMeetings] = useState<MeetingWithRegistration[]>([])
   const [attendanceCount, setAttendanceCount] = useState(0)
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
-  const { user, userProfile, signOut, loading } = useAuth()
-  const navigate = useNavigate()
+  const { user, userProfile } = useAuth()
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
@@ -72,17 +71,6 @@ function Dashboard() {
     }
   }, [user])
 
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth?to=/dashboard')
-    }
-  }, [user, loading, navigate])
-
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/')
-  }
-
   // Get upcoming meetings
   const upcomingMeetings = useMemo(() => {
     return meetings
@@ -130,76 +118,6 @@ function Dashboard() {
     }
 
     return statusConfig[registration.status] || null
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
-        <div className="crt-overlay" />
-        <div className="text-center relative z-10">
-          <div className="flex items-center gap-3 justify-center">
-            <Spinner className="animate-spin h-6 w-6 text-matrix" />
-            <span className="font-terminal text-lg neon-pulse">Loading session...</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null
-  }
-
-  // User is signed in but has no profile - show setup prompt
-  if (!userProfile) {
-    return (
-      <div className="min-h-screen bg-terminal-bg text-matrix">
-        <div className="crt-overlay" />
-        <div className="relative z-10 max-w-4xl mx-auto px-6">
-          <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <h1 className="text-3xl font-bold neon-text tracking-tight mb-2">PROFILE REQUIRED</h1>
-            <p className="text-gray-500">
-              <span className="text-hack-yellow">[WARNING]</span> Complete your profile to access the dashboard
-            </p>
-          </header>
-
-          <div
-            className={`terminal-window max-w-md transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-            style={{ transitionDelay: '200ms' }}
-          >
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">profile_incomplete.sh</span>
-            </div>
-            <div className="terminal-body text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-hack-yellow/10 border border-hack-yellow/30 flex items-center justify-center">
-                <Warning className="w-8 h-8 text-hack-yellow" />
-              </div>
-              <h3 className="text-hack-yellow font-bold text-lg mb-2">PROFILE NOT FOUND</h3>
-              <p className="text-gray-500 text-sm mb-6">
-                Complete your profile to access all features.
-              </p>
-              <Link
-                to="/auth"
-                className="btn-hack-filled rounded-lg inline-flex items-center gap-2"
-              >
-                SETUP PROFILE
-              </Link>
-              <div className="mt-4">
-                <button
-                  onClick={handleSignOut}
-                  className="text-gray-500 hover:text-matrix text-xs font-terminal transition-colors"
-                >
-                  Sign out and use a different account
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (

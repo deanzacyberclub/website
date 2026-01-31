@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { X } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
-import { calculateLessonStatus, startLesson } from '@/lib/progress'
-import type { Lesson, UserProgress } from '@/types/database.types'
+import type { Lesson } from '@/types/database.types'
 import CourseContent from './CourseContent'
 import WorkshopLink from './WorkshopLink'
 import QuizComponent from './QuizComponent'
@@ -10,35 +8,10 @@ import FlashcardComponent from './FlashcardComponent'
 
 interface LessonModalProps {
   lesson: Lesson
-  allLessons: Lesson[]
-  userProgress: UserProgress[]
   onClose: () => void
 }
 
-function LessonModal({ lesson, allLessons, userProgress, onClose }: LessonModalProps) {
-  const { user } = useAuth()
-  const [isStarting, setIsStarting] = useState(false)
-
-  const lessonStatus = calculateLessonStatus(lesson, userProgress, allLessons)
-  const progress = userProgress.find((p) => p.lesson_id === lesson.id)
-
-  // Auto-start lesson when opened if unlocked and not started
-  useEffect(() => {
-    async function autoStart() {
-      if (user && lessonStatus === 'unlocked' && !progress) {
-        setIsStarting(true)
-        try {
-          await startLesson(user.id, lesson.id)
-        } catch (error) {
-          console.error('Failed to start lesson:', error)
-        }
-        setIsStarting(false)
-      }
-    }
-
-    autoStart()
-  }, [user, lesson.id, lessonStatus, progress])
-
+function LessonModal({ lesson, onClose }: LessonModalProps) {
   // Close modal on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -113,46 +86,26 @@ function LessonModal({ lesson, allLessons, userProgress, onClose }: LessonModalP
                 </div>
               )}
             </div>
-
-            {/* Progress Indicator */}
-            {progress && (
-              <div className="mt-4 p-3 bg-terminal-alt rounded border border-matrix/30">
-                <div className="flex items-center justify-between mb-2 text-xs font-terminal">
-                  <span className="text-gray-400">Progress</span>
-                  <span className="text-matrix">{progress.progress_percentage}%</span>
-                </div>
-                <div className="h-1.5 bg-terminal-bg rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-matrix transition-all duration-300"
-                    style={{ width: `${progress.progress_percentage}%` }}
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Lesson Content Based on Type */}
-          {isStarting && (
-            <div className="text-center py-12 text-gray-500 font-terminal">Starting lesson...</div>
+          {lesson.type === 'course' && (
+            <CourseContent lesson={lesson} onComplete={onClose} />
           )}
 
-          {!isStarting && lesson.type === 'course' && (
-            <CourseContent lesson={lesson} progress={progress} onComplete={onClose} />
+          {lesson.type === 'workshop' && (
+            <WorkshopLink lesson={lesson} onComplete={onClose} />
           )}
 
-          {!isStarting && lesson.type === 'workshop' && (
-            <WorkshopLink lesson={lesson} progress={progress} onComplete={onClose} />
+          {lesson.type === 'quiz' && (
+            <QuizComponent lesson={lesson} onComplete={onClose} />
           )}
 
-          {!isStarting && lesson.type === 'quiz' && (
-            <QuizComponent lesson={lesson} progress={progress} onComplete={onClose} />
+          {lesson.type === 'flashcard' && (
+            <FlashcardComponent lesson={lesson} onComplete={onClose} />
           )}
 
-          {!isStarting && lesson.type === 'flashcard' && (
-            <FlashcardComponent lesson={lesson} progress={progress} onComplete={onClose} />
-          )}
-
-          {!isStarting && lesson.type === 'ctf' && (
+          {lesson.type === 'ctf' && (
             <div className="p-6 bg-terminal-alt rounded border border-matrix/30">
               <h3 className="text-lg font-bold text-matrix mb-3">CTF Challenge</h3>
               <p className="text-gray-400 font-terminal text-sm mb-4">

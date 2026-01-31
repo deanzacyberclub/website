@@ -1,23 +1,16 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
 import { fetchLessonMeeting } from '@/lib/study'
-import { completeLesson } from '@/lib/progress'
-import type { Lesson, UserProgress, Meeting } from '@/types/database.types'
+import type { Lesson, Meeting } from '@/types/database.types'
 import { Calendar, Clock, MapPin, Users } from 'lucide-react'
 
 interface WorkshopLinkProps {
   lesson: Lesson
-  progress: UserProgress | undefined
   onComplete: () => void
 }
 
-function WorkshopLink({ lesson, progress, onComplete }: WorkshopLinkProps) {
-  const { user } = useAuth()
+function WorkshopLink({ lesson, onComplete }: WorkshopLinkProps) {
   const [meeting, setMeeting] = useState<Meeting | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isCompleting, setIsCompleting] = useState(false)
-
-  const isCompleted = progress?.status === 'completed'
 
   useEffect(() => {
     async function loadMeeting() {
@@ -34,19 +27,6 @@ function WorkshopLink({ lesson, progress, onComplete }: WorkshopLinkProps) {
 
     loadMeeting()
   }, [lesson.meeting_id])
-
-  const handleMarkComplete = async () => {
-    if (!user || isCompleted) return
-
-    setIsCompleting(true)
-    try {
-      await completeLesson(user.id, lesson.id)
-      onComplete()
-    } catch (error) {
-      console.error('Failed to complete lesson:', error)
-    }
-    setIsCompleting(false)
-  }
 
   return (
     <div className="space-y-6">
@@ -138,38 +118,15 @@ function WorkshopLink({ lesson, progress, onComplete }: WorkshopLinkProps) {
         </div>
       )}
 
-      {/* Complete Button (for self-paced only) */}
-      {user && !isCompleted && lesson.is_self_paced && !meeting && (
-        <div className="flex justify-end pt-4 border-t border-gray-800">
-          <button
-            onClick={handleMarkComplete}
-            disabled={isCompleting}
-            className="btn-hack-filled px-6 py-2 text-sm font-terminal disabled:opacity-50"
-          >
-            {isCompleting ? 'Completing...' : 'Mark as Complete'}
-          </button>
-        </div>
-      )}
-
-      {/* Completed Badge */}
-      {isCompleted && (
-        <div className="p-4 bg-matrix/10 border border-matrix rounded text-center">
-          <p className="text-matrix font-terminal text-sm">
-            ✓ Workshop Completed
-            {progress.completed_at &&
-              ` on ${new Date(progress.completed_at).toLocaleDateString()}`}
-          </p>
-        </div>
-      )}
-
-      {/* Note about automatic completion */}
-      {user && !isCompleted && meeting && (
-        <div className="p-4 bg-hack-cyan/10 border border-hack-cyan/30 rounded">
-          <p className="text-hack-cyan font-terminal text-xs">
-            💡 Tip: This workshop will be automatically marked complete when you attend the meeting
-          </p>
-        </div>
-      )}
+      {/* Close Button */}
+      <div className="flex justify-end pt-4 border-t border-gray-800">
+        <button
+          onClick={onComplete}
+          className="btn-hack-filled px-6 py-2 text-sm font-terminal"
+        >
+          Close
+        </button>
+      </div>
     </div>
   )
 }

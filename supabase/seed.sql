@@ -1,5 +1,19 @@
--- Seed data for meetings table
--- Run this after setup.sql to populate the database with sample meetings
+-- ============================================================
+-- Seed Data for De Anza Cybersecurity Club
+-- Run this after setup.sql to populate the database
+-- ============================================================
+
+-- ============================================================
+-- PATHWAYS SEED DATA
+-- ============================================================
+
+INSERT INTO public.pathways (slug, title, description, icon, difficulty, estimated_hours, color, order_index, is_active) VALUES
+('security-plus', 'Security+ Certification', 'Comprehensive preparation for CompTIA Security+ certification covering network security, compliance, threats, and cryptography.', '🛡️', 'beginner', 40, 'hack-cyan', 1, true),
+('professional-ethical-hacker', 'Professional Ethical Hacker', 'Master offensive security techniques including reconnaissance, scanning, exploitation, and post-exploitation in controlled environments.', '🎯', 'intermediate', 60, 'hack-purple', 2, true);
+
+-- ============================================================
+-- MEETINGS SEED DATA
+-- ============================================================
 
 INSERT INTO public.meetings (slug, title, description, date, time, location, type, featured, topics, announcements, photos, resources, secret_code) VALUES
 (
@@ -62,8 +76,8 @@ INSERT INTO public.meetings (slug, title, description, date, time, location, typ
     false,
     ARRAY['CTF', 'Web Security', 'Cryptography'],
     '[
-        {"id": "a2", "title": "Teams Forming", "content": "Reply in #ctf-teams on Discord if you want to team up. Max 3 per team for this practice session. We recommend mixing experience levels so everyone can learn from each other. If you''re new, don''t be shy - experienced members love teaching! Solo participants are also welcome. We''ll have mentors floating around to help when you get stuck on challenges.", "date": "2025-01-28"},
-        {"id": "a1", "title": "CTF Platform Access", "content": "We''ll be using PicoCTF for beginners and HackTheBox for advanced members. Create accounts beforehand! PicoCTF is completely free and has great beginner challenges in web exploitation, cryptography, and forensics. HackTheBox requires a quick invite code challenge to join - ask in Discord if you get stuck. Both platforms will be useful throughout your cybersecurity journey.", "date": "2025-01-27"}
+        {"id": "a2", "title": "Teams Forming", "content": "Reply in #ctf-teams on Discord if you want to team up. Max 3 per team for this practice session.", "date": "2025-01-28"},
+        {"id": "a1", "title": "CTF Platform Access", "content": "We''ll be using PicoCTF for beginners and HackTheBox for advanced members. Create accounts beforehand!", "date": "2025-01-27"}
     ]'::jsonb,
     '[
         {"id": "p1", "url": "/photos/ctf-1.jpg", "caption": "Discord voice chat during CTF"},
@@ -87,7 +101,7 @@ INSERT INTO public.meetings (slug, title, description, date, time, location, typ
     false,
     ARRAY['Networking', 'Firewalls', 'Wireshark'],
     '[
-        {"id": "a1", "title": "Wireshark Installation", "content": "Please install Wireshark before the session. We''ll analyze packet captures live! Download it from wireshark.org - it''s free and available for Windows, Mac, and Linux. During installation, make sure to include Npcap (Windows) or the capture drivers for your OS. We''ll be dissecting real network traffic to understand protocols like HTTP, DNS, and TCP handshakes. Bring headphones if you want to follow along with the video portions.", "date": "2025-02-03"}
+        {"id": "a1", "title": "Wireshark Installation", "content": "Please install Wireshark before the session. We''ll analyze packet captures live!", "date": "2025-02-03"}
     ]'::jsonb,
     '[
         {"id": "p1", "url": "/photos/network-1.jpg", "caption": "Network topology discussion"},
@@ -111,8 +125,8 @@ INSERT INTO public.meetings (slug, title, description, date, time, location, typ
     false,
     ARRAY['OWASP', 'Burp Suite', 'SQL Injection'],
     '[
-        {"id": "a2", "title": "Practice Lab Extended", "content": "Due to popular demand, we''ve extended access to the practice lab until the end of the month. The lab includes vulnerable web applications where you can safely practice the techniques we learned. Remember: only use these skills on systems you have permission to test! Lab credentials are pinned in #workshop-labs on Discord. Let us know if you complete all the challenges - we might have bonus ones!", "date": "2024-12-15"},
-        {"id": "a1", "title": "Workshop Recording Available", "content": "The full recording of the workshop is now available on our Discord server. Check the #resources channel! The video is about 2 hours long and includes timestamps for each OWASP vulnerability we covered. We also included the bonus SQL injection deep-dive that we ran out of time for during the live session. Share with friends who couldn''t make it - the more people learning security, the better!", "date": "2024-12-11"}
+        {"id": "a2", "title": "Practice Lab Extended", "content": "Due to popular demand, we''ve extended access to the practice lab until the end of the month.", "date": "2024-12-15"},
+        {"id": "a1", "title": "Workshop Recording Available", "content": "The full recording of the workshop is now available on our Discord server.", "date": "2024-12-11"}
     ]'::jsonb,
     '[
         {"id": "p1", "url": "/photos/websec-1.jpg", "caption": "Students working on SQL injection challenges"},
@@ -138,8 +152,8 @@ INSERT INTO public.meetings (slug, title, description, date, time, location, typ
     false,
     ARRAY['Introduction', 'Community'],
     '[
-        {"id": "a2", "title": "Quarter Schedule Posted", "content": "Check out our full fall quarter schedule on the meetings page. Lots of exciting workshops coming up! We''ve got hands-on hacking sessions, certification study groups, CTF practice nights, and social events planned. Meetings are typically Wednesdays at 4pm, but check each event for specific times. Add them to your calendar so you don''t miss out!", "date": "2024-10-03"},
-        {"id": "a1", "title": "Welcome to DACC!", "content": "Thanks everyone who came out to our first meeting! Don''t forget to join our Discord server and sign the petition to help make us an official De Anza club. We need 20 signatures to get recognized, which unlocks funding for events, certifications, and competition fees. Your support means everything - spread the word to anyone interested in cybersecurity!", "date": "2024-10-02"}
+        {"id": "a2", "title": "Quarter Schedule Posted", "content": "Check out our full fall quarter schedule on the meetings page.", "date": "2024-10-03"},
+        {"id": "a1", "title": "Welcome to DACC!", "content": "Thanks everyone who came out to our first meeting!", "date": "2024-10-02"}
     ]'::jsonb,
     '[
         {"id": "p1", "url": "/photos/kickoff-1.jpg", "caption": "Officer introductions"},
@@ -164,8 +178,8 @@ INSERT INTO public.meetings (slug, title, description, date, time, location, typ
     false,
     ARRAY['Password Security', 'HashCat', 'Cryptography'],
     '[
-        {"id": "a2", "title": "Recording Available", "content": "Missed the session? Full recording is now up in the resources section. We covered password hashing fundamentals, rainbow tables, salting, and live HashCat demonstrations. The recording includes our successful crack of a 50,000 password hash dump in under 10 minutes! Also check out the wordlist resources - having good wordlists is half the battle in password cracking.", "date": "2024-11-16"},
-        {"id": "a1", "title": "GPU Recommended", "content": "HashCat works best with a GPU for maximum cracking speed. Don''t have one? No worries - watch the demo and use the cloud lab link in resources! We''ll explain why GPUs are so much faster than CPUs for this task (hint: parallel processing). Even if you can''t run it yourself, understanding the concepts is what matters. We''ll cover MD5, SHA-256, bcrypt, and why some hashes are harder to crack than others.", "date": "2024-11-13"}
+        {"id": "a2", "title": "Recording Available", "content": "Missed the session? Full recording is now up in the resources section.", "date": "2024-11-16"},
+        {"id": "a1", "title": "GPU Recommended", "content": "HashCat works best with a GPU for maximum cracking speed.", "date": "2024-11-13"}
     ]'::jsonb,
     '[
         {"id": "p1", "url": "/photos/hashcat-1.jpg", "caption": "HashCat cracking in action"},
@@ -190,9 +204,9 @@ INSERT INTO public.meetings (slug, title, description, date, time, location, typ
     false,
     ARRAY['Networking', 'Social'],
     '[
-        {"id": "a3", "title": "Thanks for an Amazing Quarter!", "content": "What a turnout! Thanks to everyone who came out to celebrate with us. We had over 30 people show up and the trivia competition was intense! Congrats to Team \"SQL Injection\" for taking first place. Photos are up in the resources section. See you all next quarter for even more hacking workshops, CTF competitions, and community events. Happy holidays and stay curious!", "date": "2024-12-06"},
-        {"id": "a2", "title": "Hacking Games & Trivia", "content": "We''ll have some fun security-themed games and trivia with prizes! Test your knowledge on everything from famous hackers to cryptography basics. Prizes include cybersecurity books, stickers, and some surprise swag. Teams of 3-4 recommended for trivia. We''ll also have a mini lock-picking station set up for anyone who wants to try their hand at physical security. No experience needed!", "date": "2024-12-04"},
-        {"id": "a1", "title": "Food & Drinks Provided!", "content": "Pizza and drinks on us! RSVP in the #social-events channel on Discord so we know how much to order. We''re getting a variety of pizzas including vegetarian options. If you have dietary restrictions, let us know and we''ll make sure there''s something for you. This is a great chance to hang out with club members outside of workshops and make some friends in the cybersecurity community!", "date": "2024-12-03"}
+        {"id": "a3", "title": "Thanks for an Amazing Quarter!", "content": "What a turnout! Thanks to everyone who came out to celebrate with us.", "date": "2024-12-06"},
+        {"id": "a2", "title": "Hacking Games & Trivia", "content": "We''ll have some fun security-themed games and trivia with prizes!", "date": "2024-12-04"},
+        {"id": "a1", "title": "Food & Drinks Provided!", "content": "Pizza and drinks on us! RSVP in the #social-events channel on Discord.", "date": "2024-12-03"}
     ]'::jsonb,
     '[
         {"id": "p1", "url": "/photos/social-1.jpg", "caption": "Pizza party!"},
@@ -206,3 +220,11 @@ INSERT INTO public.meetings (slug, title, description, date, time, location, typ
     ]'::jsonb,
     'PARTY24'
 );
+
+-- ============================================================
+-- LESSONS CURRICULUM DATA
+-- This section contains the complete study curriculum
+-- ============================================================
+
+-- Note: The curriculum is loaded via a separate file due to size
+-- Run: psql -f supabase/curriculum.sql after this file

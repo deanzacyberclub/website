@@ -228,6 +228,8 @@ function Auth() {
     )
   }
 
+  const redirectTo = searchParams.get('to')
+
   const renderSignInStep = () => (
     <div className="terminal-window max-w-md mx-auto">
       <div className="terminal-header">
@@ -237,6 +239,15 @@ function Auth() {
         <span className="ml-4 text-xs text-gray-500 font-terminal">init_auth.sh</span>
       </div>
       <div className="terminal-body">
+        {redirectTo && (
+          <div className="mb-4 px-3 py-2 bg-hack-cyan/10 border border-hack-cyan/30 rounded-lg">
+            <p className="text-sm text-hack-cyan font-terminal">
+              <span className="text-hack-yellow">[NOTICE]</span> Sign in to continue to{' '}
+              <span className="text-matrix">{redirectTo}</span>
+            </p>
+          </div>
+        )}
+
         <p className="text-sm text-gray-500 font-terminal mb-6">
           <span className="text-matrix">&gt;</span> Choose your authentication method
         </p>

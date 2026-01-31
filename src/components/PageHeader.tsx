@@ -1,10 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ProfileMenu from "./ProfileMenu";
+import { Login } from "@/lib/cyberIcon";
 
 function PageHeader() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const isEventsActive = location.pathname.startsWith("/meetings");
   const isStudyActive = location.pathname === "/study";
   const isCTFActive = location.pathname.startsWith("/ctf");
@@ -62,7 +63,19 @@ function PageHeader() {
         </Link>
       </div>
 
-      <ProfileMenu />
+      {loading ? (
+        <div className="w-10 h-10 rounded-full bg-terminal-alt border-2 border-gray-700 animate-pulse" />
+      ) : user ? (
+        <ProfileMenu />
+      ) : (
+        <Link
+          to={`/auth?to=${encodeURIComponent(location.pathname)}`}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-700 hover:border-matrix text-gray-400 hover:text-matrix transition-colors font-terminal text-sm"
+        >
+          <Login className="w-4 h-4" />
+          Sign in
+        </Link>
+      )}
     </div>
   );
 }

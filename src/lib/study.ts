@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Pathway, Lesson, UserProgress, PathwayProgress } from '@/types/database.types'
+import type { Pathway, Lesson } from '@/types/database.types'
 
 /**
  * Fetch all active pathways ordered by order_index
@@ -72,70 +72,6 @@ export async function fetchLessonById(lessonId: string): Promise<Lesson | null> 
   }
 
   return data as Lesson | null
-}
-
-/**
- * Fetch user's progress for all lessons in a pathway
- */
-export async function fetchUserProgress(
-  userId: string,
-  pathwayId: string
-): Promise<{
-  lessons: UserProgress[]
-  pathway: PathwayProgress | null
-}> {
-  // Fetch lesson progress for this pathway
-  const { data: lessonData, error: lessonError } = await supabase
-    .from('user_progress')
-    .select(`
-      *,
-      lessons!inner(pathway_id)
-    `)
-    .eq('user_id', userId)
-    .eq('lessons.pathway_id', pathwayId)
-
-  if (lessonError) {
-    console.error('Error fetching user lesson progress:', lessonError)
-  }
-
-  // Fetch pathway-level progress
-  const { data: pathwayData, error: pathwayError } = await supabase
-    .from('pathway_progress')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('pathway_id', pathwayId)
-    .maybeSingle()
-
-  if (pathwayError) {
-    console.error('Error fetching pathway progress:', pathwayError)
-  }
-
-  return {
-    lessons: (lessonData as UserProgress[]) || [],
-    pathway: pathwayData || null
-  }
-}
-
-/**
- * Fetch user's progress for a specific lesson
- */
-export async function fetchUserLessonProgress(
-  userId: string,
-  lessonId: string
-): Promise<UserProgress | null> {
-  const { data, error } = await supabase
-    .from('user_progress')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('lesson_id', lessonId)
-    .maybeSingle()
-
-  if (error) {
-    console.error('Error fetching user lesson progress:', error)
-    return null
-  }
-
-  return data
 }
 
 /**

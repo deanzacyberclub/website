@@ -1,34 +1,19 @@
-import { useMemo, useState } from 'react'
-import type { Pathway, Lesson, UserProgress, PathwayProgress } from '@/types/database.types'
-import { calculateLessonStatus } from '@/lib/progress'
+import { useState } from 'react'
+import type { Pathway, Lesson } from '@/types/database.types'
 import LessonNode from './LessonNode'
 import CertificateModal from './CertificateModal'
-import { Award, Lock } from 'lucide-react'
+import { Award, Lock, LogIn } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 interface PathwayMapProps {
   pathway: Pathway | undefined
   lessons: Lesson[]
-  userProgress: UserProgress[]
-  pathwayProgress: PathwayProgress | null
+  isLoggedIn: boolean
   onLessonClick: (lesson: Lesson) => void
 }
 
-function PathwayMap({ pathway, lessons, userProgress, pathwayProgress, onLessonClick }: PathwayMapProps) {
+function PathwayMap({ pathway, lessons, isLoggedIn, onLessonClick }: PathwayMapProps) {
   const [showCertificate, setShowCertificate] = useState(false)
-
-  // Calculate lesson statuses
-  const lessonStatuses = useMemo(() => {
-    return lessons.map((lesson) => ({
-      lesson,
-      status: calculateLessonStatus(lesson, userProgress, lessons),
-      progress: userProgress.find((p) => p.lesson_id === lesson.id)
-    }))
-  }, [lessons, userProgress])
-
-  // Check if all lessons are completed
-  const allLessonsCompleted = useMemo(() => {
-    return pathwayProgress?.completion_percentage === 100 && lessons.length > 0
-  }, [pathwayProgress, lessons])
 
   if (!pathway || lessons.length === 0) {
     return null
@@ -74,7 +59,7 @@ function PathwayMap({ pathway, lessons, userProgress, pathwayProgress, onLessonC
         </div>
       </div>
 
-      {/* Pathway Visualization - Duolingo Style */}
+      {/* Pathway Visualization */}
       <div className="terminal-window">
         <div className="terminal-header">
           <div className="terminal-dot red" />
@@ -84,7 +69,7 @@ function PathwayMap({ pathway, lessons, userProgress, pathwayProgress, onLessonC
         </div>
         <div className="terminal-body">
           <div className="space-y-0 max-w-2xl mx-auto">
-            {lessonStatuses.map(({ lesson, status, progress }, index) => (
+            {lessons.map((lesson, index) => (
               <div key={lesson.id} className="flex gap-6 items-start">
                 {/* Timeline column with dotted line */}
                 <div className="flex flex-col items-center shrink-0 pt-4">
@@ -94,20 +79,10 @@ function PathwayMap({ pathway, lessons, userProgress, pathwayProgress, onLessonC
                   )}
 
                   {/* Node dot indicator */}
-                  <div
-                    className={`w-3 h-3 rounded-full transition-all ${
-                      status === 'completed'
-                        ? 'bg-matrix border-2 border-matrix shadow-neon'
-                        : status === 'in_progress'
-                          ? 'bg-hack-cyan border-2 border-hack-cyan animate-pulse'
-                          : status === 'unlocked'
-                            ? 'bg-terminal-alt border-2 border-matrix/50'
-                            : 'bg-gray-800 border-2 border-gray-700'
-                    }`}
-                  />
+                  <div className="w-3 h-3 rounded-full bg-terminal-alt border-2 border-matrix/50" />
 
                   {/* Connector line below (except for last item) */}
-                  {index < lessonStatuses.length - 1 && (
+                  {index < lessons.length - 1 && (
                     <div className="border-l-2 border-dotted border-matrix/30 flex-1 min-h-[80px] mt-2" />
                   )}
                 </div>
@@ -117,8 +92,6 @@ function PathwayMap({ pathway, lessons, userProgress, pathwayProgress, onLessonC
                   <div className="flex items-center justify-center">
                     <LessonNode
                       lesson={lesson}
-                      status={status}
-                      score={progress?.quiz_score}
                       onClick={() => onLessonClick(lesson)}
                     />
                   </div>
@@ -134,66 +107,60 @@ function PathwayMap({ pathway, lessons, userProgress, pathwayProgress, onLessonC
                 <div className="border-l-2 border-dotted border-matrix/30 h-8 mb-2" />
 
                 {/* Certificate dot indicator */}
-                <div
-                  className={`w-3 h-3 rounded-full transition-all ${
-                    allLessonsCompleted
-                      ? 'bg-hack-yellow border-2 border-hack-yellow shadow-lg'
-                      : 'bg-gray-800 border-2 border-gray-700'
-                  }`}
-                />
+                <div className="w-3 h-3 rounded-full bg-gray-800 border-2 border-gray-700" />
               </div>
 
               {/* Certificate Card */}
               <div className="flex-1 pb-4">
-                <button
-                  onClick={() => allLessonsCompleted && setShowCertificate(true)}
-                  disabled={!allLessonsCompleted}
-                  className={`w-full p-6 rounded-lg border-2 transition-all ${
-                    allLessonsCompleted
-                      ? 'bg-hack-yellow/10 border-hack-yellow hover:bg-hack-yellow/20 hover:scale-[1.02] cursor-pointer'
-                      : 'bg-gray-900/50 border-gray-800 opacity-50 cursor-not-allowed'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Icon */}
-                    <div
-                      className={`w-16 h-16 rounded-lg border-2 flex items-center justify-center ${
-                        allLessonsCompleted
-                          ? 'bg-hack-yellow/20 border-hack-yellow'
-                          : 'bg-gray-800 border-gray-700'
-                      }`}
-                    >
-                      {allLessonsCompleted ? (
+                {isLoggedIn ? (
+                  <button
+                    onClick={() => setShowCertificate(true)}
+                    className="w-full p-6 rounded-lg border-2 transition-all bg-hack-yellow/10 border-hack-yellow hover:bg-hack-yellow/20 hover:scale-[1.02] cursor-pointer"
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Icon */}
+                      <div className="w-16 h-16 rounded-lg border-2 flex items-center justify-center bg-hack-yellow/20 border-hack-yellow">
                         <Award className="w-8 h-8 text-hack-yellow" />
-                      ) : (
-                        <Lock className="w-8 h-8 text-gray-600" />
-                      )}
-                    </div>
+                      </div>
 
-                    {/* Content */}
-                    <div className="flex-1 text-left">
-                      <h3
-                        className={`text-lg font-bold mb-1 ${
-                          allLessonsCompleted ? 'text-hack-yellow' : 'text-gray-600'
-                        }`}
-                      >
-                        {allLessonsCompleted
-                          ? 'Certificate of Accomplishment'
-                          : 'Certificate Locked'}
-                      </h3>
-                      <p className="text-xs text-gray-500 font-terminal">
-                        {allLessonsCompleted
-                          ? 'Tap to view and download your certificate'
-                          : `Complete all ${lessons.length} lessons to unlock`}
-                      </p>
-                      {allLessonsCompleted && (
-                        <div className="mt-2 text-xs text-hack-yellow font-terminal">
-                          🎉 Congratulations! You've completed the pathway
-                        </div>
-                      )}
+                      {/* Content */}
+                      <div className="flex-1 text-left">
+                        <h3 className="text-lg font-bold mb-1 text-hack-yellow">
+                          Certificate of Accomplishment
+                        </h3>
+                        <p className="text-xs text-gray-500 font-terminal">
+                          Tap to view and download your certificate
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ) : (
+                  <div className="w-full p-6 rounded-lg border-2 bg-gray-900/50 border-gray-800">
+                    <div className="flex items-center gap-4">
+                      {/* Icon */}
+                      <div className="w-16 h-16 rounded-lg border-2 flex items-center justify-center bg-gray-800 border-gray-700">
+                        <Lock className="w-8 h-8 text-gray-600" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 text-left">
+                        <h3 className="text-lg font-bold mb-1 text-gray-600">
+                          Certificate Locked
+                        </h3>
+                        <p className="text-xs text-gray-500 font-terminal mb-2">
+                          Sign in to get your certificate of accomplishment
+                        </p>
+                        <Link
+                          to="/auth?to=/study"
+                          className="inline-flex items-center gap-2 text-xs text-matrix hover:underline font-terminal"
+                        >
+                          <LogIn className="w-3 h-3" />
+                          Sign in
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </button>
+                )}
               </div>
             </div>
           </div>
@@ -201,10 +168,10 @@ function PathwayMap({ pathway, lessons, userProgress, pathwayProgress, onLessonC
       </div>
 
       {/* Certificate Modal */}
-      {showCertificate && pathwayProgress && (
+      {showCertificate && (
         <CertificateModal
           pathway={pathway}
-          progress={pathwayProgress}
+          lessonsCount={lessons.length}
           onClose={() => setShowCertificate(false)}
         />
       )}
@@ -213,20 +180,8 @@ function PathwayMap({ pathway, lessons, userProgress, pathwayProgress, onLessonC
       <div className="mt-4 p-4 bg-terminal-alt rounded-lg border border-gray-800">
         <div className="flex flex-wrap gap-4 text-xs font-terminal text-gray-400">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-gray-800 border border-gray-700" />
-            <span>Locked</span>
-          </div>
-          <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-terminal-alt border border-matrix/50" />
             <span>Available</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-hack-cyan/10 border border-hack-cyan animate-pulse" />
-            <span>In Progress</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-matrix/20 border border-matrix" />
-            <span>Completed</span>
           </div>
         </div>
       </div>
