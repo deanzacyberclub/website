@@ -1,14 +1,22 @@
 import { X, Download } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Pathway } from '@/types/database.types'
+
+// Hardcoded pathway info for certificate
+const PATHWAY_INFO = {
+  slug: 'security-plus',
+  title: 'Security+ Certification',
+  description: 'Comprehensive preparation for CompTIA Security+ certification covering network security, compliance, threats, and cryptography.',
+  icon: '🛡️',
+  estimated_hours: 40
+}
 
 interface CertificateModalProps {
-  pathway: Pathway
+  pathwayTitle: string
   lessonsCount: number
   onClose: () => void
 }
 
-function CertificateModal({ pathway, lessonsCount, onClose }: CertificateModalProps) {
+function CertificateModal({ pathwayTitle, lessonsCount, onClose }: CertificateModalProps) {
   const { userProfile } = useAuth()
 
   const handleDownload = () => {
@@ -56,9 +64,7 @@ function CertificateModal({ pathway, lessonsCount, onClose }: CertificateModalPr
             </div>
 
             {/* Pathway icon */}
-            {pathway.icon && (
-              <div className="text-6xl mb-4">{pathway.icon}</div>
-            )}
+            <div className="text-6xl mb-4">{PATHWAY_INFO.icon}</div>
 
             {/* Body */}
             <div className="space-y-4 max-w-2xl mx-auto">
@@ -77,10 +83,10 @@ function CertificateModal({ pathway, lessonsCount, onClose }: CertificateModalPr
 
               <div className="py-3">
                 <p className="text-2xl md:text-3xl font-bold text-hack-cyan">
-                  {pathway.title}
+                  {pathwayTitle}
                 </p>
                 <p className="text-sm text-gray-500 font-terminal mt-2">
-                  {pathway.description}
+                  {PATHWAY_INFO.description}
                 </p>
               </div>
 
@@ -98,7 +104,7 @@ function CertificateModal({ pathway, lessonsCount, onClose }: CertificateModalPr
                 <div className="text-xs text-gray-500 font-terminal">Lessons</div>
               </div>
               <div className="p-3 bg-terminal-alt rounded border border-matrix/30">
-                <div className="text-2xl font-bold text-matrix">{pathway.estimated_hours || '?'}h</div>
+                <div className="text-2xl font-bold text-matrix">{PATHWAY_INFO.estimated_hours}h</div>
                 <div className="text-xs text-gray-500 font-terminal">Est. Study Time</div>
               </div>
             </div>
@@ -113,7 +119,7 @@ function CertificateModal({ pathway, lessonsCount, onClose }: CertificateModalPr
                 <div className="text-right">
                   <p className="text-gray-500 text-xs font-terminal mb-1">Certificate ID</p>
                   <p className="text-matrix font-terminal text-sm font-mono">
-                    {pathway.slug.toUpperCase()}-{userProfile?.student_id?.slice(-4) || '0000'}
+                    {PATHWAY_INFO.slug.toUpperCase()}-{userProfile?.student_id?.slice(-4) || '0000'}
                   </p>
                 </div>
               </div>

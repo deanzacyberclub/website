@@ -1,21 +1,32 @@
 import type { Lesson } from '@/types/database.types'
-import { BookOpen, Users, Flag, CheckCircle, CreditCard } from 'lucide-react'
+import { BookOpen, Users, Flag, CheckCircle, CreditCard, Clock } from 'lucide-react'
 
 interface LessonNodeProps {
   lesson: Lesson
   onClick: () => void
 }
 
-function LessonNode({ lesson, onClick }: LessonNodeProps) {
-  const iconByType = {
-    course: BookOpen,
-    workshop: Users,
-    ctf: Flag,
-    quiz: CheckCircle,
-    flashcard: CreditCard
-  }
+const TYPE_CONFIG: Record<string, { label: string; color: string; Icon: typeof BookOpen }> = {
+  course: { label: 'COURSE', color: 'text-hack-cyan border-hack-cyan/50', Icon: BookOpen },
+  workshop: { label: 'WORKSHOP', color: 'text-hack-yellow border-hack-yellow/50', Icon: Users },
+  ctf: { label: 'CTF', color: 'text-hack-red border-hack-red/50', Icon: Flag },
+  quiz: { label: 'QUIZ', color: 'text-hack-purple border-hack-purple/50', Icon: CheckCircle },
+  flashcard: { label: 'FLASHCARDS', color: 'text-hack-orange border-hack-orange/50', Icon: CreditCard }
+}
 
-  const Icon = iconByType[lesson.type] || BookOpen
+const DIFFICULTY_CONFIG: Record<string, { label: string; color: string }> = {
+  easy: { label: 'Easy', color: 'bg-matrix/20 text-matrix border-matrix/50' },
+  beginner: { label: 'Beginner', color: 'bg-matrix/20 text-matrix border-matrix/50' },
+  medium: { label: 'Medium', color: 'bg-hack-yellow/20 text-hack-yellow border-hack-yellow/50' },
+  intermediate: { label: 'Intermediate', color: 'bg-hack-yellow/20 text-hack-yellow border-hack-yellow/50' },
+  hard: { label: 'Hard', color: 'bg-hack-red/20 text-hack-red border-hack-red/50' },
+  advanced: { label: 'Advanced', color: 'bg-hack-red/20 text-hack-red border-hack-red/50' }
+}
+
+function LessonNode({ lesson, onClick }: LessonNodeProps) {
+  const typeConfig = TYPE_CONFIG[lesson.type] || TYPE_CONFIG.course
+  const difficultyConfig = lesson.difficulty ? DIFFICULTY_CONFIG[lesson.difficulty] : null
+  const Icon = typeConfig.Icon
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -26,36 +37,68 @@ function LessonNode({ lesson, onClick }: LessonNodeProps) {
 
   return (
     <div
-      className="relative w-24 h-24 md:w-32 md:h-32 rounded-full border-2 flex flex-col items-center justify-center bg-terminal-alt border-matrix/50 hover:border-matrix hover:scale-110 cursor-pointer transition-all"
+      className="card-hack p-4 rounded-lg group transition-all cursor-pointer hover:scale-[1.02] w-full"
       onClick={onClick}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
       aria-label={lesson.title}
     >
-      <Icon className="w-8 h-8 md:w-10 md:h-10 text-gray-400" />
-
-      {/* Lesson Title (truncated) */}
-      <div className="text-xs md:text-sm font-terminal mt-2 text-center px-2 max-w-full truncate">
-        {lesson.title}
-      </div>
-
-      {/* Difficulty Badge */}
-      {lesson.difficulty && (
-        <div className="absolute -top-2 -left-2">
-          <span
-            className={`text-xs font-terminal px-1.5 py-0.5 rounded ${
-              lesson.difficulty === 'easy'
-                ? 'bg-matrix/20 text-matrix border border-matrix/50'
-                : lesson.difficulty === 'medium'
-                  ? 'bg-hack-orange/20 text-hack-orange border border-hack-orange/50'
-                  : 'bg-hack-red/20 text-hack-red border border-hack-red/50'
-            }`}
-          >
-            {lesson.difficulty[0].toUpperCase()}
-          </span>
+      <div className="flex items-start gap-4">
+        {/* Icon */}
+        <div className="flex-shrink-0">
+          <div className={`w-12 h-12 rounded-lg border flex items-center justify-center bg-terminal-alt ${typeConfig.color}`}>
+            <Icon className="w-6 h-6" />
+          </div>
         </div>
-      )}
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Type and Difficulty badges */}
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${typeConfig.color}`}>
+              {typeConfig.label}
+            </span>
+            {difficultyConfig && (
+              <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${difficultyConfig.color}`}>
+                {difficultyConfig.label}
+              </span>
+            )}
+          </div>
+
+          {/* Title */}
+          <h3 className="text-base font-semibold text-matrix group-hover:neon-text-subtle transition-all mb-1 truncate">
+            {lesson.title}
+          </h3>
+
+          {/* Description */}
+          <p className="text-gray-500 text-sm line-clamp-2 mb-2">
+            {lesson.description}
+          </p>
+
+          {/* Meta info */}
+          <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+            {lesson.estimated_minutes && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-matrix/50" />
+                {lesson.estimated_minutes} min
+              </div>
+            )}
+            {lesson.topics && lesson.topics.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {lesson.topics.slice(0, 3).map((topic) => (
+                  <span
+                    key={topic}
+                    className="px-1.5 py-0.5 rounded text-xs bg-terminal-alt border border-gray-700 text-gray-400"
+                  >
+                    {topic}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

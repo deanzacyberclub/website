@@ -215,55 +215,9 @@ export interface Database {
           }
         ]
       }
-      pathways: {
-        Row: {
-          id: string
-          slug: string
-          title: string
-          description: string
-          icon: string | null
-          difficulty: Difficulty | null
-          estimated_hours: number | null
-          color: string | null
-          order_index: number
-          is_active: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          slug: string
-          title: string
-          description: string
-          icon?: string | null
-          difficulty?: Difficulty | null
-          estimated_hours?: number | null
-          color?: string | null
-          order_index: number
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          slug?: string
-          title?: string
-          description?: string
-          icon?: string | null
-          difficulty?: Difficulty | null
-          estimated_hours?: number | null
-          color?: string | null
-          order_index?: number
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       lessons: {
         Row: {
           id: string
-          pathway_id: string
           slug: string
           title: string
           description: string
@@ -274,8 +228,6 @@ export interface Database {
           is_self_paced: boolean
           quiz_data: Json | null
           flashcard_data: Json | null
-          prerequisite_lesson_ids: string[] | null
-          required_score: number | null
           estimated_minutes: number | null
           difficulty: Difficulty | null
           topics: string[] | null
@@ -285,7 +237,6 @@ export interface Database {
         }
         Insert: {
           id?: string
-          pathway_id: string
           slug: string
           title: string
           description: string
@@ -296,8 +247,6 @@ export interface Database {
           is_self_paced?: boolean
           quiz_data?: Json | null
           flashcard_data?: Json | null
-          prerequisite_lesson_ids?: string[] | null
-          required_score?: number | null
           estimated_minutes?: number | null
           difficulty?: Difficulty | null
           topics?: string[] | null
@@ -307,7 +256,6 @@ export interface Database {
         }
         Update: {
           id?: string
-          pathway_id?: string
           slug?: string
           title?: string
           description?: string
@@ -318,8 +266,6 @@ export interface Database {
           is_self_paced?: boolean
           quiz_data?: Json | null
           flashcard_data?: Json | null
-          prerequisite_lesson_ids?: string[] | null
-          required_score?: number | null
           estimated_minutes?: number | null
           difficulty?: Difficulty | null
           topics?: string[] | null
@@ -329,143 +275,9 @@ export interface Database {
         }
         Relationships: [
           {
-            foreignKeyName: "lessons_pathway_id_fkey"
-            columns: ["pathway_id"]
-            referencedRelation: "pathways"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "lessons_meeting_id_fkey"
             columns: ["meeting_id"]
             referencedRelation: "meetings"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      user_progress: {
-        Row: {
-          id: string
-          user_id: string
-          lesson_id: string
-          status: LessonStatus
-          progress_percentage: number
-          quiz_score: number | null
-          quiz_attempts: number
-          quiz_best_score: number | null
-          quiz_answers: Json | null
-          flashcard_mastery: Json | null
-          started_at: string | null
-          completed_at: string | null
-          last_accessed_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          lesson_id: string
-          status?: LessonStatus
-          progress_percentage?: number
-          quiz_score?: number | null
-          quiz_attempts?: number
-          quiz_best_score?: number | null
-          quiz_answers?: Json | null
-          flashcard_mastery?: Json | null
-          started_at?: string | null
-          completed_at?: string | null
-          last_accessed_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          lesson_id?: string
-          status?: LessonStatus
-          progress_percentage?: number
-          quiz_score?: number | null
-          quiz_attempts?: number
-          quiz_best_score?: number | null
-          quiz_answers?: Json | null
-          flashcard_mastery?: Json | null
-          started_at?: string | null
-          completed_at?: string | null
-          last_accessed_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_progress_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_progress_lesson_id_fkey"
-            columns: ["lesson_id"]
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      pathway_progress: {
-        Row: {
-          id: string
-          user_id: string
-          pathway_id: string
-          lessons_completed: number
-          total_lessons: number
-          completion_percentage: number
-          current_streak_days: number
-          longest_streak_days: number
-          total_time_spent_minutes: number
-          achievements: Json
-          last_activity_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          pathway_id: string
-          lessons_completed?: number
-          total_lessons?: number
-          completion_percentage?: number
-          current_streak_days?: number
-          longest_streak_days?: number
-          total_time_spent_minutes?: number
-          achievements?: Json
-          last_activity_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          pathway_id?: string
-          lessons_completed?: number
-          total_lessons?: number
-          completion_percentage?: number
-          current_streak_days?: number
-          longest_streak_days?: number
-          total_time_spent_minutes?: number
-          achievements?: Json
-          last_activity_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pathway_progress_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pathway_progress_pathway_id_fkey"
-            columns: ["pathway_id"]
-            referencedRelation: "pathways"
             referencedColumns: ["id"]
           }
         ]
@@ -490,9 +302,8 @@ export type Meeting = Database['public']['Tables']['meetings']['Row']
 export type Attendance = Database['public']['Tables']['attendance']['Row']
 export type Registration = Database['public']['Tables']['registrations']['Row']
 
-// Study pathway types
+// Study lesson types
 export type LessonType = 'course' | 'workshop' | 'ctf' | 'quiz' | 'flashcard'
-export type LessonStatus = 'locked' | 'unlocked' | 'in_progress' | 'completed'
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'beginner' | 'intermediate' | 'advanced'
 
 export interface QuizQuestion {
@@ -529,18 +340,12 @@ export interface FlashcardData {
   cards: FlashCard[]
 }
 
-// Type-safe pathway and lesson types with proper JSONB casting
-export interface Pathway extends Omit<Database['public']['Tables']['pathways']['Row'], never> {}
-
+// Type-safe lesson type with proper JSONB casting
 export interface Lesson extends Omit<Database['public']['Tables']['lessons']['Row'], 'content' | 'quiz_data' | 'flashcard_data'> {
   content?: LessonContent | null
   quiz_data?: QuizData | null
   flashcard_data?: FlashcardData | null
 }
-
-export interface UserProgress extends Omit<Database['public']['Tables']['user_progress']['Row'], never> {}
-
-export interface PathwayProgress extends Omit<Database['public']['Tables']['pathway_progress']['Row'], never> {}
 
 // CTF Team Types
 export interface CTFTeam {

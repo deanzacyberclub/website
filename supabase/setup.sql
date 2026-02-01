@@ -170,39 +170,11 @@ FOR EACH ROW
 EXECUTE FUNCTION mark_registration_attended();
 
 -- ============================================================
--- STUDY PATHWAYS TABLE
--- ============================================================
-CREATE TABLE public.pathways (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    slug TEXT UNIQUE NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    icon TEXT,
-    difficulty TEXT CHECK (difficulty IN ('beginner', 'intermediate', 'advanced')),
-    estimated_hours INTEGER,
-    color TEXT,
-    order_index INTEGER NOT NULL,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE public.pathways ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Everyone can view active pathways" ON public.pathways FOR SELECT USING (
-    is_active = true OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
-CREATE POLICY "Officers can manage pathways" ON public.pathways FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
-
--- ============================================================
--- LESSONS TABLE
+-- LESSONS TABLE (for Security+ course)
 -- ============================================================
 CREATE TABLE public.lessons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    pathway_id UUID NOT NULL REFERENCES public.pathways(id) ON DELETE CASCADE,
-    slug TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     type TEXT CHECK (type IN ('course', 'workshop', 'ctf', 'quiz', 'flashcard')) NOT NULL,
@@ -212,27 +184,20 @@ CREATE TABLE public.lessons (
     is_self_paced BOOLEAN DEFAULT true,
     quiz_data JSONB,
     flashcard_data JSONB,
-    prerequisite_lesson_ids UUID[],
-    required_score INTEGER,
     estimated_minutes INTEGER,
     difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard', 'beginner', 'intermediate', 'advanced')),
     topics TEXT[],
     resources JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(pathway_id, slug)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_lessons_pathway ON public.lessons(pathway_id);
-CREATE INDEX idx_lessons_meeting ON public.lessons(meeting_id);
 CREATE INDEX idx_lessons_type ON public.lessons(type);
+CREATE INDEX idx_lessons_order ON public.lessons(order_index);
 
 ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Everyone can view lessons" ON public.lessons FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.pathways WHERE id = pathway_id AND is_active = true)
-    OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
+CREATE POLICY "Everyone can view lessons" ON public.lessons FOR SELECT USING (true);
 CREATE POLICY "Officers can manage lessons" ON public.lessons FOR ALL USING (
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
 );
@@ -249,127 +214,6 @@ CREATE TRIGGER lessons_updated_at
 BEFORE UPDATE ON public.lessons
 FOR EACH ROW
 EXECUTE FUNCTION update_lessons_updated_at();
-
--- ============================================================
--- USER PROGRESS TABLE (for study tracking)
--- ============================================================
-CREATE TABLE public.user_progress (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    lesson_id UUID NOT NULL REFERENCES public.lessons(id) ON DELETE CASCADE,
-    status TEXT CHECK (status IN ('locked', 'unlocked', 'in_progress', 'completed')) DEFAULT 'locked',
-    progress_percentage INTEGER DEFAULT 0 CHECK (progress_percentage >= 0 AND progress_percentage <= 100),
-    quiz_score INTEGER,
-    quiz_attempts INTEGER DEFAULT 0,
-    quiz_best_score INTEGER,
-    quiz_answers JSONB,
-    flashcard_mastery JSONB,
-    started_at TIMESTAMPTZ,
-    completed_at TIMESTAMPTZ,
-    last_accessed_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(user_id, lesson_id)
-);
-
-CREATE INDEX idx_user_progress_user ON public.user_progress(user_id);
-CREATE INDEX idx_user_progress_lesson ON public.user_progress(lesson_id);
-CREATE INDEX idx_user_progress_status ON public.user_progress(status);
-
-ALTER TABLE public.user_progress ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own progress" ON public.user_progress FOR SELECT USING (
-    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
-CREATE POLICY "Users can manage own progress" ON public.user_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own progress" ON public.user_progress FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own progress" ON public.user_progress FOR DELETE USING (
-    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
-
-CREATE OR REPLACE FUNCTION update_user_progress_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER user_progress_updated_at
-BEFORE UPDATE ON public.user_progress
-FOR EACH ROW
-EXECUTE FUNCTION update_user_progress_updated_at();
-
--- ============================================================
--- PATHWAY PROGRESS TABLE (aggregate stats)
--- ============================================================
-CREATE TABLE public.pathway_progress (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    pathway_id UUID NOT NULL REFERENCES public.pathways(id) ON DELETE CASCADE,
-    lessons_completed INTEGER DEFAULT 0,
-    total_lessons INTEGER DEFAULT 0,
-    completion_percentage INTEGER DEFAULT 0,
-    current_streak_days INTEGER DEFAULT 0,
-    longest_streak_days INTEGER DEFAULT 0,
-    total_time_spent_minutes INTEGER DEFAULT 0,
-    achievements JSONB DEFAULT '[]'::jsonb,
-    last_activity_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(user_id, pathway_id)
-);
-
-CREATE INDEX idx_pathway_progress_user ON public.pathway_progress(user_id);
-CREATE INDEX idx_pathway_progress_pathway ON public.pathway_progress(pathway_id);
-
-ALTER TABLE public.pathway_progress ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own pathway progress" ON public.pathway_progress FOR SELECT USING (
-    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
-CREATE POLICY "Users can manage own pathway progress" ON public.pathway_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own pathway progress" ON public.pathway_progress FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own pathway progress" ON public.pathway_progress FOR DELETE USING (
-    auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
-
-CREATE OR REPLACE FUNCTION update_pathway_progress_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER pathway_progress_updated_at
-BEFORE UPDATE ON public.pathway_progress
-FOR EACH ROW
-EXECUTE FUNCTION update_pathway_progress_updated_at();
-
--- Auto-complete workshop lessons when attendance is recorded
-CREATE OR REPLACE FUNCTION auto_complete_workshop_lesson()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE public.user_progress
-    SET status = 'completed',
-        progress_percentage = 100,
-        completed_at = NOW(),
-        updated_at = NOW()
-    FROM public.lessons
-    WHERE user_progress.lesson_id = lessons.id
-    AND user_progress.user_id = NEW.user_id
-    AND lessons.meeting_id = NEW.meeting_id
-    AND lessons.type = 'workshop'
-    AND user_progress.status != 'completed';
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER attendance_completes_workshop_lesson
-AFTER INSERT ON public.attendance
-FOR EACH ROW
-EXECUTE FUNCTION auto_complete_workshop_lesson();
 
 -- ============================================================
 -- CTF TEAMS TABLE

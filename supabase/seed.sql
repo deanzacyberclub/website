@@ -4,14 +4,6 @@
 -- ============================================================
 
 -- ============================================================
--- PATHWAYS SEED DATA
--- ============================================================
-
-INSERT INTO public.pathways (slug, title, description, icon, difficulty, estimated_hours, color, order_index, is_active) VALUES
-('security-plus', 'Security+ Certification', 'Comprehensive preparation for CompTIA Security+ certification covering network security, compliance, threats, and cryptography.', '🛡️', 'beginner', 40, 'hack-cyan', 1, true),
-('professional-ethical-hacker', 'Professional Ethical Hacker', 'Master offensive security techniques including reconnaissance, scanning, exploitation, and post-exploitation in controlled environments.', '🎯', 'intermediate', 60, 'hack-purple', 2, true);
-
--- ============================================================
 -- MEETINGS SEED DATA
 -- ============================================================
 
