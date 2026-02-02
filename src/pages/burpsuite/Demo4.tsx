@@ -37,26 +37,50 @@ function Demo4() {
     const dataParam = searchParams.get("data");
     const refParam = searchParams.get("ref");
 
-    if (dataParam) {
-      try {
-        // Decode Base64
-        const decoded = atob(dataParam);
-        const data = JSON.parse(decoded);
-        setBookingInfo(data);
-      } catch (err) {
-        console.error("Failed to decode booking data");
+    const fetchBooking = async () => {
+      if (dataParam || refParam) {
+        try {
+          // Make a real HTTP request that Burp Suite can intercept
+          const url = dataParam
+            ? `/api/booking?data=${dataParam}`
+            : `/api/booking?ref=${refParam}`;
+
+          const response = await fetch(url, {
+            method: "GET",
+            headers: {
+              "Accept": "application/json",
+            },
+          });
+
+          // Since the endpoint doesn't exist, this will fail
+          // But the request will still be sent and interceptable by Burp Suite
+        } catch (err) {
+          // Request was sent and can be intercepted even if it fails
+        }
+
+        // Decode the data client-side (simulating what would happen after response)
+        if (dataParam) {
+          try {
+            const decoded = atob(dataParam);
+            const data = JSON.parse(decoded);
+            setBookingInfo(data);
+          } catch (err) {
+            console.error("Failed to decode booking data");
+          }
+        } else if (refParam) {
+          try {
+            const urlDecoded = decodeURIComponent(refParam);
+            const base64Decoded = atob(urlDecoded);
+            const data = JSON.parse(base64Decoded);
+            setBookingInfo(data);
+          } catch (err) {
+            console.error("Failed to decode booking reference");
+          }
+        }
       }
-    } else if (refParam) {
-      try {
-        // First URL decode, then Base64 decode
-        const urlDecoded = decodeURIComponent(refParam);
-        const base64Decoded = atob(urlDecoded);
-        const data = JSON.parse(base64Decoded);
-        setBookingInfo(data);
-      } catch (err) {
-        console.error("Failed to decode booking reference");
-      }
-    }
+    };
+
+    fetchBooking();
   }, [searchParams]);
 
   const loadExample1 = () => {

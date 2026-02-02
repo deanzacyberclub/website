@@ -42,15 +42,38 @@ function Demo2() {
     setError("");
     setDocumentId(id);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    try {
+      // Make a real HTTP GET request that Burp Suite can intercept
+      const response = await fetch(`/api/documents?id=${id}`, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+        },
+      });
 
-    const doc = documents[id];
-    if (doc) {
-      setDocument(doc);
-    } else {
-      setError("Document not found");
-      setDocument(null);
+      // Since the endpoint doesn't exist, this will fail
+      // But the request will still be sent and interceptable by Burp Suite
+
+      // Simulate server-side response
+      const doc = documents[id];
+      if (doc) {
+        setDocument(doc);
+      } else {
+        setError("Document not found");
+        setDocument(null);
+      }
+    } catch (err) {
+      // Even if the fetch fails (endpoint doesn't exist),
+      // the request was still sent and can be intercepted
+
+      // Simulate server-side response
+      const doc = documents[id];
+      if (doc) {
+        setDocument(doc);
+      } else {
+        setError("Document not found");
+        setDocument(null);
+      }
     }
 
     setLoading(false);

@@ -13,21 +13,53 @@ function Demo1() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Create form data just like a real insecure form would
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+    formData.append("remember", remember ? "on" : "off");
+    formData.append("app_version", "2.3.1");
+    formData.append("client_type", "web");
 
-    // Check if password is exactly "12345678"
-    if (password !== "12345678") {
-      setLoading(false);
-      alert("Authentication failed. Invalid credentials.");
-      return;
+    try {
+      // Make a real HTTP request that Burp Suite can intercept
+      const response = await fetch("/api/burpsuite/demo1/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
+      });
+
+      // Since the endpoint doesn't exist, this will fail
+      // But the request will still be sent and interceptable by Burp Suite
+
+      // Simulate server-side validation
+      // In a real scenario, the server would check this
+      if (password === "12345678") {
+        // Set a fake session cookie
+        document.cookie = "SESSIONID=abc123-fake-session-token-xyz789; path=/";
+        setLoading(false);
+        setLoggedIn(true);
+      } else {
+        setLoading(false);
+        alert("Authentication failed. Invalid credentials.");
+      }
+    } catch (err) {
+      // Even if the fetch fails (endpoint doesn't exist),
+      // the request was still sent and can be intercepted
+
+      // Simulate server-side validation
+      if (password === "12345678") {
+        // Set a fake session cookie
+        document.cookie = "SESSIONID=abc123-fake-session-token-xyz789; path=/";
+        setLoading(false);
+        setLoggedIn(true);
+      } else {
+        setLoading(false);
+        alert("Authentication failed. Invalid credentials.");
+      }
     }
-
-    // Set a fake session cookie
-    document.cookie = "SESSIONID=abc123-fake-session-token-xyz789; path=/";
-
-    setLoading(false);
-    setLoggedIn(true);
   };
 
   if (loggedIn) {

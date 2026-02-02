@@ -17,18 +17,46 @@ function Demo3() {
     setLoading(true);
     setError("");
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    try {
+      // Create form data for the login request
+      const formData = new URLSearchParams();
+      formData.append("username", username);
+      formData.append("password", password);
 
-    // Check if username is valid (this creates the vulnerability)
-    if (!validUsernames.includes(username.toLowerCase())) {
-      setError("User not found");
-    } else if (username.toLowerCase() === "admin" && password === "admin123") {
-      // Only admin/admin123 actually logs in
-      setLoggedIn(true);
-    } else {
-      setError("Invalid password");
-      setAttempts(Math.max(0, attempts - 1));
+      // Make a real HTTP request that Burp Suite can intercept
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
+      });
+
+      // Since the endpoint doesn't exist, this will fail
+      // But the request will still be sent and interceptable by Burp Suite
+
+      // Simulate server-side response (with vulnerability)
+      if (!validUsernames.includes(username.toLowerCase())) {
+        setError("User not found");
+      } else if (username.toLowerCase() === "admin" && password === "admin123") {
+        setLoggedIn(true);
+      } else {
+        setError("Invalid password");
+        setAttempts(Math.max(0, attempts - 1));
+      }
+    } catch (err) {
+      // Even if the fetch fails (endpoint doesn't exist),
+      // the request was still sent and can be intercepted
+
+      // Simulate server-side response (with vulnerability)
+      if (!validUsernames.includes(username.toLowerCase())) {
+        setError("User not found");
+      } else if (username.toLowerCase() === "admin" && password === "admin123") {
+        setLoggedIn(true);
+      } else {
+        setError("Invalid password");
+        setAttempts(Math.max(0, attempts - 1));
+      }
     }
 
     setLoading(false);
