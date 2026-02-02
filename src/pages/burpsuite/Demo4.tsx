@@ -45,36 +45,66 @@ function Demo4() {
             ? `/api/booking?data=${dataParam}`
             : `/api/booking?ref=${refParam}`;
 
-          const response = await fetch(url, {
+          const fetchPromise = fetch(url, {
             method: "GET",
             headers: {
               "Accept": "application/json",
             },
           });
 
-          // Since the endpoint doesn't exist, this will fail
-          // But the request will still be sent and interceptable by Burp Suite
-        } catch (err) {
-          // Request was sent and can be intercepted even if it fails
-        }
+          // Wait for the request to complete (or fail after network timeout)
+          // This simulates waiting for the server to respond
+          await fetchPromise.catch(() => {
+            // Endpoint doesn't exist, but request was sent and interceptable
+          });
 
-        // Decode the data client-side (simulating what would happen after response)
-        if (dataParam) {
-          try {
-            const decoded = atob(dataParam);
-            const data = JSON.parse(decoded);
-            setBookingInfo(data);
-          } catch (err) {
-            console.error("Failed to decode booking data");
+          // Add a small delay to simulate server processing time
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
+          // Decode the data client-side (simulating what would happen after response)
+          if (dataParam) {
+            try {
+              const decoded = atob(dataParam);
+              const data = JSON.parse(decoded);
+              setBookingInfo(data);
+            } catch (err) {
+              console.error("Failed to decode booking data");
+            }
+          } else if (refParam) {
+            try {
+              const urlDecoded = decodeURIComponent(refParam);
+              const base64Decoded = atob(urlDecoded);
+              const data = JSON.parse(base64Decoded);
+              setBookingInfo(data);
+            } catch (err) {
+              console.error("Failed to decode booking reference");
+            }
           }
-        } else if (refParam) {
-          try {
-            const urlDecoded = decodeURIComponent(refParam);
-            const base64Decoded = atob(urlDecoded);
-            const data = JSON.parse(base64Decoded);
-            setBookingInfo(data);
-          } catch (err) {
-            console.error("Failed to decode booking reference");
+        } catch (err) {
+          // Even if the fetch fails (endpoint doesn't exist),
+          // the request was still sent and can be intercepted
+
+          // Add a small delay to simulate server processing time
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
+          // Decode the data client-side
+          if (dataParam) {
+            try {
+              const decoded = atob(dataParam);
+              const data = JSON.parse(decoded);
+              setBookingInfo(data);
+            } catch (err) {
+              console.error("Failed to decode booking data");
+            }
+          } else if (refParam) {
+            try {
+              const urlDecoded = decodeURIComponent(refParam);
+              const base64Decoded = atob(urlDecoded);
+              const data = JSON.parse(base64Decoded);
+              setBookingInfo(data);
+            } catch (err) {
+              console.error("Failed to decode booking reference");
+            }
           }
         }
       }

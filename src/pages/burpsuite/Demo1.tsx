@@ -23,7 +23,7 @@ function Demo1() {
 
     try {
       // Make a real HTTP request that Burp Suite can intercept
-      const fetchPromise = fetch("/api/burpsuite/demo1/login", {
+      const response = await fetch("http://localhost:3001/api/burpsuite/demo1/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -31,43 +31,22 @@ function Demo1() {
         body: formData.toString(),
       });
 
-      // Wait for the request to complete (or fail after network timeout)
-      // This simulates waiting for the server to respond
-      await fetchPromise.catch(() => {
-        // Endpoint doesn't exist, but request was sent and interceptable
-      });
+      const data = await response.json();
 
-      // Add a small delay to simulate server processing time
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Simulate server-side validation
-      // In a real scenario, the server would check this
-      if (password === "12345678") {
+      // The server validates the password (including any Burp Suite modifications!)
+      if (response.ok && data.success) {
         // Set a fake session cookie
-        document.cookie = "SESSIONID=abc123-fake-session-token-xyz789; path=/";
+        document.cookie = `SESSIONID=${data.sessionId}; path=/`;
         setLoading(false);
         setLoggedIn(true);
       } else {
         setLoading(false);
-        alert("Authentication failed. Invalid credentials.");
+        alert(`Authentication failed. ${data.message || "Invalid credentials."}`);
       }
     } catch (err) {
-      // Even if the fetch fails (endpoint doesn't exist),
-      // the request was still sent and can be intercepted
-
-      // Add a small delay to simulate server processing time
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Simulate server-side validation
-      if (password === "12345678") {
-        // Set a fake session cookie
-        document.cookie = "SESSIONID=abc123-fake-session-token-xyz789; path=/";
-        setLoading(false);
-        setLoggedIn(true);
-      } else {
-        setLoading(false);
-        alert("Authentication failed. Invalid credentials.");
-      }
+      setLoading(false);
+      alert("Connection error. Make sure the API server is running (npm run api).");
+      console.error("API Error:", err);
     }
   };
 
