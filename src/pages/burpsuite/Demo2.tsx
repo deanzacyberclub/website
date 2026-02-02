@@ -44,15 +44,21 @@ function Demo2() {
 
     try {
       // Make a real HTTP GET request that Burp Suite can intercept
-      const response = await fetch(`/api/documents?id=${id}`, {
+      const fetchPromise = fetch(`/api/documents?id=${id}`, {
         method: "GET",
         headers: {
           "Accept": "application/json",
         },
       });
 
-      // Since the endpoint doesn't exist, this will fail
-      // But the request will still be sent and interceptable by Burp Suite
+      // Wait for the request to complete (or fail after network timeout)
+      // This simulates waiting for the server to respond
+      await fetchPromise.catch(() => {
+        // Endpoint doesn't exist, but request was sent and interceptable
+      });
+
+      // Add a small delay to simulate server processing time
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       // Simulate server-side response
       const doc = documents[id];
@@ -65,6 +71,9 @@ function Demo2() {
     } catch (err) {
       // Even if the fetch fails (endpoint doesn't exist),
       // the request was still sent and can be intercepted
+
+      // Add a small delay to simulate server processing time
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       // Simulate server-side response
       const doc = documents[id];

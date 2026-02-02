@@ -23,7 +23,7 @@ function Demo1() {
 
     try {
       // Make a real HTTP request that Burp Suite can intercept
-      const response = await fetch("/api/burpsuite/demo1/login", {
+      const fetchPromise = fetch("/api/burpsuite/demo1/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -31,8 +31,14 @@ function Demo1() {
         body: formData.toString(),
       });
 
-      // Since the endpoint doesn't exist, this will fail
-      // But the request will still be sent and interceptable by Burp Suite
+      // Wait for the request to complete (or fail after network timeout)
+      // This simulates waiting for the server to respond
+      await fetchPromise.catch(() => {
+        // Endpoint doesn't exist, but request was sent and interceptable
+      });
+
+      // Add a small delay to simulate server processing time
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Simulate server-side validation
       // In a real scenario, the server would check this
@@ -48,6 +54,9 @@ function Demo1() {
     } catch (err) {
       // Even if the fetch fails (endpoint doesn't exist),
       // the request was still sent and can be intercepted
+
+      // Add a small delay to simulate server processing time
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Simulate server-side validation
       if (password === "12345678") {
