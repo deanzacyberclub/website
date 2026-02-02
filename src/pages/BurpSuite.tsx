@@ -72,26 +72,6 @@ function BurpSuite() {
           })}
         </div>
 
-        {/* CTF Challenge */}
-        <div className="mt-12 card-hack p-8 rounded-lg border-2 border-matrix/40 bg-gradient-to-br from-matrix/5 to-transparent">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-3xl">🚩</span>
-            <h2 className="text-3xl font-bold text-matrix">Launch Week Challenge</h2>
-          </div>
-          <p className="text-gray-300 mb-4 text-lg">
-            Think you've mastered the demos? Put your skills to the test with our CTF puzzle.
-          </p>
-          <p className="text-gray-400 mb-6 text-sm">
-            First person to capture the flag wins! This challenge requires creative thinking and mastery of Proxy, Repeater, and Intruder techniques.
-          </p>
-          <Link
-            to="/burpsuite/dashboard"
-            className="inline-block btn-hack-filled rounded-lg px-8 py-4 font-semibold text-lg"
-          >
-            Launch Week 1 Puzzle →
-          </Link>
-        </div>
-
         {/* Instructions */}
         <div className="mt-8 card-hack p-6 rounded-lg">
           <h2 className="text-2xl font-bold text-matrix mb-4">Getting Started</h2>
