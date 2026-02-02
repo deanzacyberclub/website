@@ -286,6 +286,31 @@ function Attendance() {
 
       if (insertError) throw insertError;
 
+      // Also create/update registration with "attended" status for logged-in users
+      if (user) {
+        const { data: existingRegistration } = await supabase
+          .from("registrations")
+          .select("id")
+          .eq("meeting_id", form.meetingId)
+          .eq("user_id", user.id)
+          .single();
+
+        if (existingRegistration) {
+          // Update existing registration to "attended"
+          await supabase
+            .from("registrations")
+            .update({ status: "attended" })
+            .eq("id", existingRegistration.id);
+        } else {
+          // Create new registration with "attended" status
+          await supabase.from("registrations").insert({
+            meeting_id: form.meetingId,
+            user_id: user.id,
+            status: "attended",
+          });
+        }
+      }
+
       // Fetch updated attendance count for signed-in users
       if (user) {
         const { count } = await supabase

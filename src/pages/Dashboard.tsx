@@ -11,6 +11,12 @@ interface MeetingWithRegistration extends Meeting {
   userRegistration?: Registration
 }
 
+// Parse date string as local timezone (not UTC)
+const parseLocalDate = (dateStr: string) => {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
 function Dashboard() {
   const [loaded, setLoaded] = useState(false)
   const [meetings, setMeetings] = useState<MeetingWithRegistration[]>([])
@@ -71,23 +77,30 @@ function Dashboard() {
     }
   }, [user])
 
+  // Get today's date at midnight for comparison
+  const today = useMemo(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d
+  }, [])
+
   // Get upcoming meetings
   const upcomingMeetings = useMemo(() => {
     return meetings
-      .filter(m => new Date(m.date) >= new Date())
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }, [meetings])
+      .filter(m => parseLocalDate(m.date) >= today)
+      .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime())
+  }, [meetings, today])
 
-  // Get past meetings (show events user was registered for or attended)
+  // Get past meetings (only show events user actually attended)
   const pastMeetings = useMemo(() => {
     return meetings
       .filter(m => {
-        const isPast = new Date(m.date) < new Date()
-        const hasRegistration = m.userRegistration && m.userRegistration.status !== 'cancelled'
-        return isPast && hasRegistration
+        const isPast = parseLocalDate(m.date) < today
+        const hasAttended = m.userRegistration?.status === 'attended'
+        return isPast && hasAttended
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [meetings])
+      .sort((a, b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime())
+  }, [meetings, today])
 
   // Get displayed meetings based on active tab
   const displayedMeetings = activeTab === 'upcoming' ? upcomingMeetings : pastMeetings
@@ -113,7 +126,7 @@ function Dashboard() {
     const statusConfig = {
       registered: { label: 'Going', color: 'bg-green-600 text-white' },
       waitlist: { label: 'Waitlist', color: 'bg-hack-yellow text-black' },
-      invited: { label: 'Pending', color: 'bg-hack-orange text-white' },
+      invited: { label: 'Invited', color: 'bg-hack-cyan text-black' },
       attended: { label: 'Going', color: 'bg-green-600 text-white' },
     }
 
@@ -227,10 +240,10 @@ function Dashboard() {
                   <div className="flex flex-col items-center shrink-0">
                     <div className="text-left w-24">
                       <div className="text-sm font-terminal text-gray-400">
-                        {new Date(meeting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        {parseLocalDate(meeting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </div>
                       <div className="text-xs text-gray-600 font-terminal">
-                        {new Date(meeting.date).toLocaleDateString('en-US', { weekday: 'long' })}
+                        {parseLocalDate(meeting.date).toLocaleDateString('en-US', { weekday: 'long' })}
                       </div>
                     </div>
                     <div className="flex flex-col items-center flex-1 mt-2">
@@ -266,14 +279,18 @@ function Dashboard() {
                           </span>
                         </div>
 
-                        {/* Status Badge - Show for both upcoming and past events with registration */}
-                        {meeting.userRegistration && getStatusBadge(meeting.userRegistration, activeTab === 'past') && (
-                          <div className="flex items-center gap-2">
+                        {/* Status Badge - Show for both upcoming and past events */}
+                        <div className="flex items-center gap-2">
+                          {meeting.userRegistration && getStatusBadge(meeting.userRegistration, activeTab === 'past') ? (
                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(meeting.userRegistration, activeTab === 'past')!.color}`}>
                               {getStatusBadge(meeting.userRegistration, activeTab === 'past')!.label}
                             </span>
-                          </div>
-                        )}
+                          ) : activeTab === 'upcoming' && (
+                            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-hack-cyan text-black">
+                              Invited
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -467,7 +484,7 @@ function Dashboard() {
                 for (let i = 5; i >= 0; i--) {
                   const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
                   const monthMeetings = meetings.filter(m => {
-                    const mDate = new Date(m.date)
+                    const mDate = parseLocalDate(m.date)
                     return mDate.getMonth() === date.getMonth() && mDate.getFullYear() === date.getFullYear()
                   })
                   months.push({

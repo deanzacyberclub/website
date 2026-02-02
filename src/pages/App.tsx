@@ -125,6 +125,12 @@ function SwipeableCards({ meetings }: SwipeableCardsProps) {
   const rotation = dragOffset * 0.08;
   const opacity = 1 - Math.abs(dragOffset) / 300;
 
+  // Parse date as local timezone (not UTC)
+  const parseLocalDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const transform = `translateX(${dragOffset}px) rotate(${rotation}deg)`;
 
   return (
@@ -187,10 +193,10 @@ function SwipeableCards({ meetings }: SwipeableCardsProps) {
           <div className="flex items-start gap-4 mb-3">
             <div className="text-center shrink-0 w-14">
               <div className="text-3xl font-bold text-matrix">
-                {new Date(meeting.date).getDate()}
+                {parseLocalDate(meeting.date).getDate()}
               </div>
               <div className="text-xs text-gray-500 uppercase font-terminal">
-                {new Date(meeting.date).toLocaleDateString("en-US", {
+                {parseLocalDate(meeting.date).toLocaleDateString("en-US", {
                   month: "short",
                   year: "numeric",
                 })}

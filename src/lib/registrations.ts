@@ -106,8 +106,11 @@ export async function registerForMeeting(
       }
     }
 
-    // Check if meeting is in the past
-    const isPast = new Date(meeting.date) < new Date()
+    // Check if meeting is in the past (parse date as local timezone)
+    const [year, month, day] = meeting.date.split('-').map(Number)
+    const meetingDate = new Date(year, month - 1, day)
+    meetingDate.setHours(23, 59, 59, 999) // Allow registration until end of day
+    const isPast = meetingDate < new Date()
     if (isPast) {
       return {
         success: false,

@@ -50,6 +50,12 @@ const defaultCreateForm: CreateMeetingForm = {
   secret_code: ''
 }
 
+// Parse date string as local timezone (not UTC)
+const parseLocalDate = (dateStr: string) => {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
 function Meetings() {
   const navigate = useNavigate()
   const { userProfile } = useAuth()
@@ -92,17 +98,17 @@ function Meetings() {
   today.setHours(0, 0, 0, 0)
 
   const featuredMeetings = useMemo(() => {
-    return meetings.filter(m => m.featured && new Date(m.date) >= today)
+    return meetings.filter(m => m.featured && parseLocalDate(m.date) >= today)
   }, [meetings])
 
   const filteredMeetings = useMemo(() => {
-    let filtered = meetings.filter(m => !m.featured || new Date(m.date) < today)
+    let filtered = meetings.filter(m => !m.featured || parseLocalDate(m.date) < today)
 
     // Apply time filter
     if (filter === 'upcoming') {
-      filtered = filtered.filter(m => new Date(m.date) >= today)
+      filtered = filtered.filter(m => parseLocalDate(m.date) >= today)
     } else if (filter === 'past') {
-      filtered = filtered.filter(m => new Date(m.date) < today)
+      filtered = filtered.filter(m => parseLocalDate(m.date) < today)
     }
 
     // Apply type filter
@@ -123,8 +129,8 @@ function Meetings() {
 
     // Sort by date (upcoming first for 'all' and 'upcoming', past first for 'past')
     filtered.sort((a, b) => {
-      const dateA = new Date(a.date).getTime()
-      const dateB = new Date(b.date).getTime()
+      const dateA = parseLocalDate(a.date).getTime()
+      const dateB = parseLocalDate(b.date).getTime()
       if (filter === 'past') {
         return dateB - dateA // Most recent past first
       }
@@ -135,7 +141,7 @@ function Meetings() {
   }, [meetings, filter, typeFilter, searchQuery])
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
+    const date = parseLocalDate(dateStr)
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
@@ -145,7 +151,7 @@ function Meetings() {
   }
 
   const isPast = (dateStr: string) => {
-    return new Date(dateStr) < today
+    return parseLocalDate(dateStr) < today
   }
 
   const handleCreateFormChange = (field: keyof CreateMeetingForm, value: string | boolean) => {
@@ -693,13 +699,13 @@ function Meetings() {
                     {/* Date Badge */}
                     <div className="flex-shrink-0 w-16 text-center">
                       <div className={`text-2xl font-bold font-terminal ${isPast(meeting.date) ? 'text-gray-500' : 'text-matrix'}`}>
-                        {new Date(meeting.date).getDate()}
+                        {parseLocalDate(meeting.date).getDate()}
                       </div>
                       <div className="text-xs text-gray-500 uppercase">
-                        {new Date(meeting.date).toLocaleDateString('en-US', { month: 'short' })}
+                        {parseLocalDate(meeting.date).toLocaleDateString('en-US', { month: 'short' })}
                       </div>
                       <div className="text-xs text-gray-600">
-                        {new Date(meeting.date).getFullYear()}
+                        {parseLocalDate(meeting.date).getFullYear()}
                       </div>
                     </div>
 
@@ -774,7 +780,7 @@ function Meetings() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-hack-cyan">
-                    {meetings.filter(m => new Date(m.date) >= today).length}
+                    {meetings.filter(m => parseLocalDate(m.date) >= today).length}
                   </div>
                   <div className="text-xs text-gray-500 uppercase">Upcoming</div>
                 </div>

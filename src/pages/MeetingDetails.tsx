@@ -43,6 +43,7 @@ import {
   getRegistrationCount,
   getWaitlistCount,
 } from "@/lib/registrations";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface UserProfile {
   id: string;
@@ -117,6 +118,8 @@ function MeetingDetails() {
     RegistrationWithUser[]
   >([]);
   const [loadingAttendees, setLoadingAttendees] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelError, setCancelError] = useState("");
 
   const isOfficer = userProfile?.is_officer ?? false;
 
@@ -188,12 +191,13 @@ function MeetingDetails() {
 
       setLoadingAttendees(true);
       try {
-        // Fetch all registrations for this meeting (attended or registered)
+        // Fetch all registrations for this meeting with "attended" status
+        // (registrations table is publicly readable for "attended" status)
         const { data: registrations } = await supabase
           .from("registrations")
           .select("*")
           .eq("meeting_id", meeting.id)
-          .in("status", ["attended", "registered"])
+          .eq("status", "attended")
           .order("registered_at", { ascending: false });
 
         if (registrations && registrations.length > 0) {
@@ -264,12 +268,18 @@ function MeetingDetails() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // Parse date string as local timezone (not UTC)
+  const parseLocalDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const isPast = (dateStr: string) => {
-    return new Date(dateStr) < today;
+    return parseLocalDate(dateStr) < today;
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     return date.toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
@@ -316,19 +326,68 @@ function MeetingDetails() {
     if (!meeting || !user) return;
 
     setRegistering(true);
-    setRegistrationMessage(null);
+    setCancelError("");
 
     const result = await cancelRegistration(meeting.id, user.id);
 
     if (result.success) {
       setUserRegistration(null);
       setRegistrationMessage({ type: "success", text: result.message });
+      setShowCancelDialog(false);
 
       // Refresh counts
       const count = await getRegistrationCount(meeting.id);
       setRegistrationCount(count);
       const wCount = await getWaitlistCount(meeting.id);
       setWaitlistCount(wCount);
+    } else {
+      setCancelError(result.message);
+    }
+
+    setRegistering(false);
+  };
+
+  const handleAcceptInvite = async () => {
+    if (!meeting || !user || !userRegistration) return;
+
+    setRegistering(true);
+    setRegistrationMessage(null);
+
+    try {
+      const { data, error } = await supabase
+        .from("registrations")
+        .update({ status: "registered" })
+        .eq("id", userRegistration.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setUserRegistration(data);
+      setRegistrationMessage({ type: "success", text: "You have accepted the invite!" });
+
+      // Refresh counts
+      const count = await getRegistrationCount(meeting.id);
+      setRegistrationCount(count);
+    } catch (err) {
+      console.error("Error accepting invite:", err);
+      setRegistrationMessage({ type: "error", text: "Failed to accept invite. Please try again." });
+    }
+
+    setRegistering(false);
+  };
+
+  const handleDeclineInvite = async () => {
+    if (!meeting || !user) return;
+
+    setRegistering(true);
+    setRegistrationMessage(null);
+
+    const result = await cancelRegistration(meeting.id, user.id);
+
+    if (result.success) {
+      setUserRegistration(null);
+      setRegistrationMessage({ type: "success", text: "Invite declined" });
     } else {
       setRegistrationMessage({ type: "error", text: result.message });
     }
@@ -653,6 +712,23 @@ function MeetingDetails() {
 
   return (
     <div className="bg-terminal-bg text-matrix min-h-screen">
+      {/* Cancel Registration Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showCancelDialog}
+        onClose={() => {
+          setShowCancelDialog(false);
+          setCancelError("");
+        }}
+        onConfirm={handleCancelRegistration}
+        title="Cancel Registration?"
+        message="Are you sure you want to cancel your registration for this event? You may lose your spot if the event fills up."
+        confirmText="YES, CANCEL"
+        cancelText="KEEP REGISTRATION"
+        loading={registering}
+        error={cancelError}
+        variant="danger"
+      />
+
       {/* Fullscreen Attendance Code Overlay */}
       {codeFullscreen && meeting?.secret_code && (
         <div
@@ -1681,9 +1757,41 @@ function MeetingDetails() {
                         </div>
                       )}
 
-                      {/* User already registered */}
+                      {/* User has been invited - show accept/decline */}
                       {userRegistration &&
+                      userRegistration.status === "invited" ? (
+                        <div className="space-y-4">
+                          <div className="p-4 rounded-lg bg-hack-cyan/10 border border-hack-cyan/50">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Star className="w-5 h-5 text-hack-cyan" />
+                              <span className="font-semibold text-hack-cyan">
+                                You've been invited!
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-400">
+                              You've been invited to attend this meeting. Accept the invite to confirm your spot.
+                            </p>
+                          </div>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={handleDeclineInvite}
+                              disabled={registering}
+                              className="flex-1 px-4 py-2 text-sm font-terminal text-gray-400 hover:text-hack-red border border-gray-600 hover:border-hack-red rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {registering ? "..." : "Decline"}
+                            </button>
+                            <button
+                              onClick={handleAcceptInvite}
+                              disabled={registering}
+                              className="flex-1 btn-hack-filled px-4 py-2 disabled:opacity-50"
+                            >
+                              {registering ? "Accepting..." : "Accept Invite"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : userRegistration &&
                       userRegistration.status !== "cancelled" ? (
+                        /* User already registered */
                         <div className="space-y-4">
                           <div className="p-4 rounded-lg bg-matrix/10 border border-matrix/50">
                             <div className="flex items-center gap-2 mb-2">
@@ -1693,8 +1801,8 @@ function MeetingDetails() {
                                   "You are registered"}
                                 {userRegistration.status === "waitlist" &&
                                   "You are on the waitlist"}
-                                {userRegistration.status === "invited" &&
-                                  "You are invited"}
+                                {userRegistration.status === "attended" &&
+                                  "You are registered"}
                               </span>
                             </div>
                             <p className="text-sm text-gray-400">
@@ -1702,18 +1810,15 @@ function MeetingDetails() {
                                 "See you at the event!"}
                               {userRegistration.status === "waitlist" &&
                                 "You'll be notified if a spot opens up."}
-                              {userRegistration.status === "invited" &&
-                                "You have been invited to this event."}
+                              {userRegistration.status === "attended" &&
+                                "See you at the event!"}
                             </p>
                           </div>
                           <button
-                            onClick={handleCancelRegistration}
-                            disabled={registering}
-                            className="text-sm text-gray-500 hover:text-hack-red transition-colors disabled:opacity-50"
+                            onClick={() => setShowCancelDialog(true)}
+                            className="text-sm text-gray-500 hover:text-hack-red transition-colors"
                           >
-                            {registering
-                              ? "Cancelling..."
-                              : "Cancel registration"}
+                            Cancel registration
                           </button>
                         </div>
                       ) : meeting.registration_type === "closed" ? (

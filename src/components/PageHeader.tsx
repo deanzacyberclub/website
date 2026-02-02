@@ -14,7 +14,7 @@ function PageHeader() {
   return (
     <div className="flex items-center justify-between mb-8">
       <Link
-        to={user ? "/dashboard" : "/"}
+        to="/dashboard"
         className="glitch text-matrix hover:text-matrix transition-colors font-terminal text-sm tracking-tight neon-text-subtle"
         data-text="[dacc]"
       >
@@ -69,7 +69,7 @@ function PageHeader() {
         <ProfileMenu />
       ) : (
         <Link
-          to={`/auth?to=${encodeURIComponent(location.pathname)}`}
+          to={`/auth?to=${encodeURIComponent(location.pathname === "/" ? "/dashboard" : location.pathname)}`}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-700 hover:border-matrix text-gray-400 hover:text-matrix transition-colors font-terminal text-sm"
         >
           <Login className="w-4 h-4" />
