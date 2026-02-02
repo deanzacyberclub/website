@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, AlertTriangle, Document } from "@/lib/cyberIcon";
+import { ChevronLeft, Document } from "@/lib/cyberIcon";
 
 interface Document {
   title: string;
@@ -44,45 +44,24 @@ function Demo2() {
 
     try {
       // Make a real HTTP GET request that Burp Suite can intercept
-      const fetchPromise = fetch(`/api/documents?id=${id}`, {
+      const response = await fetch(`/api/documents?id=${id}`, {
         method: "GET",
         headers: {
           "Accept": "application/json",
         },
       });
 
-      // Wait for the request to complete (or fail after network timeout)
-      // This simulates waiting for the server to respond
-      await fetchPromise.catch(() => {
-        // Endpoint doesn't exist, but request was sent and interceptable
-      });
-
-      // Add a small delay to simulate server processing time
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // Simulate server-side response
-      const doc = documents[id];
-      if (doc) {
+      if (response.ok) {
+        const doc = await response.json();
         setDocument(doc);
       } else {
         setError("Document not found");
         setDocument(null);
       }
     } catch (err) {
-      // Even if the fetch fails (endpoint doesn't exist),
-      // the request was still sent and can be intercepted
-
-      // Add a small delay to simulate server processing time
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // Simulate server-side response
-      const doc = documents[id];
-      if (doc) {
-        setDocument(doc);
-      } else {
-        setError("Document not found");
-        setDocument(null);
-      }
+      setError("Connection error. Please try again.");
+      setDocument(null);
+      console.error("API Error:", err);
     }
 
     setLoading(false);
@@ -121,7 +100,7 @@ function Demo2() {
           Back to Demos
         </Link>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="max-w-4xl mx-auto">
           {/* Document Viewer */}
           <div>
             <div className="card-hack p-8 rounded-lg">
@@ -182,88 +161,6 @@ function Demo2() {
                   </code>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="space-y-6">
-            <div className="card-hack p-6 rounded-lg">
-              <h2 className="text-xl font-bold text-matrix mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Demo 2: IDOR Vulnerability
-              </h2>
-              <p className="text-gray-400 text-sm mb-4">
-                This document portal has an Insecure Direct Object Reference (IDOR) vulnerability. The API doesn't verify if you're authorized to access documents.
-              </p>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg">
-              <h3 className="text-lg font-bold text-white mb-3">What to Demonstrate:</h3>
-              <ol className="space-y-3 text-sm text-gray-400">
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">1.</span>
-                  <span>Open Burp Suite and enable <span className="text-matrix font-mono">Intercept</span></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">2.</span>
-                  <span>Click the <span className="text-matrix font-mono">"Get My Performance Review"</span> button</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">3.</span>
-                  <span>Intercept the request - you'll see <span className="text-matrix font-mono">GET /api/documents?id=1001</span></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">4.</span>
-                  <span>Right-click and <span className="text-matrix font-mono">Send to Repeater</span>, then forward the request</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">5.</span>
-                  <span>In Repeater, change <span className="text-matrix font-mono">id=1001</span> to <span className="text-matrix font-mono">id=1002</span></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">6.</span>
-                  <span>Click "Send" - you can now access <span className="text-red-400">CEO salary information</span>!</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">7.</span>
-                  <span>Try <span className="text-matrix font-mono">id=1003</span> for <span className="text-red-400">layoff plans</span> and <span className="text-matrix font-mono">id=1004</span> for <span className="text-red-400">merger plans</span></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">8.</span>
-                  <span>Show how changing one parameter grants unauthorized access to sensitive data</span>
-                </li>
-              </ol>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg">
-              <h3 className="text-lg font-bold text-white mb-3">Available Documents:</h3>
-              <div className="space-y-2 text-sm">
-                {Object.entries(documents).map(([id, doc]) => (
-                  <div
-                    key={id}
-                    className="flex items-center justify-between p-2 rounded bg-terminal-alt border border-gray-700"
-                  >
-                    <span className="text-gray-400">
-                      <span className="text-matrix font-mono">id={id}</span> - {doc.title}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded border ${getClassificationColor(doc.classification)}`}
-                    >
-                      {doc.classification}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg border-red-500/30 bg-red-500/5">
-              <h3 className="text-lg font-bold text-red-400 mb-3">Real-World Impact:</h3>
-              <p className="text-sm text-gray-400 mb-2">
-                In 2019, First American Financial exposed <span className="text-red-400 font-bold">885 million records</span> because anyone could access documents by simply changing a number in the URL.
-              </p>
-              <p className="text-sm text-gray-400">
-                This is one of the most common vulnerabilities in web applications. Always verify authorization, not just authentication.
-              </p>
             </div>
           </div>
         </div>

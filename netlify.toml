@@ -7,7 +7,36 @@
 
 [functions]
   node_bundler = "esbuild"
+  directory = "netlify/functions"
 
+# BurpSuite Demo API Endpoints
+[[redirects]]
+  from = "/api/burpsuite/demo1/login"
+  to = "/.netlify/functions/burpsuite-demo1-login"
+  status = 200
+
+[[redirects]]
+  from = "/api/documents"
+  to = "/.netlify/functions/documents"
+  status = 200
+
+[[redirects]]
+  from = "/api/auth/login"
+  to = "/.netlify/functions/auth-login"
+  status = 200
+
+# CTF Challenge API Endpoints
+[[redirects]]
+  from = "/api/burpsuite/dashboard/auth"
+  to = "/.netlify/functions/burpsuite-dashboard-auth"
+  status = 200
+
+[[redirects]]
+  from = "/api/burpsuite/dashboard/data"
+  to = "/.netlify/functions/burpsuite-dashboard-data"
+  status = 200
+
+# SPA fallback for React Router (must be last)
 [[redirects]]
   from = "/*"
   to = "/index.html"

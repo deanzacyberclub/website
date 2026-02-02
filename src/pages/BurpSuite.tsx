@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Shield, Lock, Key, Code, ChevronDown } from "@/lib/cyberIcon";
+import { Shield, Lock, Key } from "@/lib/cyberIcon";
 
 const demos = [
   {
@@ -9,7 +8,6 @@ const demos = [
     description: "Learn how to intercept HTTP requests and view credentials in plain text using Burp Suite's Proxy feature.",
     path: "/burpsuite/demo1",
     icon: Lock,
-    topics: ["HTTP Interception", "Form Data Analysis", "Session Tokens", "Hidden Fields"],
   },
   {
     id: 2,
@@ -17,7 +15,6 @@ const demos = [
     description: "Discover Insecure Direct Object Reference vulnerabilities by modifying API parameters to access unauthorized data.",
     path: "/burpsuite/demo2",
     icon: Key,
-    topics: ["IDOR", "API Security", "Authorization Testing", "Parameter Tampering"],
   },
   {
     id: 3,
@@ -25,25 +22,10 @@ const demos = [
     description: "Automate attacks to enumerate valid usernames by analyzing different error message responses.",
     path: "/burpsuite/demo3",
     icon: Shield,
-    topics: ["Username Enumeration", "Automated Attacks", "Response Analysis", "Password Spraying"],
-  },
-  {
-    id: 4,
-    title: "Decoder - Exposed Encoded Data",
-    description: "Understand why encoding is not encryption by decoding Base64-encoded sensitive data in URLs.",
-    path: "/burpsuite/demo4",
-    icon: Code,
-    topics: ["Base64 Decoding", "Data Exposure", "URL Parameters", "Encoding vs Encryption"],
   },
 ];
 
 function BurpSuite() {
-  const [expandedDemo, setExpandedDemo] = useState<number | null>(null);
-
-  const toggleDemo = (id: number) => {
-    setExpandedDemo(expandedDemo === id ? null : id);
-  };
-
   return (
     <div className="bg-terminal-bg text-matrix min-h-screen">
       <div className="crt-overlay" />
@@ -58,28 +40,20 @@ function BurpSuite() {
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Burp Suite <span className="text-matrix neon-text">Demo Lab</span>
           </h1>
-          <p className="text-gray-400 text-lg leading-relaxed max-w-3xl">
-            Welcome to the DACC Burp Suite practice environment. These intentionally vulnerable applications demonstrate common web security flaws and how to discover them using Burp Suite.
-          </p>
-          <div className="mt-6 p-4 rounded-lg border border-red-500/30 bg-red-500/10">
-            <p className="text-red-400 text-sm">
-              <span className="font-bold">⚠️ EDUCATIONAL USE ONLY:</span> These demos contain intentional security vulnerabilities. They are for authorized security training purposes only. Do not use these techniques on systems you don't own or have explicit permission to test.
-            </p>
-          </div>
         </div>
 
         {/* Demo Cards Grid */}
         <div className="grid md:grid-cols-2 gap-6">
           {demos.map((demo) => {
             const Icon = demo.icon;
-            const isExpanded = expandedDemo === demo.id;
             return (
-              <div
+              <Link
                 key={demo.id}
-                className="card-hack rounded-lg hover:border-matrix/60 transition-all"
+                to={demo.path}
+                className="card-hack rounded-lg hover:border-matrix/60 transition-all block"
               >
                 <div className="p-6">
-                  <div className="flex items-start gap-4 mb-4">
+                  <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-lg bg-matrix/20 border border-matrix/40 flex items-center justify-center shrink-0">
                       <Icon className="w-6 h-6 text-matrix" />
                     </div>
@@ -87,61 +61,39 @@ function BurpSuite() {
                       <h3 className="text-xl font-semibold text-matrix mb-2">
                         Demo {demo.id}: {demo.title}
                       </h3>
-                      <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                      <p className="text-gray-400 text-sm leading-relaxed">
                         {demo.description}
                       </p>
                     </div>
                   </div>
-
-                  {/* Topics */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {demo.topics.map((topic) => (
-                      <span
-                        key={topic}
-                        className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-400 font-terminal"
-                      >
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Toggle Button */}
-                  <button
-                    onClick={() => toggleDemo(demo.id)}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-terminal-alt border border-gray-700 hover:border-matrix/40 transition-all text-sm font-semibold text-gray-300"
-                  >
-                    <span>{isExpanded ? "Hide" : "Show"} Demo Details</span>
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                    />
-                  </button>
                 </div>
-
-                {/* Expandable Content */}
-                <div
-                  className={`overflow-hidden transition-all duration-300 ${
-                    isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                  }`}
-                >
-                  <div className="p-6 pt-0 border-t border-gray-700/50 mt-4">
-                    <p className="text-gray-400 text-sm mb-4">
-                      This demo will show you how to use Burp Suite to discover and exploit this vulnerability. Make sure you have Burp Suite configured as your browser proxy before starting.
-                    </p>
-                    <Link
-                      to={demo.path}
-                      className="btn-hack-filled rounded-lg px-6 py-3 text-sm font-semibold inline-block hover:scale-105 transition-transform"
-                    >
-                      Launch Demo {demo.id}
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              </Link>
             );
           })}
         </div>
 
+        {/* CTF Challenge */}
+        <div className="mt-12 card-hack p-8 rounded-lg border-2 border-matrix/40 bg-gradient-to-br from-matrix/5 to-transparent">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-3xl">🚩</span>
+            <h2 className="text-3xl font-bold text-matrix">Launch Week Challenge</h2>
+          </div>
+          <p className="text-gray-300 mb-4 text-lg">
+            Think you've mastered the demos? Put your skills to the test with our CTF puzzle.
+          </p>
+          <p className="text-gray-400 mb-6 text-sm">
+            First person to capture the flag wins! This challenge requires creative thinking and mastery of Proxy, Repeater, and Intruder techniques.
+          </p>
+          <Link
+            to="/burpsuite/dashboard"
+            className="inline-block btn-hack-filled rounded-lg px-8 py-4 font-semibold text-lg"
+          >
+            Launch Week 1 Puzzle →
+          </Link>
+        </div>
+
         {/* Instructions */}
-        <div className="mt-12 card-hack p-6 rounded-lg">
+        <div className="mt-8 card-hack p-6 rounded-lg">
           <h2 className="text-2xl font-bold text-matrix mb-4">Getting Started</h2>
           <ol className="space-y-3 text-gray-400">
             <li className="flex gap-3">

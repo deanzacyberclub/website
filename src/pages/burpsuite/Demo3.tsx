@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, AlertTriangle, Mail } from "@/lib/cyberIcon";
+import { ChevronLeft, Mail } from "@/lib/cyberIcon";
 
 const validUsernames = ["jsmith", "admin", "ceo", "hradmin"];
 
@@ -24,7 +24,7 @@ function Demo3() {
       formData.append("password", password);
 
       // Make a real HTTP request that Burp Suite can intercept
-      const fetchPromise = fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -32,40 +32,19 @@ function Demo3() {
         body: formData.toString(),
       });
 
-      // Wait for the request to complete (or fail after network timeout)
-      // This simulates waiting for the server to respond
-      await fetchPromise.catch(() => {
-        // Endpoint doesn't exist, but request was sent and interceptable
-      });
+      const data = await response.json();
 
-      // Add a small delay to simulate server processing time
-      await new Promise((resolve) => setTimeout(resolve, 250));
-
-      // Simulate server-side response (with vulnerability)
-      if (!validUsernames.includes(username.toLowerCase())) {
-        setError("User not found");
-      } else if (username.toLowerCase() === "admin" && password === "admin123") {
+      if (response.ok && data.success) {
         setLoggedIn(true);
       } else {
-        setError("Invalid password");
-        setAttempts(Math.max(0, attempts - 1));
+        setError(data.message || "Authentication failed");
+        if (data.message !== "User not found") {
+          setAttempts(Math.max(0, attempts - 1));
+        }
       }
     } catch (err) {
-      // Even if the fetch fails (endpoint doesn't exist),
-      // the request was still sent and can be intercepted
-
-      // Add a small delay to simulate server processing time
-      await new Promise((resolve) => setTimeout(resolve, 250));
-
-      // Simulate server-side response (with vulnerability)
-      if (!validUsernames.includes(username.toLowerCase())) {
-        setError("User not found");
-      } else if (username.toLowerCase() === "admin" && password === "admin123") {
-        setLoggedIn(true);
-      } else {
-        setError("Invalid password");
-        setAttempts(Math.max(0, attempts - 1));
-      }
+      setError("Connection error. Please try again.");
+      console.error("API Error:", err);
     }
 
     setLoading(false);
@@ -128,7 +107,7 @@ function Demo3() {
           Back to Demos
         </Link>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="max-w-md mx-auto">
           {/* Login Form */}
           <div>
             <div className="card-hack p-8 rounded-lg">
@@ -189,91 +168,6 @@ function Demo3() {
                   </p>
                 </div>
               </form>
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="space-y-6">
-            <div className="card-hack p-6 rounded-lg">
-              <h2 className="text-xl font-bold text-matrix mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Demo 3: Username Enumeration
-              </h2>
-              <p className="text-gray-400 text-sm mb-4">
-                This login form reveals different error messages based on whether the username exists. This allows attackers to enumerate valid usernames.
-              </p>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg">
-              <h3 className="text-lg font-bold text-white mb-3">What to Demonstrate:</h3>
-              <ol className="space-y-3 text-sm text-gray-400">
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">1.</span>
-                  <span>First, manually test with username "bob" and any password - see "User not found"</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">2.</span>
-                  <span>Try username "admin" with wrong password - see "Invalid password" (different!)</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">3.</span>
-                  <span>In Burp Suite, send a login request to <span className="text-matrix font-mono">Intruder</span></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">4.</span>
-                  <span>Set the username field as the <span className="text-matrix font-mono">§injection point§</span></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">5.</span>
-                  <span>Load the wordlist (see below) into Intruder's payload list</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">6.</span>
-                  <span>Run the attack in <span className="text-matrix font-mono">Sniper</span> mode</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">7.</span>
-                  <span>Sort by <span className="text-matrix font-mono">response length</span> - valid usernames have different response size</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">8.</span>
-                  <span>Once you have valid usernames, password spraying becomes much easier!</span>
-                </li>
-              </ol>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg">
-              <h3 className="text-lg font-bold text-white mb-3">Test Wordlist:</h3>
-              <div className="bg-terminal-alt border border-gray-700 rounded p-4">
-                <pre className="text-xs text-matrix font-mono">
-{`jsmith
-admin
-ceo
-hradmin
-bob
-alice
-test
-guest
-administrator
-root`}
-                </pre>
-              </div>
-              <p className="text-xs text-gray-400 mt-2">
-                💡 Valid usernames: jsmith, admin, ceo, hradmin
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                🔑 Working credentials: admin / admin123
-              </p>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg border-red-500/30 bg-red-500/5">
-              <h3 className="text-lg font-bold text-red-400 mb-3">Real-World Impact:</h3>
-              <p className="text-sm text-gray-400 mb-2">
-                Attackers often enumerate valid usernames before attempting password attacks. Different error messages reveal whether an account exists.
-              </p>
-              <p className="text-sm text-gray-400">
-                This vulnerability has affected GitHub, Facebook, and countless other sites. Always return generic error messages like "Invalid username or password".
-              </p>
             </div>
           </div>
         </div>

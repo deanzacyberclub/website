@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, AlertTriangle } from "@/lib/cyberIcon";
+import { ChevronLeft } from "@/lib/cyberIcon";
 
 function Demo1() {
   const [username, setUsername] = useState("");
@@ -23,7 +23,7 @@ function Demo1() {
 
     try {
       // Make a real HTTP request that Burp Suite can intercept
-      const response = await fetch("http://localhost:3001/api/burpsuite/demo1/login", {
+      const response = await fetch("/api/burpsuite/demo1/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -45,7 +45,7 @@ function Demo1() {
       }
     } catch (err) {
       setLoading(false);
-      alert("Connection error. Make sure the API server is running (npm run api).");
+      alert("Connection error. Please try again.");
       console.error("API Error:", err);
     }
   };
@@ -106,7 +106,7 @@ function Demo1() {
           Back to Demos
         </Link>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="max-w-md mx-auto">
           {/* Login Form */}
           <div>
             <div className="card-hack p-8 rounded-lg">
@@ -175,72 +175,6 @@ function Demo1() {
 
               <p className="text-center text-gray-500 text-xs mt-4">
                 Version 2.3.1 | Web Client
-              </p>
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="space-y-6">
-            <div className="card-hack p-6 rounded-lg">
-              <h2 className="text-xl font-bold text-matrix mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Demo 1: Proxy Intercept
-              </h2>
-              <p className="text-gray-400 text-sm mb-4">
-                This login form transmits credentials in plain text. Use Burp Suite to intercept and analyze the request.
-              </p>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg">
-              <h3 className="text-lg font-bold text-white mb-3">What to Demonstrate:</h3>
-              <ol className="space-y-3 text-sm text-gray-400">
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">1.</span>
-                  <span>Open Burp Suite and turn on <span className="text-matrix font-mono">Intercept</span></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">2.</span>
-                  <span>Enter any username and password (try "wrongpass") in the form</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">3.</span>
-                  <span>Click "Sign In" and view the intercepted request</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">4.</span>
-                  <span>Show the password visible in <span className="text-matrix font-mono">plain text</span></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">5.</span>
-                  <span>Point out hidden fields: <span className="text-matrix font-mono">app_version</span> and <span className="text-matrix font-mono">client_type</span></span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">6.</span>
-                  <span><span className="text-red-400 font-bold">Modify the password</span> in Burp to <span className="text-matrix font-mono">12345678</span> before forwarding</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">7.</span>
-                  <span>Forward the request - the login succeeds! This demonstrates request tampering</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-matrix font-bold">8.</span>
-                  <span>Observe the session cookie being set in the response</span>
-                </li>
-              </ol>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg bg-blue-500/5 border-blue-500/30">
-              <h3 className="text-lg font-bold text-blue-400 mb-3">💡 Demo Tip:</h3>
-              <p className="text-sm text-gray-400">
-                The backend only accepts password <span className="text-matrix font-mono font-bold">12345678</span>.
-                This allows you to demonstrate request modification by intercepting any login attempt and changing the password to the correct value in Burp Suite.
-              </p>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg border-red-500/30 bg-red-500/5">
-              <h3 className="text-lg font-bold text-red-400 mb-3">Real-World Impact:</h3>
-              <p className="text-sm text-gray-400">
-                Many internal corporate apps and legacy systems still transmit credentials in easily viewable form. Even over HTTPS, anyone with network access or a compromised proxy can see everything.
               </p>
             </div>
           </div>
