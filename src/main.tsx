@@ -27,6 +27,11 @@ const CTFChallengeEditor = lazy(() => import("@/pages/ctf/ChallengeEditor"));
 const Study = lazy(() => import("@/pages/Study"));
 const Officer = lazy(() => import("@/pages/Officer"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
+const BurpSuite = lazy(() => import("@/pages/BurpSuite"));
+const BurpSuiteDemo1 = lazy(() => import("@/pages/burpsuite/Demo1"));
+const BurpSuiteDemo2 = lazy(() => import("@/pages/burpsuite/Demo2"));
+const BurpSuiteDemo3 = lazy(() => import("@/pages/burpsuite/Demo3"));
+const BurpSuiteDemo4 = lazy(() => import("@/pages/burpsuite/Demo4"));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -57,6 +62,13 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/@/:id" element={<UserProfile />} />
+
+              {/* BurpSuite Demo Routes */}
+              <Route path="/burpsuite" element={<BurpSuite />} />
+              <Route path="/burpsuite/demo1" element={<BurpSuiteDemo1 />} />
+              <Route path="/burpsuite/demo2" element={<BurpSuiteDemo2 />} />
+              <Route path="/burpsuite/demo3" element={<BurpSuiteDemo3 />} />
+              <Route path="/burpsuite/demo4" element={<BurpSuiteDemo4 />} />
 
               {/* Protected routes - require authentication */}
               <Route path="/live" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
