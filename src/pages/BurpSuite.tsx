@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Shield, Lock, Key, Code } from "@/lib/cyberIcon";
+import { Shield, Lock, Key, Code, ChevronDown } from "@/lib/cyberIcon";
 
 const demos = [
   {
@@ -37,6 +38,12 @@ const demos = [
 ];
 
 function BurpSuite() {
+  const [expandedDemo, setExpandedDemo] = useState<number | null>(null);
+
+  const toggleDemo = (id: number) => {
+    setExpandedDemo(expandedDemo === id ? null : id);
+  };
+
   return (
     <div className="bg-terminal-bg text-matrix min-h-screen">
       <div className="crt-overlay" />
@@ -65,38 +72,70 @@ function BurpSuite() {
         <div className="grid md:grid-cols-2 gap-6">
           {demos.map((demo) => {
             const Icon = demo.icon;
+            const isExpanded = expandedDemo === demo.id;
             return (
-              <Link
+              <div
                 key={demo.id}
-                to={demo.path}
-                className="card-hack p-6 rounded-lg hover:border-matrix/60 transition-all group"
+                className="card-hack rounded-lg hover:border-matrix/60 transition-all"
               >
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-lg bg-matrix/20 border border-matrix/40 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                    <Icon className="w-6 h-6 text-matrix" />
+                <div className="p-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-lg bg-matrix/20 border border-matrix/40 flex items-center justify-center shrink-0">
+                      <Icon className="w-6 h-6 text-matrix" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-semibold text-matrix mb-2">
+                        Demo {demo.id}: {demo.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                        {demo.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-semibold text-matrix mb-2 group-hover:neon-text-subtle transition-all">
-                      Demo {demo.id}: {demo.title}
-                    </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                      {demo.description}
-                    </p>
+
+                  {/* Topics */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {demo.topics.map((topic) => (
+                      <span
+                        key={topic}
+                        className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-400 font-terminal"
+                      >
+                        {topic}
+                      </span>
+                    ))}
                   </div>
+
+                  {/* Toggle Button */}
+                  <button
+                    onClick={() => toggleDemo(demo.id)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-terminal-alt border border-gray-700 hover:border-matrix/40 transition-all text-sm font-semibold text-gray-300"
+                  >
+                    <span>{isExpanded ? "Hide" : "Show"} Demo Details</span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    />
+                  </button>
                 </div>
 
-                {/* Topics */}
-                <div className="flex flex-wrap gap-2">
-                  {demo.topics.map((topic) => (
-                    <span
-                      key={topic}
-                      className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-400 font-terminal"
+                {/* Expandable Content */}
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <div className="p-6 pt-0 border-t border-gray-700/50 mt-4">
+                    <p className="text-gray-400 text-sm mb-4">
+                      This demo will show you how to use Burp Suite to discover and exploit this vulnerability. Make sure you have Burp Suite configured as your browser proxy before starting.
+                    </p>
+                    <Link
+                      to={demo.path}
+                      className="btn-hack-filled rounded-lg px-6 py-3 text-sm font-semibold inline-block hover:scale-105 transition-transform"
                     >
-                      {topic}
-                    </span>
-                  ))}
+                      Launch Demo {demo.id}
+                    </Link>
+                  </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>

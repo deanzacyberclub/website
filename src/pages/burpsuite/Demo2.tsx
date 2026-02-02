@@ -32,7 +32,7 @@ const documents: { [key: string]: Document } = {
 };
 
 function Demo2() {
-  const [documentId, setDocumentId] = useState("1001");
+  const [documentId, setDocumentId] = useState("");
   const [document, setDocument] = useState<Document | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,6 +40,7 @@ function Demo2() {
   const fetchDocument = async (id: string) => {
     setLoading(true);
     setError("");
+    setDocumentId(id);
 
     // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -55,9 +56,10 @@ function Demo2() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchDocument(documentId);
-  }, [documentId]);
+  const handleGetMyReport = () => {
+    // This will trigger a request that can be intercepted
+    fetchDocument("1001");
+  };
 
   const getClassificationColor = (classification: string) => {
     switch (classification) {
@@ -99,7 +101,17 @@ function Demo2() {
                 </div>
               </div>
 
-              {loading ? (
+              {!documentId && !loading ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 mb-6">Click below to retrieve your performance review</p>
+                  <button
+                    onClick={handleGetMyReport}
+                    className="btn-hack-filled rounded-lg px-6 py-3 font-semibold"
+                  >
+                    Get My Performance Review
+                  </button>
+                </div>
+              ) : loading ? (
                 <div className="text-center py-12">
                   <p className="text-gray-400">Loading document...</p>
                 </div>
@@ -130,12 +142,14 @@ function Demo2() {
                 </div>
               ) : null}
 
-              <div className="mt-6 p-4 rounded-lg bg-gray-800/50 border border-gray-700">
-                <p className="text-xs text-gray-400 font-mono mb-2">API Endpoint:</p>
-                <code className="text-xs text-matrix font-mono">
-                  GET /api/documents?id={documentId}
-                </code>
-              </div>
+              {documentId && (
+                <div className="mt-6 p-4 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <p className="text-xs text-gray-400 font-mono mb-2">API Endpoint:</p>
+                  <code className="text-xs text-matrix font-mono">
+                    GET /api/documents?id={documentId}
+                  </code>
+                </div>
+              )}
             </div>
           </div>
 
@@ -156,31 +170,35 @@ function Demo2() {
               <ol className="space-y-3 text-sm text-gray-400">
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">1.</span>
-                  <span>Open Burp Suite and navigate to this page</span>
+                  <span>Open Burp Suite and enable <span className="text-matrix font-mono">Intercept</span></span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">2.</span>
-                  <span>Intercept the request for <span className="text-matrix font-mono">id=1001</span> (your own document)</span>
+                  <span>Click the <span className="text-matrix font-mono">"Get My Performance Review"</span> button</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">3.</span>
-                  <span>Right-click and send the request to <span className="text-matrix font-mono">Repeater</span></span>
+                  <span>Intercept the request - you'll see <span className="text-matrix font-mono">GET /api/documents?id=1001</span></span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">4.</span>
-                  <span>In Repeater, change <span className="text-matrix font-mono">id=1001</span> to <span className="text-matrix font-mono">id=1002</span></span>
+                  <span>Right-click and <span className="text-matrix font-mono">Send to Repeater</span>, then forward the request</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">5.</span>
-                  <span>Click "Send" and observe you can access <span className="text-red-400">CEO salary information</span></span>
+                  <span>In Repeater, change <span className="text-matrix font-mono">id=1001</span> to <span className="text-matrix font-mono">id=1002</span></span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">6.</span>
-                  <span>Try <span className="text-matrix font-mono">id=1003</span> for <span className="text-red-400">layoff plans</span></span>
+                  <span>Click "Send" - you can now access <span className="text-red-400">CEO salary information</span>!</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">7.</span>
-                  <span>Try <span className="text-matrix font-mono">id=1004</span> for <span className="text-red-400">merger plans</span></span>
+                  <span>Try <span className="text-matrix font-mono">id=1003</span> for <span className="text-red-400">layoff plans</span> and <span className="text-matrix font-mono">id=1004</span> for <span className="text-red-400">merger plans</span></span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-matrix font-bold">8.</span>
+                  <span>Show how changing one parameter grants unauthorized access to sensitive data</span>
                 </li>
               </ol>
             </div>

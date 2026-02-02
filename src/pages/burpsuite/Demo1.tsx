@@ -13,35 +13,21 @@ function Demo1() {
     e.preventDefault();
     setLoading(true);
 
-    // Create form data just like a real insecure form would
-    const formData = new URLSearchParams();
-    formData.append("username", username);
-    formData.append("password", password);
-    formData.append("remember", remember ? "on" : "off");
-    formData.append("app_version", "2.3.1");
-    formData.append("client_type", "web");
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    try {
-      // Simulate API call
-      const response = await fetch("/api/burpsuite/demo1/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
-      });
-
-      // Set a fake session cookie
-      document.cookie = "SESSIONID=abc123-fake-session-token-xyz789; path=/";
-
+    // Check if password is exactly "12345678"
+    if (password !== "12345678") {
       setLoading(false);
-      setLoggedIn(true);
-    } catch (err) {
-      // Even if the API doesn't exist, simulate successful login
-      document.cookie = "SESSIONID=abc123-fake-session-token-xyz789; path=/";
-      setLoading(false);
-      setLoggedIn(true);
+      alert("Authentication failed. Invalid credentials.");
+      return;
     }
+
+    // Set a fake session cookie
+    document.cookie = "SESSIONID=abc123-fake-session-token-xyz789; path=/";
+
+    setLoading(false);
+    setLoggedIn(true);
   };
 
   if (loggedIn) {
@@ -194,7 +180,7 @@ function Demo1() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">2.</span>
-                  <span>Enter any username and password in the form</span>
+                  <span>Enter any username and password (try "wrongpass") in the form</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">3.</span>
@@ -210,13 +196,25 @@ function Demo1() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">6.</span>
-                  <span>Forward the request and observe the session cookie</span>
+                  <span><span className="text-red-400 font-bold">Modify the password</span> in Burp to <span className="text-matrix font-mono">12345678</span> before forwarding</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-matrix font-bold">7.</span>
-                  <span>Demonstrate modifying the username before forwarding</span>
+                  <span>Forward the request - the login succeeds! This demonstrates request tampering</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-matrix font-bold">8.</span>
+                  <span>Observe the session cookie being set in the response</span>
                 </li>
               </ol>
+            </div>
+
+            <div className="card-hack p-6 rounded-lg bg-blue-500/5 border-blue-500/30">
+              <h3 className="text-lg font-bold text-blue-400 mb-3">💡 Demo Tip:</h3>
+              <p className="text-sm text-gray-400">
+                The backend only accepts password <span className="text-matrix font-mono font-bold">12345678</span>.
+                This allows you to demonstrate request modification by intercepting any login attempt and changing the password to the correct value in Burp Suite.
+              </p>
             </div>
 
             <div className="card-hack p-6 rounded-lg border-red-500/30 bg-red-500/5">
