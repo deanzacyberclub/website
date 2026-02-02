@@ -32,11 +32,10 @@ export default async (req, context) => {
 
     const token = authHeader.substring(7); // Remove 'Bearer '
 
-    // Decode the base64 token
+    // Parse the JSON token (no encoding)
     let tokenData;
     try {
-      const decoded = Buffer.from(token, 'base64').toString('utf-8');
-      tokenData = JSON.parse(decoded);
+      tokenData = JSON.parse(token);
     } catch (e) {
       return new Response(
         JSON.stringify({
@@ -49,28 +48,50 @@ export default async (req, context) => {
 
     console.log('[CTF Dashboard] Access attempt:', tokenData);
 
-    // The vulnerability: Check if role is "executive" AND timestamp is during Launch Week 1
+    // The vulnerability: Check if role is in the correct privilege level AND timestamp is during Launch Week 1
     // Launch Week 1: Jan 1, 2024 00:00:00 UTC to Jan 8, 2024 00:00:00 UTC
     const LAUNCH_WEEK_START = 1704067200; // Jan 1, 2024 00:00:00 UTC
     const LAUNCH_WEEK_END = 1704672000;   // Jan 8, 2024 00:00:00 UTC
 
+    // List of valid roles (from lowest to highest privilege)
+    const validRoles = [
+      'intern',
+      'employee',
+      'analyst',
+      'senior-analyst',
+      'team-lead',
+      'manager',
+      'senior-manager',
+      'director',
+      'senior-director',
+      'vp',
+      'senior-vp',
+      'executive-vp',
+      'c-level',
+      'cfo',
+      'cto',
+      'coo',
+      'ceo'
+    ];
+
     const role = tokenData.role;
     const timestamp = tokenData.timestamp;
 
+    // The correct role is "c-level" (Chief-level access)
     // Provide different error messages to guide the player
-    if (role !== 'executive') {
-      // Hint: They need to change the role
+    if (role !== 'c-level') {
+      // Hint: They need to find the right role
       const responseHeaders = {
         ...headers,
         'X-Error-Type': 'insufficient-privileges',
-        'X-Required-Role': 'executive',
-        'X-Current-Role': role || 'unknown'
+        'X-Current-Role': role || 'unknown',
+        'X-Role-Hierarchy': 'System uses standard corporate role hierarchy'
       };
 
       return new Response(
         JSON.stringify({
           success: false,
-          message: `Access denied: User role '${role}' does not have executive privileges`
+          message: `Access denied: Role '${role}' does not have sufficient privileges for executive dashboard`
         }),
         { status: 403, headers: responseHeaders }
       );
@@ -99,15 +120,15 @@ export default async (req, context) => {
     const successHeaders = {
       ...headers,
       'X-Congratulations': 'You solved it!',
-      'X-Technique-Used': 'Token manipulation + Timestamp fuzzing'
+      'X-Technique-Used': 'Token manipulation + Role enumeration + Timestamp fuzzing'
     };
 
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Welcome to the Executive Dashboard! You have successfully escalated your privileges.',
-        flag: 'DACC{t1m3_tr4v3l_4uth_byp4ss_FTW}',
-        methodology: 'You discovered the token was base64-encoded JSON, changed the role to "executive", and brute-forced the timestamp to fall within the Launch Week 1 window (Jan 1-7, 2024).',
+        flag: 'Week 1 - Bear',
+        methodology: 'You modified the token role field using Repeater, brute-forced the correct role (c-level) using Intruder, and set the timestamp to fall within Launch Week 1 (Jan 1-7, 2024).',
         data: {
           executive_count: 12,
           revenue: '$4.2M',
