@@ -1,21 +1,16 @@
-import { useState, useEffect, ChangeEvent, FormEvent, useRef } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
-import type { Meeting } from "@/types/database.types";
 import {
   Spinner,
   Check,
   Plus,
   ArrowLeft,
   User,
-  Calendar,
 } from "@/lib/cyberIcon";
-import CustomSelect from "@/components/CustomSelect";
 
 interface AttendanceForm {
-  meetingId: string;
   secretCode: string;
   studentId: string;
 }
@@ -25,136 +20,17 @@ function Attendance() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [loadingMeetings, setLoadingMeetings] = useState(true);
   const [attendanceCount, setAttendanceCount] = useState(0);
 
   const { user, userProfile } = useAuth();
-  const meetingSelectRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState<AttendanceForm>({
-    meetingId: "",
     secretCode: "",
     studentId: "",
   });
 
-  // Helper function to parse meeting time and check if it's currently active
-  const selectDefaultMeeting = (allMeetings: Meeting[]): Meeting | null => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    // 1. Check for currently active meetings (happening right now)
-    const activeMeetings = allMeetings.filter((meeting) => {
-      const meetingDate = new Date(meeting.date);
-      const meetingDateOnly = new Date(
-        meetingDate.getFullYear(),
-        meetingDate.getMonth(),
-        meetingDate.getDate(),
-      );
-
-      // Only check meetings happening today
-      if (meetingDateOnly.getTime() !== today.getTime()) return false;
-
-      // Parse time range (e.g., "4:00 PM - 6:00 PM")
-      const timeMatch = meeting.time.match(
-        /(\d{1,2}):(\d{2})\s*(AM|PM)\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i,
-      );
-      if (!timeMatch) return false;
-
-      const [_, startHour, startMin, startPeriod, endHour, endMin, endPeriod] =
-        timeMatch;
-
-      // Convert to 24-hour format
-      let start24Hour = parseInt(startHour);
-      if (startPeriod.toUpperCase() === "PM" && start24Hour !== 12)
-        start24Hour += 12;
-      if (startPeriod.toUpperCase() === "AM" && start24Hour === 12)
-        start24Hour = 0;
-
-      let end24Hour = parseInt(endHour);
-      if (endPeriod.toUpperCase() === "PM" && end24Hour !== 12) end24Hour += 12;
-      if (endPeriod.toUpperCase() === "AM" && end24Hour === 12) end24Hour = 0;
-
-      const startTime = new Date(now);
-      startTime.setHours(start24Hour, parseInt(startMin), 0, 0);
-
-      const endTime = new Date(now);
-      endTime.setHours(end24Hour, parseInt(endMin), 0, 0);
-
-      // Check if current time is between start and end
-      return now >= startTime && now <= endTime;
-    });
-
-    if (activeMeetings.length > 0) {
-      return activeMeetings[0]; // Return the first active meeting
-    }
-
-    // 2. Check for meetings that happened earlier today
-    const todayPastMeetings = allMeetings.filter((meeting) => {
-      const meetingDate = new Date(meeting.date);
-      const meetingDateOnly = new Date(
-        meetingDate.getFullYear(),
-        meetingDate.getMonth(),
-        meetingDate.getDate(),
-      );
-      return meetingDateOnly.getTime() === today.getTime();
-    });
-
-    if (todayPastMeetings.length > 0) {
-      return todayPastMeetings[0]; // Return the most recent meeting today
-    }
-
-    // 3. Check for next future meeting
-    const futureMeetings = allMeetings
-      .filter((meeting) => {
-        const meetingDate = new Date(meeting.date);
-        const meetingDateOnly = new Date(
-          meetingDate.getFullYear(),
-          meetingDate.getMonth(),
-          meetingDate.getDate(),
-        );
-        return meetingDateOnly.getTime() > today.getTime();
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    if (futureMeetings.length > 0) {
-      return futureMeetings[0]; // Return the next upcoming meeting
-    }
-
-    // 4. No meetings available
-    return null;
-  };
-
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100);
-  }, []);
-
-  useEffect(() => {
-    async function fetchMeetings() {
-      try {
-        const { data, error } = await supabase
-          .from("meetings")
-          .select("*")
-          .order("date", { ascending: false });
-
-        if (error) throw error;
-        setMeetings(data || []);
-
-        // Auto-select the most appropriate meeting
-        if (data && data.length > 0) {
-          const selectedMeeting = selectDefaultMeeting(data);
-          if (selectedMeeting) {
-            setForm((prev) => ({ ...prev, meetingId: selectedMeeting.id }));
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching meetings:", err);
-      } finally {
-        setLoadingMeetings(false);
-      }
-    }
-
-    fetchMeetings();
   }, []);
 
   // Pre-fill student ID if user is logged in and has a profile
@@ -181,39 +57,11 @@ function Attendance() {
     }
   };
 
-  const handleMeetingChange = (value: string) => {
-    setForm({ ...form, meetingId: value });
-  };
-
-  const handleMeetingDropdownClick = () => {
-    // Scroll to position the dropdown so both the select and options are visible
-    if (meetingSelectRef.current) {
-      const element = meetingSelectRef.current;
-      const rect = element.getBoundingClientRect();
-      const scrollTop =
-        window.pageYOffset || document.documentElement.scrollTop;
-
-      // Calculate target scroll position
-      // Position the element near the top with some padding (80px for header space)
-      const targetPosition = rect.top + scrollTop - 80;
-
-      window.scrollTo({
-        top: Math.max(0, targetPosition),
-        behavior: "smooth",
-      });
-    }
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
     // Validation
-    if (!form.meetingId) {
-      setError("[ERROR] Please select a meeting");
-      return;
-    }
-
     if (!form.secretCode.trim()) {
       setError("[ERROR] Secret code is required");
       return;
@@ -235,19 +83,14 @@ function Attendance() {
     setSubmitting(true);
 
     try {
-      // Find the selected meeting and verify the secret code
-      const selectedMeeting = meetings.find((m) => m.id === form.meetingId);
+      // Look up meeting by secret code
+      const { data: meeting, error: lookupError } = await supabase
+        .from("meetings")
+        .select("*")
+        .ilike("secret_code", form.secretCode.trim())
+        .single();
 
-      if (!selectedMeeting) {
-        setError("[ERROR] Meeting not found");
-        return;
-      }
-
-      // Verify secret code (case-insensitive)
-      if (
-        selectedMeeting.secret_code?.toLowerCase() !==
-        form.secretCode.trim().toLowerCase()
-      ) {
+      if (lookupError || !meeting) {
         setError("[ERROR] Invalid secret code");
         return;
       }
@@ -258,7 +101,7 @@ function Attendance() {
         const { data } = await supabase
           .from("attendance")
           .select("id")
-          .eq("meeting_id", form.meetingId)
+          .eq("meeting_id", meeting.id)
           .eq("user_id", user.id)
           .single();
         existingAttendance = data;
@@ -266,7 +109,7 @@ function Attendance() {
         const { data } = await supabase
           .from("attendance")
           .select("id")
-          .eq("meeting_id", form.meetingId)
+          .eq("meeting_id", meeting.id)
           .eq("student_id", studentIdToUse)
           .single();
         existingAttendance = data;
@@ -279,7 +122,7 @@ function Attendance() {
 
       // Record attendance
       const { error: insertError } = await supabase.from("attendance").insert({
-        meeting_id: form.meetingId,
+        meeting_id: meeting.id,
         user_id: user?.id || null,
         student_id: studentIdToUse,
       });
@@ -291,7 +134,7 @@ function Attendance() {
         const { data: existingRegistration } = await supabase
           .from("registrations")
           .select("id")
-          .eq("meeting_id", form.meetingId)
+          .eq("meeting_id", meeting.id)
           .eq("user_id", user.id)
           .single();
 
@@ -304,7 +147,7 @@ function Attendance() {
         } else {
           // Create new registration with "attended" status
           await supabase.from("registrations").insert({
-            meeting_id: form.meetingId,
+            meeting_id: meeting.id,
             user_id: user.id,
             status: "attended",
           });
@@ -322,7 +165,6 @@ function Attendance() {
 
       setSubmitted(true);
       setForm({
-        meetingId: "",
         secretCode: "",
         studentId: userProfile?.student_id || "",
       });
@@ -333,8 +175,6 @@ function Attendance() {
       setSubmitting(false);
     }
   };
-
-  const selectedMeeting = meetings.find((m) => m.id === form.meetingId);
 
   if (submitted) {
     return (
@@ -498,67 +338,6 @@ function Attendance() {
             </div>
           </div>
 
-          {/* Meeting Selection */}
-          <div
-            ref={meetingSelectRef}
-            className="terminal-window overflow-visible"
-          >
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
-                select_meeting.sh
-              </span>
-            </div>
-            <div className="terminal-body overflow-visible">
-              <label className="block text-sm mb-3 text-gray-500 font-terminal">
-                --meeting
-              </label>
-              {!loadingMeetings && meetings.length === 0 ? (
-                <div className="p-4 rounded-lg bg-hack-yellow/10 border border-hack-yellow/50">
-                  <p className="text-hack-yellow text-sm">
-                    <span className="text-hack-yellow">[WARNING]</span> No
-                    meetings at this time.
-                  </p>
-                  <p className="text-gray-500 text-xs mt-2">
-                    Check back later or contact a club officer.
-                  </p>
-                </div>
-              ) : (
-                <div onClick={handleMeetingDropdownClick}>
-                  <CustomSelect
-                    options={meetings.map((meeting) => ({
-                      value: meeting.id,
-                      label: meeting.title,
-                      badge: {
-                        text: TYPE_LABELS[meeting.type],
-                        color: TYPE_COLORS[meeting.type],
-                      },
-                      metadata:
-                        new Date(meeting.date).toLocaleDateString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        }) +
-                        " • " +
-                        meeting.location,
-                    }))}
-                    value={form.meetingId}
-                    onChange={handleMeetingChange}
-                    placeholder={
-                      loadingMeetings
-                        ? "Loading meetings..."
-                        : "Select a meeting..."
-                    }
-                    disabled={loadingMeetings}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Secret Code */}
           <div className="terminal-window">
             <div className="terminal-header">
@@ -596,7 +375,7 @@ function Attendance() {
 
           <button
             type="submit"
-            disabled={submitting || meetings.length === 0}
+            disabled={submitting || !form.secretCode.trim()}
             className="btn-hack-filled rounded-lg w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (

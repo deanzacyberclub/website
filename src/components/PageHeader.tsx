@@ -14,7 +14,7 @@ function PageHeader() {
   return (
     <div className="flex items-center justify-between mb-8">
       <Link
-        to="/dashboard"
+        to="/"
         className="glitch text-matrix hover:text-matrix transition-colors font-terminal text-sm tracking-tight neon-text-subtle"
         data-text="[dacc]"
       >
@@ -51,16 +51,18 @@ function PageHeader() {
         >
           ctf
         </Link>
-        <Link
-          to="/live"
-          className={`${
-            isCheckInActive
-              ? "text-matrix neon-text-subtle"
-              : "text-gray-500 hover:text-matrix"
-          } transition-colors font-terminal text-sm`}
-        >
-          check-in
-        </Link>
+        {user && (
+          <Link
+            to="/live"
+            className={`${
+              isCheckInActive
+                ? "text-matrix neon-text-subtle"
+                : "text-gray-500 hover:text-matrix"
+            } transition-colors font-terminal text-sm`}
+          >
+            check-in
+          </Link>
+        )}
       </div>
 
       {loading ? (

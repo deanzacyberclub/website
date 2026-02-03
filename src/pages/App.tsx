@@ -331,23 +331,37 @@ function FAQSection({ loaded }: { loaded: boolean }) {
 }
 
 function MatrixRain() {
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Pause animations when tab is not visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsVisible(!document.hidden);
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
   const columns = useMemo(() => {
     const cols = [];
-    const columnCount = Math.floor(window.innerWidth / 20);
+    // Reduce column count significantly for better performance
+    const columnCount = Math.min(Math.floor(window.innerWidth / 60), 25);
     for (let i = 0; i < columnCount; i++) {
       const chars = Array.from(
-        { length: Math.floor(Math.random() * 20) + 10 },
+        { length: Math.floor(Math.random() * 12) + 6 },
         () => matrixChars[Math.floor(Math.random() * matrixChars.length)],
       ).join("");
       cols.push({
         left: `${(i / columnCount) * 100}%`,
-        animationDuration: `${Math.random() * 10 + 8}s`,
+        animationDuration: `${Math.random() * 10 + 12}s`,
         animationDelay: `${Math.random() * 5}s`,
         chars,
       });
     }
     return cols;
   }, []);
+
+  if (!isVisible) return null;
 
   return (
     <div className="matrix-rain">
