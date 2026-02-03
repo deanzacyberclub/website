@@ -166,12 +166,12 @@ const faqs = [
   {
     question: "When and where do you meet?",
     answer:
-      "We meet weekly during the academic quarter at De Anza College. Check our Events page for the current schedule and room locations.",
+      "We meet every Monday at 2:30 PM - 4:00 PM in the Advanced Technology Center, Room 205 during the academic quarter at De Anza College.",
   },
   {
     question: "What will I learn?",
     answer:
-      "Everything from networking fundamentals and Linux basics to penetration testing, CTF competitions, and industry certifications like Security+ and Network+.",
+      "Everything from networking fundamentals and Linux basics to penetration testing, CTF competitions, and industry certifications like Security+ and Network+. We'll also cover game and app hacking in the future, so stay tuned!", 
   },
   {
     question: "How do I join?",
