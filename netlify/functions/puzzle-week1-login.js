@@ -98,7 +98,7 @@ export default async (req, context) => {
           success: true,
           message: 'Welcome to Nexus Systems, Administrator.',
           flag: 'Week1PWN',
-          methodology: 'Congratulations! You combined username enumeration, IDOR exploitation, and request tampering to gain admin access.'
+          next_steps: 'DM the flag to Stanley on Discord for credit!'
         }),
         { status: 200, headers }
       );

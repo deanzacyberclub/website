@@ -160,7 +160,7 @@ const server = http.createServer((req, res) => {
       "1006": { id: "1006", name: "Jennifer Adams", department: "Marketing", position: "Marketing Manager", email: "j.adams@nexus-sys.internal", phone: "x4410", notes: "Campaign system access" },
       "1007": { id: "1007", name: "Robert Kim", department: "Security", position: "Security Engineer", email: "r.kim@nexus-sys.internal", phone: "x4001", notes: "RESTRICTED - Do not share access_code: N3XU5-7R41N-2026", access_level: "security", clearance: "Level 4" },
       "1008": { id: "1008", name: "Lisa Morgan", department: "Legal", position: "Legal Counsel", email: "l.morgan@nexus-sys.internal", phone: "x4600", notes: "Contract review access" },
-      "1009": { id: "1009", name: "Admin Account", department: "IT", position: "System Administrator", email: "admin@nexus-sys.internal", phone: "x4000", notes: "Primary admin - username: sysadmin", access_level: "admin", status: "Active - password reset required" },
+      "1009": { id: "1009", name: "Admin Account", department: "IT", position: "System Administrator", email: "admin@nexus-sys.internal", phone: "x4000", notes: "Primary admin - username: sysadmin", password: "nexus2026", access_level: "admin", status: "Active" },
       "1010": { id: "1010", name: "Service Account", department: "Automation", position: "Automated Process", email: "noreply@nexus-sys.internal", phone: "N/A", notes: "Do not modify - automated processes depend on this account" }
     };
 
@@ -228,7 +228,7 @@ const server = http.createServer((req, res) => {
 
         if (!accessCode) {
           res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, message: 'Security verification required' }));
+          res.end(JSON.stringify({ success: false, message: 'Security verification required', access_code: null }));
           return;
         }
 
@@ -243,7 +243,7 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({
           success: true,
           message: 'Welcome to Nexus Systems, Administrator.',
-          flag: 'DACC{burp_m4st3r_ch41n3d_3xpl01ts_w33k1}',
+          flag: 'Week1PWN',
           methodology: 'Congratulations! You combined username enumeration, IDOR exploitation, and request tampering to gain admin access.'
         }));
         return;
