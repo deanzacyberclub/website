@@ -384,7 +384,7 @@ function App() {
                   href="https://discord.gg/v5JWDrZVNp"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-hack-filled rounded-lg px-8 py-4 text-lg flex items-center gap-3"
+                  className="btn-hack-filled rounded-lg px-8 py-4 text-lg flex items-center justify-center gap-3 w-full"
                 >
                   <Discord className="w-5 h-5" />
                   Join Discord
