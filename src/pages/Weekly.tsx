@@ -7,6 +7,7 @@ function Weekly() {
     minutes: 0,
     seconds: 0,
   });
+  const [challengeActive, setChallengeActive] = useState(false);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -14,8 +15,8 @@ function Weekly() {
       const now = new Date();
       const pstTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
 
-      // Set target to Feb 3rd, 2026 at 12 PM noon PST
-      const target = new Date("2026-02-03T12:00:00");
+      // Set target to Feb 3rd, 2026 at 6 PM PST
+      const target = new Date("2026-02-03T18:00:00");
 
       const difference = target.getTime() - pstTime.getTime();
 
@@ -26,8 +27,10 @@ function Weekly() {
         const seconds = Math.floor((difference / 1000) % 60);
 
         setTimeLeft({ days, hours, minutes, seconds });
+        setChallengeActive(false);
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setChallengeActive(true);
       }
     };
 
@@ -55,43 +58,58 @@ function Weekly() {
           </p>
         </div>
 
-        {/* Countdown */}
+        {/* Countdown or Launch Button */}
         <div className="card-hack p-12 rounded-lg text-center">
-          <h2 className="text-2xl font-bold text-matrix mb-8">Next Challenge Releases In</h2>
+          {challengeActive ? (
+            <>
+              <h2 className="text-2xl font-bold text-matrix mb-4">Week 1 Challenge is LIVE</h2>
+              <p className="text-gray-400 mb-8">The challenge is now available. Good luck!</p>
+              <a
+                href="/puzzle/week1"
+                className="inline-block btn-hack-filled rounded-lg px-12 py-4 text-xl font-bold animate-pulse hover:animate-none"
+              >
+                Launch the Challenge
+              </a>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-matrix mb-8">Next Challenge Releases In</h2>
 
-          <div className="grid grid-cols-4 gap-4 max-w-3xl mx-auto mb-8">
-            <div className="card-hack p-6 rounded-lg bg-matrix/5">
-              <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
-                {String(timeLeft.days).padStart(2, '0')}
+              <div className="grid grid-cols-4 gap-4 max-w-3xl mx-auto mb-8">
+                <div className="card-hack p-6 rounded-lg bg-matrix/5">
+                  <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
+                    {String(timeLeft.days).padStart(2, '0')}
+                  </div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Days</div>
+                </div>
+
+                <div className="card-hack p-6 rounded-lg bg-matrix/5">
+                  <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
+                    {String(timeLeft.hours).padStart(2, '0')}
+                  </div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Hours</div>
+                </div>
+
+                <div className="card-hack p-6 rounded-lg bg-matrix/5">
+                  <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
+                    {String(timeLeft.minutes).padStart(2, '0')}
+                  </div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Minutes</div>
+                </div>
+
+                <div className="card-hack p-6 rounded-lg bg-matrix/5">
+                  <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
+                    {String(timeLeft.seconds).padStart(2, '0')}
+                  </div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Seconds</div>
+                </div>
               </div>
-              <div className="text-sm text-gray-400 uppercase tracking-wider">Days</div>
-            </div>
 
-            <div className="card-hack p-6 rounded-lg bg-matrix/5">
-              <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
-                {String(timeLeft.hours).padStart(2, '0')}
+              <div className="text-gray-400 text-sm">
+                Countdown to Feb 3rd, 6:00 PM PST
               </div>
-              <div className="text-sm text-gray-400 uppercase tracking-wider">Hours</div>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg bg-matrix/5">
-              <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
-                {String(timeLeft.minutes).padStart(2, '0')}
-              </div>
-              <div className="text-sm text-gray-400 uppercase tracking-wider">Minutes</div>
-            </div>
-
-            <div className="card-hack p-6 rounded-lg bg-matrix/5">
-              <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
-                {String(timeLeft.seconds).padStart(2, '0')}
-              </div>
-              <div className="text-sm text-gray-400 uppercase tracking-wider">Seconds</div>
-            </div>
-          </div>
-
-          <div className="text-gray-400 text-sm">
-            Countdown to Feb 3rd, 12:00 PM PST
-          </div>
+            </>
+          )}
         </div>
 
         {/* Info Section */}
@@ -99,7 +117,7 @@ function Weekly() {
           <div className="card-hack p-6 rounded-lg">
             <h3 className="text-xl font-bold text-matrix mb-4">📅 Weekly Schedule</h3>
             <p className="text-gray-400 text-sm mb-3">
-              Next challenge releases on Feb 3rd at 12:00 PM PST.
+              Next challenge releases on Feb 3rd at 6:00 PM PST.
             </p>
             <p className="text-gray-400 text-sm">
               Each challenge tests your skills in web security, cryptography, reverse engineering, and more.

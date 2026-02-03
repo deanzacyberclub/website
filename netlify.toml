@@ -36,6 +36,17 @@
   to = "/.netlify/functions/burpsuite-dashboard-data"
   status = 200
 
+# Weekly Puzzle API Endpoints
+[[redirects]]
+  from = "/api/puzzle/week1/login"
+  to = "/.netlify/functions/puzzle-week1-login"
+  status = 200
+
+[[redirects]]
+  from = "/api/puzzle/week1/employees"
+  to = "/.netlify/functions/puzzle-week1-employees"
+  status = 200
+
 # SPA fallback for React Router (must be last)
 [[redirects]]
   from = "/*"
