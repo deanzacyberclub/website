@@ -408,30 +408,44 @@ function Dashboard() {
               <h3 className="text-lg font-semibold text-matrix mb-4">Events by Type</h3>
               <div className="space-y-3">
                 {(() => {
-                  const typeCounts = meetings.reduce((acc, m) => {
-                    acc[m.type] = (acc[m.type] || 0) + 1
+                  const typeStats = meetings.reduce((acc, m) => {
+                    if (!acc[m.type]) {
+                      acc[m.type] = { total: 0, attended: 0 }
+                    }
+                    acc[m.type].total += 1
+                    if (m.userRegistration?.status === 'attended') {
+                      acc[m.type].attended += 1
+                    }
                     return acc
-                  }, {} as Record<string, number>)
-                  const maxCount = Math.max(...Object.values(typeCounts), 1)
+                  }, {} as Record<string, { total: number; attended: number }>)
+                  const maxCount = Math.max(...Object.values(typeStats).map(s => s.total), 1)
 
-                  return Object.entries(typeCounts).map(([type, count]) => (
+                  return Object.entries(typeStats).map(([type, stats]) => (
                     <div key={type}>
                       <div className="flex justify-between text-xs mb-1">
                         <span className={`font-terminal ${TYPE_COLORS[type as keyof typeof TYPE_COLORS]?.split(' ')[1] || 'text-gray-400'}`}>
                           {TYPE_LABELS[type as keyof typeof TYPE_LABELS] || type}
                         </span>
-                        <span className="text-gray-500">{count}</span>
+                        <span className="text-gray-500">
+                          <span className="text-matrix">{stats.attended}</span>/{stats.total}
+                        </span>
                       </div>
-                      <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div className="h-2 bg-gray-800 rounded-full overflow-hidden flex">
+                        {/* Attended portion - full color */}
                         <div
-                          className={`h-full rounded-full transition-all duration-700 ${
+                          className={`h-full transition-all duration-700 ${
                             type === 'workshop' ? 'bg-matrix' :
                             type === 'ctf' ? 'bg-hack-cyan' :
                             type === 'social' ? 'bg-hack-purple' :
                             type === 'competition' ? 'bg-hack-orange' :
-                            'bg-gray-600'
+                            'bg-gray-400'
                           }`}
-                          style={{ width: `${(count / maxCount) * 100}%` }}
+                          style={{ width: `${(stats.attended / maxCount) * 100}%` }}
+                        />
+                        {/* Non-attended portion - grayed out */}
+                        <div
+                          className="h-full bg-gray-600 transition-all duration-700"
+                          style={{ width: `${((stats.total - stats.attended) / maxCount) * 100}%` }}
                         />
                       </div>
                     </div>
@@ -479,7 +493,7 @@ function Dashboard() {
             <div className="flex items-end gap-2 h-32">
               {(() => {
                 const now = new Date()
-                const months: { label: string; count: number }[] = []
+                const months: { label: string; total: number; attended: number }[] = []
 
                 for (let i = 5; i >= 0; i--) {
                   const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
@@ -487,23 +501,32 @@ function Dashboard() {
                     const mDate = parseLocalDate(m.date)
                     return mDate.getMonth() === date.getMonth() && mDate.getFullYear() === date.getFullYear()
                   })
+                  const attendedMeetings = monthMeetings.filter(m => m.userRegistration?.status === 'attended')
                   months.push({
                     label: date.toLocaleDateString('en-US', { month: 'short' }),
-                    count: monthMeetings.length
+                    total: monthMeetings.length,
+                    attended: attendedMeetings.length
                   })
                 }
 
-                const maxEvents = Math.max(...months.map(m => m.count), 1)
+                const maxEvents = Math.max(...months.map(m => m.total), 1)
 
                 return months.map((month, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                    <div className="w-full flex items-end justify-center h-24">
+                    <div className="w-full flex flex-col items-center justify-end h-24">
+                      {/* Stacked bar: attended (color) on bottom, non-attended (gray) on top */}
                       <div
-                        className={`w-full max-w-8 rounded-t transition-all duration-500 ${
-                          month.count > 0 ? 'bg-gradient-to-t from-matrix/50 to-matrix' : 'bg-gray-800'
-                        }`}
+                        className="w-full max-w-8 bg-gray-600 rounded-t transition-all duration-500"
                         style={{
-                          height: month.count > 0 ? `${Math.max((month.count / maxEvents) * 100, 15)}%` : '8px'
+                          height: month.total > 0 ? `${Math.max(((month.total - month.attended) / maxEvents) * 100, 0)}%` : '0'
+                        }}
+                      />
+                      <div
+                        className={`w-full max-w-8 transition-all duration-500 ${
+                          month.attended > 0 ? 'bg-gradient-to-t from-matrix/50 to-matrix' : ''
+                        } ${month.total > 0 && month.attended === 0 ? '' : month.total === 0 ? 'rounded-t bg-gray-800' : ''}`}
+                        style={{
+                          height: month.attended > 0 ? `${Math.max((month.attended / maxEvents) * 100, 15)}%` : month.total === 0 ? '8px' : '0'
                         }}
                       />
                     </div>
@@ -513,8 +536,17 @@ function Dashboard() {
               })()}
             </div>
             <div className="flex justify-between mt-4 pt-4 border-t border-gray-800 text-xs text-gray-500">
-              <span>Last 6 months</span>
-              <span className="text-matrix">{meetings.length} total events</span>
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-matrix"></span>
+                  Attended
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-gray-600"></span>
+                  Not attended
+                </span>
+              </div>
+              <span><span className="text-matrix">{attendanceCount}</span>/{meetings.length} events</span>
             </div>
           </div>
         </div>

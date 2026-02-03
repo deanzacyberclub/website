@@ -14,14 +14,8 @@ function Weekly() {
       const now = new Date();
       const pstTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
 
-      // Set target to 6 PM PST today
-      const target = new Date(pstTime);
-      target.setHours(18, 0, 0, 0);
-
-      // If we've passed 6 PM today, set target to 6 PM tomorrow
-      if (pstTime >= target) {
-        target.setDate(target.getDate() + 1);
-      }
+      // Set target to Feb 3rd, 2026 at 12 PM noon PST
+      const target = new Date("2026-02-03T12:00:00");
 
       const difference = target.getTime() - pstTime.getTime();
 
@@ -96,7 +90,7 @@ function Weekly() {
           </div>
 
           <div className="text-gray-400 text-sm">
-            Countdown to 6:00 PM PST
+            Countdown to Feb 3rd, 12:00 PM PST
           </div>
         </div>
 
@@ -105,7 +99,7 @@ function Weekly() {
           <div className="card-hack p-6 rounded-lg">
             <h3 className="text-xl font-bold text-matrix mb-4">📅 Weekly Schedule</h3>
             <p className="text-gray-400 text-sm mb-3">
-              New challenges are released every week at 6:00 PM PST.
+              Next challenge releases on Feb 3rd at 12:00 PM PST.
             </p>
             <p className="text-gray-400 text-sm">
               Each challenge tests your skills in web security, cryptography, reverse engineering, and more.
