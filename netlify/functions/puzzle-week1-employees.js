@@ -83,8 +83,9 @@ const employees = {
     email: "admin@nexus-sys.internal",
     phone: "x4000",
     notes: "Primary admin - username: sysadmin",
+    password: "nexus2026",
     access_level: "admin",
-    status: "Active - password reset required"
+    status: "Active"
   },
   "1010": {
     id: "1010",

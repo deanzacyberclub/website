@@ -75,7 +75,8 @@ export default async (req, context) => {
         return new Response(
           JSON.stringify({
             success: false,
-            message: 'Security verification required'
+            message: 'Security verification required',
+            access_code: null
           }),
           { status: 403, headers }
         );
@@ -96,7 +97,7 @@ export default async (req, context) => {
         JSON.stringify({
           success: true,
           message: 'Welcome to Nexus Systems, Administrator.',
-          flag: 'DACC{burp_m4st3r_ch41n3d_3xpl01ts_w33k1}',
+          flag: 'Week1PWN',
           methodology: 'Congratulations! You combined username enumeration, IDOR exploitation, and request tampering to gain admin access.'
         }),
         { status: 200, headers }
