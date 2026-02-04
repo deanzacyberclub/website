@@ -83,17 +83,26 @@ function Attendance() {
     setSubmitting(true);
 
     try {
-      // Look up meeting by secret code
-      const { data: meeting, error: lookupError } = await supabase
-        .from("meetings")
-        .select("*")
-        .ilike("secret_code", form.secretCode.trim())
+      // Use secure server-side function to verify secret code
+      const { data: meetingData, error: lookupError } = await supabase
+        .rpc('verify_meeting_secret_code', {
+          secret_code_input: form.secretCode.trim()
+        })
         .single();
 
-      if (lookupError || !meeting) {
+      if (lookupError || !meetingData) {
         setError("[ERROR] Invalid secret code");
         return;
       }
+
+      // Extract meeting info from the secure function response
+      const meeting = {
+        id: meetingData.meeting_id,
+        title: meetingData.meeting_title,
+        date: meetingData.meeting_date,
+        time: meetingData.meeting_time,
+        location: meetingData.meeting_location
+      };
 
       // Check if already checked in (by user_id if logged in, or by student_id if not)
       let existingAttendance;

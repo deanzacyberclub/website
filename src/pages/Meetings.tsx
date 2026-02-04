@@ -75,8 +75,10 @@ function Meetings() {
   useEffect(() => {
     async function fetchMeetings() {
       try {
+        // Officers get full access with secret_code, regular users use public view
+        const table = isOfficer ? 'meetings' : 'meetings_public'
         const { data, error } = await supabase
-          .from('meetings')
+          .from(table)
           .select('*')
           .order('date', { ascending: false })
 
@@ -92,7 +94,7 @@ function Meetings() {
     }
 
     fetchMeetings()
-  }, [])
+  }, [isOfficer])
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)

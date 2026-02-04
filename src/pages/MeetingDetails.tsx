@@ -128,8 +128,10 @@ function MeetingDetails() {
       if (!slug) return;
 
       try {
+        // Officers get full access with secret_code, regular users use public view
+        const table = isOfficer ? "meetings" : "meetings_public";
         const { data, error } = await supabase
-          .from("meetings")
+          .from(table)
           .select("*")
           .eq("slug", slug)
           .single();
@@ -140,7 +142,7 @@ function MeetingDetails() {
         // Fetch related meetings of the same type
         if (data) {
           const { data: related } = await supabase
-            .from("meetings")
+            .from(table)
             .select("*")
             .eq("type", data.type)
             .neq("slug", slug)
@@ -158,7 +160,7 @@ function MeetingDetails() {
     }
 
     fetchMeeting();
-  }, [slug]);
+  }, [slug, isOfficer]);
 
   // Fetch registration data
   useEffect(() => {
