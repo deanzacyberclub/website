@@ -57,8 +57,12 @@ function ChallengeDetail() {
     if (!id) return;
 
     try {
+      // For officers: get full challenge data including flag and solution
+      // For regular users: use the public view that excludes sensitive data
+      const table = isOfficer ? "ctf_challenges" : "ctf_challenges_public";
+
       const { data, error } = await supabase
-        .from("ctf_challenges")
+        .from(table)
         .select("*")
         .eq("id", id)
         .eq("is_active", true)
@@ -75,9 +79,8 @@ function ChallengeDetail() {
 
       // Fetch all challenges for navigation
       const { data: allData } = await supabase
-        .from("ctf_challenges")
+        .from("ctf_challenges_public")
         .select("id, title, difficulty")
-        .eq("is_active", true)
         .order("difficulty")
         .order("title");
 
@@ -85,7 +88,7 @@ function ChallengeDetail() {
     } catch (err) {
       console.error("Error fetching challenge:", err);
     }
-  }, [id]);
+  }, [id, isOfficer]);
 
   useEffect(() => {
     fetchChallenge();
@@ -237,10 +240,16 @@ function ChallengeDetail() {
 
     if (!user || !team) return;
 
-    const isCorrect =
-      flagInput.trim().toLowerCase() === challenge.flag.toLowerCase();
-
     try {
+      // Use the secure server-side flag verification function
+      const { data: isCorrect, error: verifyError } = await supabase
+        .rpc('verify_ctf_flag', {
+          challenge_id_input: challenge.id,
+          submitted_flag_input: flagInput.trim()
+        });
+
+      if (verifyError) throw verifyError;
+
       // Record submission
       const { error } = await supabase.from("ctf_submissions").insert({
         team_id: team.id,

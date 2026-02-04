@@ -19,10 +19,10 @@ function Challenges() {
 
   const fetchChallenges = useCallback(async () => {
     try {
+      // Use the public view that excludes flags and solutions
       const { data, error } = await supabase
-        .from('ctf_challenges')
+        .from('ctf_challenges_public')
         .select('*')
-        .eq('is_active', true)
         .order('difficulty', { ascending: true })
         .order('points', { ascending: true })
 
