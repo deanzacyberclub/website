@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import type {
   Meeting,
   MeetingType,
@@ -82,6 +83,7 @@ function MeetingDetails() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
+  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification();
   const [loaded, setLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("announcements");
   const [meeting, setMeeting] = useState<Meeting | null>(null);
@@ -121,7 +123,8 @@ function MeetingDetails() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelError, setCancelError] = useState("");
 
-  const isOfficer = userProfile?.is_officer ?? false;
+  // Use server-verified officer status instead of client-side state
+  const isOfficer = isVerifiedOfficer ?? false;
 
   useEffect(() => {
     async function fetchMeeting() {

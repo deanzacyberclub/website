@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useOfficerVerification } from '@/hooks/useOfficerVerification'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, Trophy, Lock, Check, Star, Flag, Code, Users, Plus } from '@/lib/cyberIcon'
 import { categoryInfo, difficultyInfo, type Challenge, type CTFCategory, type CTFDifficulty } from './types'
 
 function Challenges() {
   const { user, userProfile } = useAuth()
+  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification()
   const [loaded, setLoaded] = useState(false)
   const [selectedDifficulty, setSelectedDifficulty] = useState<CTFDifficulty | 'all'>('all')
   const [selectedCategory, setSelectedCategory] = useState<CTFCategory | 'all'>('all')
@@ -15,7 +17,8 @@ function Challenges() {
   const [teamId, setTeamId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const isOfficer = userProfile?.is_officer === true
+  // Use server-verified officer status instead of client-side state
+  const isOfficer = isVerifiedOfficer ?? false
 
   const fetchChallenges = useCallback(async () => {
     try {

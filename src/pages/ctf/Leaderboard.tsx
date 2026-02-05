@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import {
   ChevronLeft,
   Trophy,
@@ -50,6 +51,7 @@ interface TeamChallengeDetails {
 
 function Leaderboard() {
   const { userProfile } = useAuth();
+  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification();
   const [loaded, setLoaded] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [recentSubmissions, setRecentSubmissions] = useState<TeamSubmission[]>(
@@ -62,7 +64,8 @@ function Leaderboard() {
     Record<string, TeamChallengeDetails>
   >({});
 
-  const isOfficer = userProfile?.is_officer ?? false;
+  // Use server-verified officer status instead of client-side state
+  const isOfficer = isVerifiedOfficer ?? false;
   const [showSettings, setShowSettings] = useState(false);
   const [freezeState, setFreezeState] = useState<FreezeState>({
     is_frozen: false,

@@ -86,8 +86,8 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               <Route path="/ctf/team" element={<ProtectedRoute><CTFTeam /></ProtectedRoute>} />
               <Route path="/ctf/join" element={<ProtectedRoute><CTFJoinTeam /></ProtectedRoute>} />
               <Route path="/ctf/join/:code" element={<ProtectedRoute><CTFJoinTeam /></ProtectedRoute>} />
-              <Route path="/ctf/challenge/:id/edit" element={<ProtectedRoute><CTFChallengeEditor /></ProtectedRoute>} />
-              <Route path="/ctf/challenges/new" element={<ProtectedRoute><CTFChallengeEditor /></ProtectedRoute>} />
+              <Route path="/ctf/challenge/:id/edit" element={<ProtectedRoute requireOfficer><CTFChallengeEditor /></ProtectedRoute>} />
+              <Route path="/ctf/challenges/new" element={<ProtectedRoute requireOfficer><CTFChallengeEditor /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Route>

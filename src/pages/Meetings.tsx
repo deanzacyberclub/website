@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useOfficerVerification } from '@/hooks/useOfficerVerification'
 import type { Meeting, MeetingType } from '@/types/database.types'
 import { Spinner, Close, Plus, Calendar, Clock, MapPin, Star } from '@/lib/cyberIcon'
 
@@ -59,6 +60,7 @@ const parseLocalDate = (dateStr: string) => {
 function Meetings() {
   const navigate = useNavigate()
   const { userProfile } = useAuth()
+  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification()
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<FilterType>('all')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
@@ -70,7 +72,8 @@ function Meetings() {
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
-  const isOfficer = userProfile?.is_officer ?? false
+  // Use server-verified officer status instead of client-side state
+  const isOfficer = isVerifiedOfficer ?? false
 
   useEffect(() => {
     async function fetchMeetings() {

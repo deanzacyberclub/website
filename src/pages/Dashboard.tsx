@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useOfficerVerification } from '@/hooks/useOfficerVerification'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import type { Meeting, Registration } from '@/types/database.types'
@@ -23,6 +24,7 @@ function Dashboard() {
   const [attendanceCount, setAttendanceCount] = useState(0)
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
   const { user, userProfile } = useAuth()
+  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification()
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
@@ -180,8 +182,8 @@ function Dashboard() {
           </Link>
         </div>
 
-        {/* Officer Dashboard - Only for officers */}
-        {userProfile.is_officer && (
+        {/* Officer Dashboard - Only for officers (server-side verified) */}
+        {isVerifiedOfficer && (
           <div
             className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
             style={{ transitionDelay: '150ms' }}

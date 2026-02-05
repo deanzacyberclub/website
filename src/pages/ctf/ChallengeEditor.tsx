@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useOfficerVerification } from '@/hooks/useOfficerVerification'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, Plus, Trash, AlertTriangle } from '@/lib/cyberIcon'
 import { categoryInfo, difficultyInfo, type Challenge, type CTFCategory, type CTFDifficulty } from './types'
@@ -8,6 +9,7 @@ import { categoryInfo, difficultyInfo, type Challenge, type CTFCategory, type CT
 function ChallengeEditor() {
   const { id } = useParams<{ id: string }>()
   const { user, userProfile } = useAuth()
+  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification()
   const navigate = useNavigate()
   const isEditing = !!id
 
@@ -28,7 +30,8 @@ function ChallengeEditor() {
   const [author, setAuthor] = useState('')
   const [files, setFiles] = useState<{ name: string; url: string }[]>([])
 
-  const isOfficer = userProfile?.is_officer === true
+  // Use server-verified officer status instead of client-side state
+  const isOfficer = isVerifiedOfficer ?? false
 
   useEffect(() => {
     setLoaded(true)

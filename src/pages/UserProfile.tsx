@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import {
   Spinner,
   ChevronLeft,
@@ -59,6 +60,7 @@ function UserProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, userProfile, loading: authLoading } = useAuth();
+  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification();
   const [loaded, setLoaded] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [registrations, setRegistrations] = useState<UserRegistration[]>([]);
@@ -68,7 +70,8 @@ function UserProfile() {
   const [error, setError] = useState<string | null>(null);
   const [deletingAttendance, setDeletingAttendance] = useState<string | null>(null);
 
-  const isOfficer = userProfile?.is_officer ?? false;
+  // Use server-verified officer status instead of client-side state
+  const isOfficer = isVerifiedOfficer ?? false;
 
   // Redirect non-authenticated users or non-officers
   useEffect(() => {

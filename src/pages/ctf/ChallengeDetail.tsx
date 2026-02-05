@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import { supabase } from "@/lib/supabase";
 import {
   ChevronLeft,
@@ -34,6 +35,7 @@ interface TeamInfo {
 function ChallengeDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, userProfile } = useAuth();
+  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification();
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
   const [flagInput, setFlagInput] = useState("");
@@ -50,7 +52,8 @@ function ChallengeDetail() {
   const [deleting, setDeleting] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
 
-  const isOfficer = userProfile?.is_officer === true;
+  // Use server-verified officer status instead of client-side state
+  const isOfficer = isVerifiedOfficer ?? false;
 
   // Fetch challenge from database
   const fetchChallenge = useCallback(async () => {
