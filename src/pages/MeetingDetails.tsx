@@ -128,13 +128,25 @@ function MeetingDetails() {
       if (!slug) return;
 
       try {
-        // Officers get full access with secret_code, regular users use public view
-        const table = isOfficer ? "meetings" : "meetings_public";
-        const { data, error } = await supabase
-          .from(table)
-          .select("*")
-          .eq("slug", slug)
-          .single();
+        let data, error;
+
+        if (isOfficer) {
+          // Officers use secure function to get meeting with secret code
+          const result = await supabase
+            .rpc('get_meeting_with_secrets', { meeting_slug: slug })
+            .single();
+          data = result.data;
+          error = result.error;
+        } else {
+          // Regular users use public view
+          const result = await supabase
+            .from("meetings_public")
+            .select("*")
+            .eq("slug", slug)
+            .single();
+          data = result.data;
+          error = result.error;
+        }
 
         if (error) throw error;
         setMeeting(data);
@@ -142,7 +154,7 @@ function MeetingDetails() {
         // Fetch related meetings of the same type
         if (data) {
           const { data: related } = await supabase
-            .from(table)
+            .from("meetings_public")
             .select("*")
             .eq("type", data.type)
             .neq("slug", slug)

@@ -75,12 +75,22 @@ function Meetings() {
   useEffect(() => {
     async function fetchMeetings() {
       try {
-        // Officers get full access with secret_code, regular users use public view
-        const table = isOfficer ? 'meetings' : 'meetings_public'
-        const { data, error } = await supabase
-          .from(table)
-          .select('*')
-          .order('date', { ascending: false })
+        let data, error;
+
+        if (isOfficer) {
+          // Officers use secure function to get meetings with secret codes
+          const result = await supabase.rpc('get_all_meetings_for_officers')
+          data = result.data
+          error = result.error
+        } else {
+          // Regular users use public view
+          const result = await supabase
+            .from('meetings_public')
+            .select('*')
+            .order('date', { ascending: false })
+          data = result.data
+          error = result.error
+        }
 
         if (error) throw error
         setMeetings(data || [])
