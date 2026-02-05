@@ -69,6 +69,7 @@ function Officer() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [showUsers, setShowUsers] = useState(false);
   const [togglingOfficer, setTogglingOfficer] = useState<string | null>(null);
+  const [deletingRegistration, setDeletingRegistration] = useState<string | null>(null);
 
   const isOfficer = userProfile?.is_officer ?? false;
 
@@ -220,6 +221,41 @@ function Officer() {
       console.error("Error toggling officer status:", err);
     } finally {
       setTogglingOfficer(null);
+    }
+  };
+
+  const deleteRegistration = async (registrationId: string) => {
+    if (
+      !confirm(
+        "Remove this registration record? This will also remove any associated attendance.",
+      )
+    )
+      return;
+
+    setDeletingRegistration(registrationId);
+    try {
+      const { error: deleteError } = await supabase
+        .from("registrations")
+        .delete()
+        .eq("id", registrationId);
+
+      if (deleteError) throw deleteError;
+
+      // Remove from local state
+      setRecentRegistrations(
+        recentRegistrations.filter((r) => r.id !== registrationId),
+      );
+
+      // Update stats
+      setStats((prev) => ({
+        ...prev,
+        totalRegistrations: Math.max(0, prev.totalRegistrations - 1),
+      }));
+    } catch (err) {
+      console.error("Error deleting registration:", err);
+      alert("Failed to delete registration");
+    } finally {
+      setDeletingRegistration(null);
     }
   };
 
@@ -504,7 +540,7 @@ function Officer() {
                             toggleOfficerStatus(u.id, u.is_officer)
                           }
                           disabled={
-                            togglingOfficer === u.id || u.id === user?.id
+                            togglingOfficer === u.id || u.id === userProfile?.id
                           }
                           className={`px-3 py-1.5 rounded-lg text-xs font-terminal transition-colors disabled:opacity-50 ${
                             u.is_officer
@@ -602,7 +638,7 @@ function Officer() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <span
                           className={`px-2 py-0.5 rounded text-xs font-terminal ${
                             reg.status === "attended"
@@ -619,6 +655,13 @@ function Officer() {
                         <span className="text-xs text-gray-500">
                           {formatTime(reg.registered_at)}
                         </span>
+                        <button
+                          onClick={() => deleteRegistration(reg.id)}
+                          disabled={deletingRegistration === reg.id}
+                          className="px-2 py-1 text-xs rounded text-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors disabled:opacity-50 shrink-0"
+                        >
+                          {deletingRegistration === reg.id ? "..." : "Remove"}
+                        </button>
                       </div>
                     </div>
                   ))}

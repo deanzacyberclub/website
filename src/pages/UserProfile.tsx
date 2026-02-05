@@ -66,6 +66,7 @@ function UserProfile() {
   const [ctfInfo, setCtfInfo] = useState<CTFTeamInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingAttendance, setDeletingAttendance] = useState<string | null>(null);
 
   const isOfficer = userProfile?.is_officer ?? false;
 
@@ -198,6 +199,28 @@ function UserProfile() {
       hour: "numeric",
       minute: "2-digit",
     });
+  };
+
+  const deleteAttendanceRecord = async (attendanceId: string) => {
+    if (!confirm("Remove this attendance record?")) return;
+
+    setDeletingAttendance(attendanceId);
+    try {
+      const { error: deleteError } = await supabase
+        .from("attendance")
+        .delete()
+        .eq("id", attendanceId);
+
+      if (deleteError) throw deleteError;
+
+      // Remove from local state
+      setAttendance(attendance.filter((a) => a.id !== attendanceId));
+    } catch (err) {
+      console.error("Error deleting attendance record:", err);
+      alert("Failed to delete attendance record");
+    } finally {
+      setDeletingAttendance(null);
+    }
   };
 
   if (authLoading || loading) {
@@ -416,9 +439,20 @@ function UserProfile() {
                       <span className="text-gray-400">Unknown Meeting</span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {formatDateTime(att.checked_in_at)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">
+                      {formatDateTime(att.checked_in_at)}
+                    </span>
+                    {isOfficer && (
+                      <button
+                        onClick={() => deleteAttendanceRecord(att.id)}
+                        disabled={deletingAttendance === att.id}
+                        className="px-2 py-1 text-xs rounded text-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors disabled:opacity-50"
+                      >
+                        {deletingAttendance === att.id ? "..." : "Remove"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
