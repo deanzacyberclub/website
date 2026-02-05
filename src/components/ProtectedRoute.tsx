@@ -5,9 +5,14 @@ import { Spinner } from "@/lib/cyberIcon";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireProfile?: boolean;
+  requireOfficer?: boolean;
 }
 
-function ProtectedRoute({ children, requireProfile = true }: ProtectedRouteProps) {
+function ProtectedRoute({
+  children,
+  requireProfile = true,
+  requireOfficer = false,
+}: ProtectedRouteProps) {
   const { user, userProfile, loading } = useAuth();
   const location = useLocation();
 
@@ -33,6 +38,11 @@ function ProtectedRoute({ children, requireProfile = true }: ProtectedRouteProps
   if (requireProfile && !userProfile) {
     // User is authenticated but has no profile - redirect to auth to complete setup
     return <Navigate to={`/auth?to=${encodeURIComponent(location.pathname)}`} replace />;
+  }
+
+  if (requireOfficer && !userProfile?.is_officer) {
+    // User is authenticated but is not an officer - redirect to dashboard
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

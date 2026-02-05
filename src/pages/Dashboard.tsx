@@ -31,9 +31,9 @@ function Dashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch meetings
+        // Fetch meetings from public view
         const { data: meetingsData } = await supabase
-          .from('meetings')
+          .from('meetings_public')
           .select('*')
           .order('date', { ascending: true })
 

@@ -71,19 +71,12 @@ function Officer() {
   const [togglingOfficer, setTogglingOfficer] = useState<string | null>(null);
   const [deletingRegistration, setDeletingRegistration] = useState<string | null>(null);
 
-  const isOfficer = userProfile?.is_officer ?? false;
-
-  // Redirect non-officers
-  useEffect(() => {
-    if (userProfile && !isOfficer) {
-      navigate("/dashboard");
-    }
-  }, [userProfile, isOfficer, navigate]);
+  // Note: Authorization is enforced by ProtectedRoute wrapper requiring officer status
+  // and server-side RLS policies on all Supabase operations
 
   // Fetch dashboard stats
   useEffect(() => {
     async function fetchStats() {
-      if (!isOfficer) return;
 
       try {
         const today = new Date().toISOString().split("T")[0];
@@ -98,9 +91,9 @@ function Officer() {
           { count: officersCount },
         ] = await Promise.all([
           supabase.from("users").select("*", { count: "exact", head: true }),
-          supabase.from("meetings").select("*", { count: "exact", head: true }),
+          supabase.from("meetings_public").select("*", { count: "exact", head: true }),
           supabase
-            .from("meetings")
+            .from("meetings_public")
             .select("*", { count: "exact", head: true })
             .gte("date", today),
           supabase
@@ -144,7 +137,7 @@ function Officer() {
               .select("id, display_name, photo_url")
               .in("id", userIds),
             supabase
-              .from("meetings")
+              .from("meetings_public")
               .select("id, title, slug, date")
               .in("id", meetingIds),
           ]);
@@ -157,8 +150,12 @@ function Officer() {
 
           setRecentRegistrations(registrationsWithData);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error fetching stats:", err);
+        // If authorization error, redirect to dashboard
+        if (err?.code === "PGRST301" || err?.status === 403) {
+          navigate("/dashboard");
+        }
       } finally {
         setLoadingStats(false);
         setLoaded(true);
@@ -166,18 +163,24 @@ function Officer() {
     }
 
     fetchStats();
-  }, [isOfficer]);
+  }, []);
 
   // Fetch all users
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const { data } = await supabase.rpc("get_all_users_for_officers");
+      const { data, error } = await supabase.rpc("get_all_users_for_officers");
+      if (error) {
+        console.error("Error fetching users - authorization denied:", error);
+        navigate("/dashboard");
+        return;
+      }
       if (data) {
         setUsers(data);
       }
     } catch (err) {
       console.error("Error fetching users:", err);
+      navigate("/dashboard");
     } finally {
       setLoadingUsers(false);
     }
@@ -276,14 +279,6 @@ function Officer() {
     });
   };
 
-  // Show loading while checking officer status or if not an officer (will redirect)
-  if (!isOfficer) {
-    return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
-        <Spinner className="animate-spin h-8 w-8" />
-      </div>
-    );
-  }
 
   return (
     <div className="bg-terminal-bg text-matrix min-h-screen">

@@ -70,17 +70,20 @@ function UserProfile() {
 
   const isOfficer = userProfile?.is_officer ?? false;
 
-  // Redirect non-officers
+  // Redirect non-authenticated users or non-officers
   useEffect(() => {
     if (!authLoading && (!user || !isOfficer)) {
       navigate("/dashboard");
     }
   }, [authLoading, user, isOfficer, navigate]);
 
+  // Note: Authorization is also enforced by ProtectedRoute wrapper (requireOfficer)
+  // and server-side RLS policies on all Supabase operations
+
   // Fetch user details
   useEffect(() => {
     async function fetchUserDetails() {
-      if (!id || !isOfficer) return;
+      if (!id) return;
 
       setLoading(true);
       setError(null);
@@ -171,8 +174,13 @@ function UserProfile() {
             solves_count: submissions?.length || 0,
           });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error fetching user details:", err);
+        // If authorization error, redirect to dashboard
+        if (err?.code === "PGRST301" || err?.status === 403) {
+          navigate("/dashboard");
+          return;
+        }
         setError("Failed to load user details");
       } finally {
         setLoading(false);
@@ -181,7 +189,7 @@ function UserProfile() {
     }
 
     fetchUserDetails();
-  }, [id, isOfficer]);
+  }, [id, navigate]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {

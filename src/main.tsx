@@ -63,7 +63,7 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               <Route path="/legal" element={<Legal />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/@/:id" element={<UserProfile />} />
+              <Route path="/@/:id" element={<ProtectedRoute requireOfficer><UserProfile /></ProtectedRoute>} />
 
               {/* BurpSuite Demo Routes */}
               <Route path="/burpsuite" element={<BurpSuite />} />
@@ -82,7 +82,7 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               <Route path="/live" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/officer" element={<ProtectedRoute><Officer /></ProtectedRoute>} />
+              <Route path="/officer" element={<ProtectedRoute requireOfficer><Officer /></ProtectedRoute>} />
               <Route path="/ctf/team" element={<ProtectedRoute><CTFTeam /></ProtectedRoute>} />
               <Route path="/ctf/join" element={<ProtectedRoute><CTFJoinTeam /></ProtectedRoute>} />
               <Route path="/ctf/join/:code" element={<ProtectedRoute><CTFJoinTeam /></ProtectedRoute>} />

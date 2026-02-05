@@ -339,7 +339,7 @@ function App() {
   const fetchRecentMeetings = async () => {
     try {
       const { data } = await supabase
-        .from("meetings")
+        .from("meetings_public")
         .select("*")
         .order("date", { ascending: false })
         .limit(4);
