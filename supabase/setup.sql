@@ -74,7 +74,11 @@ CREATE INDEX meetings_slug_idx ON public.meetings(slug);
 
 ALTER TABLE public.meetings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can view meetings" ON public.meetings FOR SELECT USING (true);
+-- Only officers can query the meetings table directly (which contains secret_code).
+-- Regular users must use the meetings_public view instead.
+CREATE POLICY "Officers can view meetings" ON public.meetings FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
 CREATE POLICY "Officers can insert meetings" ON public.meetings FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
 );
@@ -84,6 +88,26 @@ CREATE POLICY "Officers can update meetings" ON public.meetings FOR UPDATE USING
 CREATE POLICY "Officers can delete meetings" ON public.meetings FOR DELETE USING (
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
 );
+
+-- ============================================================
+-- MEETINGS PUBLIC VIEW (excludes secret_code and invite_code)
+-- ============================================================
+-- security_invoker=false means this view runs as the view owner,
+-- bypassing RLS on the meetings table. This is safe because the
+-- view explicitly excludes sensitive columns (secret_code, invite_code).
+CREATE OR REPLACE VIEW public.meetings_public
+WITH (security_invoker = false)
+AS
+SELECT
+    id, slug, title, description, date, "time", location, type,
+    featured, topics, announcements, photos, resources,
+    created_at, updated_at, registration_type, registration_capacity, invite_form_url
+FROM public.meetings;
+
+GRANT SELECT ON public.meetings_public TO anon;
+GRANT SELECT ON public.meetings_public TO authenticated;
+
+COMMENT ON VIEW public.meetings_public IS 'Public-facing meetings data that excludes secret_code and invite_code.';
 
 -- ============================================================
 -- ATTENDANCE TABLE
@@ -446,5 +470,80 @@ BEGIN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
     RETURN QUERY SELECT u.id, u.display_name, u.email, u.photo_url, u.student_id, u.is_officer, u.created_at FROM users u WHERE u.id = target_user_id;
+END;
+$$;
+
+-- ============================================================
+-- MEETING FUNCTIONS
+-- ============================================================
+
+-- Function for officers to get all meetings including secret_code
+CREATE OR REPLACE FUNCTION get_all_meetings_for_officers()
+RETURNS TABLE (
+    id UUID, slug TEXT, title TEXT, description TEXT, date DATE,
+    "time" TEXT, location TEXT, type TEXT, featured BOOLEAN,
+    topics TEXT[], announcements JSONB, photos JSONB, resources JSONB,
+    secret_code TEXT, invite_code TEXT,
+    created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ,
+    registration_type TEXT, registration_capacity INTEGER, invite_form_url TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+        RAISE EXCEPTION 'Access denied: User is not an officer';
+    END IF;
+    RETURN QUERY
+    SELECT m.id, m.slug, m.title, m.description, m.date, m.time, m.location,
+           m.type, m.featured, m.topics, m.announcements, m.photos, m.resources,
+           m.secret_code, m.invite_code, m.created_at, m.updated_at,
+           m.registration_type, m.registration_capacity, m.invite_form_url
+    FROM meetings m ORDER BY m.date DESC;
+END;
+$$;
+
+-- Function for officers to get a single meeting including secret_code
+CREATE OR REPLACE FUNCTION get_meeting_with_secrets(meeting_slug TEXT)
+RETURNS TABLE (
+    id UUID, slug TEXT, title TEXT, description TEXT, date DATE,
+    "time" TEXT, location TEXT, type TEXT, featured BOOLEAN,
+    topics TEXT[], announcements JSONB, photos JSONB, resources JSONB,
+    secret_code TEXT, invite_code TEXT,
+    created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ,
+    registration_type TEXT, registration_capacity INTEGER, invite_form_url TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+        RAISE EXCEPTION 'Access denied: User is not an officer';
+    END IF;
+    RETURN QUERY
+    SELECT m.id, m.slug, m.title, m.description, m.date, m.time, m.location,
+           m.type, m.featured, m.topics, m.announcements, m.photos, m.resources,
+           m.secret_code, m.invite_code, m.created_at, m.updated_at,
+           m.registration_type, m.registration_capacity, m.invite_form_url
+    FROM meetings m WHERE m.slug = meeting_slug;
+END;
+$$;
+
+-- Function for attendance check-in: verifies a secret code without exposing it
+CREATE OR REPLACE FUNCTION verify_meeting_secret_code(secret_code_input TEXT)
+RETURNS TABLE (meeting_id UUID, meeting_title TEXT, meeting_date DATE, meeting_time TEXT, meeting_location TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT id, title, date, time, location
+    FROM meetings
+    WHERE UPPER(secret_code) = UPPER(secret_code_input)
+      AND secret_code IS NOT NULL
+    LIMIT 1;
 END;
 $$;

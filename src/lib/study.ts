@@ -41,7 +41,7 @@ export async function fetchLessonById(lessonId: string): Promise<Lesson | null> 
  */
 export async function fetchLessonMeeting(meetingId: string) {
   const { data, error } = await supabase
-    .from('meetings')
+    .from('meetings_public')
     .select('*')
     .eq('id', meetingId)
     .maybeSingle()

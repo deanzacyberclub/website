@@ -71,13 +71,39 @@ function Officer() {
   const [togglingOfficer, setTogglingOfficer] = useState<string | null>(null);
   const [deletingRegistration, setDeletingRegistration] = useState<string | null>(null);
 
-  // Note: Authorization is enforced by ProtectedRoute wrapper requiring officer status
-  // and server-side RLS policies on all Supabase operations
+  // Server-side officer verification as defense-in-depth
+  // This catches cases where client-side state was tampered with after ProtectedRoute rendered
+  const [officerVerified, setOfficerVerified] = useState(false);
 
-  // Fetch dashboard stats
   useEffect(() => {
-    async function fetchStats() {
+    async function verifyOfficer() {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("is_officer")
+          .eq("id", userProfile?.id)
+          .single();
 
+        if (error || !data?.is_officer) {
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+        setOfficerVerified(true);
+      } catch {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+
+    if (userProfile?.id) {
+      verifyOfficer();
+    }
+  }, [userProfile?.id, navigate]);
+
+  // Fetch dashboard stats only after officer status is verified server-side
+  useEffect(() => {
+    if (!officerVerified) return;
+
+    async function fetchStats() {
       try {
         const today = new Date().toISOString().split("T")[0];
 
@@ -163,10 +189,11 @@ function Officer() {
     }
 
     fetchStats();
-  }, []);
+  }, [officerVerified]);
 
-  // Fetch all users
+  // Fetch all users (guarded by server-side officer verification)
   const fetchUsers = async () => {
+    if (!officerVerified) return;
     setLoadingUsers(true);
     try {
       const { data, error } = await supabase.rpc("get_all_users_for_officers");
@@ -279,6 +306,18 @@ function Officer() {
     });
   };
 
+
+  // Don't render any dashboard content until officer status is verified server-side
+  if (!officerVerified) {
+    return (
+      <div className="bg-terminal-bg text-matrix min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <Spinner className="animate-spin h-6 w-6 text-matrix" />
+          <span className="font-terminal text-lg">Verifying access...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-terminal-bg text-matrix min-h-screen">

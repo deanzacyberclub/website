@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Spinner } from "@/lib/cyberIcon";
 
 interface ProtectedRouteProps {
@@ -15,8 +17,49 @@ function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, userProfile, loading } = useAuth();
   const location = useLocation();
+  // null = not yet verified, true/false = server result
+  const [officerVerified, setOfficerVerified] = useState<boolean | null>(
+    requireOfficer ? null : true,
+  );
 
-  if (loading) {
+  // Server-side officer verification: queries the database directly
+  // instead of relying on client-side context state which can be intercepted
+  useEffect(() => {
+    if (!requireOfficer || !user) {
+      setOfficerVerified(requireOfficer ? null : true);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function verifyOfficerStatus() {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("is_officer")
+          .eq("id", user!.id)
+          .single();
+
+        if (cancelled) return;
+
+        if (error || !data?.is_officer) {
+          setOfficerVerified(false);
+        } else {
+          setOfficerVerified(true);
+        }
+      } catch {
+        if (!cancelled) setOfficerVerified(false);
+      }
+    }
+
+    verifyOfficerStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requireOfficer, user]);
+
+  if (loading || (requireOfficer && officerVerified === null)) {
     return (
       <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
         <div className="crt-overlay" />
@@ -31,17 +74,14 @@ function ProtectedRoute({
   }
 
   if (!user) {
-    // Redirect to auth page with return URL
     return <Navigate to={`/auth?to=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
   if (requireProfile && !userProfile) {
-    // User is authenticated but has no profile - redirect to auth to complete setup
     return <Navigate to={`/auth?to=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
-  if (requireOfficer && !userProfile?.is_officer) {
-    // User is authenticated but is not an officer - redirect to dashboard
+  if (requireOfficer && !officerVerified) {
     return <Navigate to="/dashboard" replace />;
   }
 

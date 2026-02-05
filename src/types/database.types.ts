@@ -284,7 +284,37 @@ export interface Database {
       }
     }
     Views: {
-      [_ in never]: never
+      meetings_public: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          description: string
+          date: string
+          time: string
+          location: string
+          type: MeetingType
+          featured: boolean
+          topics: string[]
+          announcements: Announcement[]
+          photos: Photo[]
+          resources: Resource[]
+          registration_type: RegistrationType
+          registration_capacity: number | null
+          invite_form_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Relationships: []
+      }
+      public_profiles: {
+        Row: {
+          id: string
+          display_name: string
+          photo_url: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
@@ -299,6 +329,7 @@ export interface Database {
 }
 
 export type Meeting = Database['public']['Tables']['meetings']['Row']
+export type MeetingPublic = Database['public']['Views']['meetings_public']['Row']
 export type Attendance = Database['public']['Tables']['attendance']['Row']
 export type Registration = Database['public']['Tables']['registrations']['Row']
 

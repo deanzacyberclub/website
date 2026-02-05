@@ -114,7 +114,7 @@ function UserProfile() {
         if (regsData && regsData.length > 0) {
           const meetingIds = [...new Set(regsData.map((r) => r.meeting_id))];
           const { data: meetings } = await supabase
-            .from("meetings")
+            .from("meetings_public")
             .select("id, title, slug, date")
             .in("id", meetingIds);
 
@@ -137,7 +137,7 @@ function UserProfile() {
             ...new Set(attendanceData.map((a) => a.meeting_id)),
           ];
           const { data: meetings } = await supabase
-            .from("meetings")
+            .from("meetings_public")
             .select("id, title, slug, date")
             .in("id", meetingIds);
 
