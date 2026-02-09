@@ -45,19 +45,52 @@ const users: Record<string, User> = {
   },
 };
 
-// Track MFA status by UUID so it can be modified via API
-let mfaStatusByUUID: Record<string, boolean> = {
-  [userUUIDs.badActor123]: false,
-  [userUUIDs.StanleyYelnats]: true,
-};
+// Storage key for MFA status persistence
+const MFA_STORAGE_KEY = "hive_mfa_status";
 
-// Reset MFA status
-const resetMfaStatus = () => {
-  mfaStatusByUUID = {
+// Get MFA status from localStorage (simulates server-side persistence)
+const getMfaStatus = (): Record<string, boolean> => {
+  try {
+    const stored = localStorage.getItem(MFA_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  // Default values
+  return {
     [userUUIDs.badActor123]: false,
     [userUUIDs.StanleyYelnats]: true,
   };
 };
+
+// Save MFA status to localStorage
+const saveMfaStatus = (status: Record<string, boolean>) => {
+  localStorage.setItem(MFA_STORAGE_KEY, JSON.stringify(status));
+};
+
+// Reset MFA status to defaults
+const resetMfaStatus = () => {
+  const defaults = {
+    [userUUIDs.badActor123]: false,
+    [userUUIDs.StanleyYelnats]: true,
+  };
+  saveMfaStatus(defaults);
+  return defaults;
+};
+
+// Expose function globally so the API response handler can update MFA status
+// This simulates what would happen on a real server when the MFA toggle request is processed
+if (typeof window !== "undefined") {
+  // @ts-expect-error - Expose for API simulation
+  window.__updateHiveMfaStatus = (uuid: string, enabled: boolean) => {
+    const current = getMfaStatus();
+    current[uuid] = enabled;
+    saveMfaStatus(current);
+    return { success: true, uuid, mfaEnabled: enabled };
+  };
+}
 
 function Demo5() {
   const [currentView, setCurrentView] = useState<"login" | "mfa" | "feed" | "settings" | "success">("login");
