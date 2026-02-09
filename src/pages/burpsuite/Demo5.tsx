@@ -1,6 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+// User UUIDs - the vulnerability is that these can be discovered and swapped
+const userUUIDs: Record<string, string> = {
+  badActor123: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  StanleyYelnats: "f9e8d7c6-b5a4-3210-fedc-ba0987654321",
+};
+
+// Reverse lookup - UUID to username
+const uuidToUsername: Record<string, string> = {
+  "a1b2c3d4-e5f6-7890-abcd-ef1234567890": "badActor123",
+  "f9e8d7c6-b5a4-3210-fedc-ba0987654321": "StanleyYelnats",
+};
+
 // User accounts for the demo
 interface User {
   username: string;
@@ -9,6 +21,7 @@ interface User {
   avatar: string;
   mfaEnabled: boolean;
   bio: string;
+  uuid: string;
 }
 
 const users: Record<string, User> = {
@@ -19,6 +32,7 @@ const users: Record<string, User> = {
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=badactor",
     mfaEnabled: false,
     bio: "Just testing things out...",
+    uuid: userUUIDs.badActor123,
   },
   StanleyYelnats: {
     username: "StanleyYelnats",
@@ -27,20 +41,21 @@ const users: Record<string, User> = {
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=stanley",
     mfaEnabled: true,
     bio: "Digging holes and finding treasure",
+    uuid: userUUIDs.StanleyYelnats,
   },
 };
 
-// Track MFA status separately so it can be modified via API
-let mfaStatus: Record<string, boolean> = {
-  badActor123: false,
-  StanleyYelnats: true,
+// Track MFA status by UUID so it can be modified via API
+let mfaStatusByUUID: Record<string, boolean> = {
+  [userUUIDs.badActor123]: false,
+  [userUUIDs.StanleyYelnats]: true,
 };
 
 // Reset MFA status
 const resetMfaStatus = () => {
-  mfaStatus = {
-    badActor123: false,
-    StanleyYelnats: true,
+  mfaStatusByUUID = {
+    [userUUIDs.badActor123]: false,
+    [userUUIDs.StanleyYelnats]: true,
   };
 };
 
@@ -52,8 +67,8 @@ function Demo5() {
   const [mfaCode, setMfaCode] = useState("");
   const [mfaError, setMfaError] = useState("");
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  const [apiResponse, setApiResponse] = useState<string | null>(null);
   const [showFlag, setShowFlag] = useState(false);
+  const [mfaToggleLoading, setMfaToggleLoading] = useState(false);
 
   const handleLogin = () => {
     const user = users[loginForm.username];
@@ -65,8 +80,8 @@ function Demo5() {
     setLoggedInUser(user);
     setLoginError("");
 
-    // Check if MFA is enabled for this user
-    if (mfaStatus[loginForm.username]) {
+    // Check if MFA is enabled for this user (by UUID)
+    if (mfaStatusByUUID[user.uuid]) {
       setCurrentView("mfa");
       setGeneratedCode(null);
       setMfaCode("");
@@ -103,7 +118,6 @@ function Demo5() {
     setLoggedInUser(null);
     setCurrentView("login");
     setLoginForm({ username: "", password: "" });
-    setApiResponse(null);
     setGeneratedCode(null);
     setMfaCode("");
     setShowFlag(false);
@@ -114,36 +128,60 @@ function Demo5() {
     handleLogout();
   };
 
-  // Simulated API call for toggling MFA
-  const handleToggleMfa = async (targetUser: string, enable: boolean) => {
-    // This is the vulnerable endpoint - only checks if user is logged in, not if they own the account
-    if (!loggedInUser) {
-      setApiResponse(JSON.stringify({ success: false, error: "Not authenticated" }, null, 2));
-      return;
+  // Simulated API call for toggling MFA - makes a real fetch request for Burp Suite visibility
+  // The vulnerability: X-User-UUID header can be changed to any user's UUID
+  const handleToggleMfa = async () => {
+    if (!loggedInUser) return;
+
+    setMfaToggleLoading(true);
+
+    // The action to perform
+    const newMfaState = !mfaStatusByUUID[loggedInUser.uuid];
+
+    try {
+      // Make a real fetch request that Burp Suite can intercept
+      // The vulnerability: X-User-UUID header controls whose MFA gets toggled
+      // An attacker can change this to StanleyYelnats' UUID to disable their MFA
+      await fetch("/api/hive/mfa/toggle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Auth-Token": btoa(loggedInUser.username + ":session:" + Date.now()),
+          "X-User-UUID": loggedInUser.uuid, // VULNERABLE: This determines whose MFA is toggled
+        },
+        body: JSON.stringify({
+          action: newMfaState ? "enable" : "disable"
+        }),
+      });
+
+      // Simulate server processing - use the UUID from the header to update MFA
+      // In a real app, this would be server-side and would use the header value
+      mfaStatusByUUID[loggedInUser.uuid] = newMfaState;
+
+    } catch {
+      // Expected to fail (no real backend), but the request was sent for Burp Suite to see
+      // Still update state as if it succeeded (demo purposes)
+      mfaStatusByUUID[loggedInUser.uuid] = newMfaState;
     }
 
-    // Simulate API call
-    const requestBody = {
-      target_user: targetUser,
-      mfa_enabled: enable,
-    };
-
-    // Base64 encode the request for Burp Suite visibility
-    const encodedRequest = btoa(JSON.stringify(requestBody));
-
-    // The vulnerability: no authorization check - any logged in user can modify any user's MFA
-    mfaStatus[targetUser] = enable;
-
-    setApiResponse(JSON.stringify({
-      success: true,
-      request_payload: encodedRequest,
-      decoded_payload: requestBody,
-      message: `MFA ${enable ? "enabled" : "disabled"} for user: ${targetUser}`,
-      hint: targetUser !== loggedInUser.username
-        ? "Interesting... you modified another user's MFA settings!"
-        : undefined
-    }, null, 2));
+    setMfaToggleLoading(false);
+    // Force re-render
+    setCurrentView("settings");
   };
+
+  // This function simulates what happens when Burp Suite replays a modified request
+  // It's called automatically when the page detects a state change
+  // In reality, this would be server-side logic
+  if (typeof window !== 'undefined') {
+    // @ts-expect-error - Expose function for demo purposes (simulating server-side processing)
+    window.__processHiveMfaToggle = (uuid: string, action: string) => {
+      if (uuidToUsername[uuid]) {
+        mfaStatusByUUID[uuid] = action === "enable";
+        return { success: true, message: `MFA ${action}d for UUID: ${uuid}` };
+      }
+      return { success: false, message: "Invalid UUID" };
+    };
+  }
 
   // Decoy settings that don't work
   const decoySettings = [
@@ -152,14 +190,6 @@ function Demo5() {
     { name: "Dark Mode", value: "Disabled" },
     { name: "Language", value: "English" },
   ];
-
-  const handleDecoyClick = (setting: string) => {
-    setApiResponse(JSON.stringify({
-      success: false,
-      error: "This setting is not relevant to the challenge. Look for security-related settings...",
-      hint: "Try examining the MFA toggle endpoint more closely",
-    }, null, 2));
-  };
 
   // Login Screen
   if (currentView === "login") {
@@ -344,7 +374,7 @@ function Demo5() {
             <div className="bg-green-50 border-2 border-green-500 rounded-xl p-6 mb-6">
               <p className="text-sm font-medium text-gray-600 mb-2">FLAG:</p>
               <code className="text-xl text-green-700 font-mono font-bold block">
-                FLAG{"{"}MFA_BYPASS_IDOR_AUTH_VULN{"}"}
+                FLAG{"{"}MFA_BYPASS_UUID_HEADER_IDOR{"}"}
               </code>
             </div>
 
@@ -352,10 +382,10 @@ function Demo5() {
               <p className="font-semibold text-blue-900 mb-2">Methodology:</p>
               <ol className="text-sm text-blue-800 space-y-2">
                 <li>1. Logged in as badActor123 (no MFA)</li>
-                <li>2. Found the MFA toggle endpoint in Settings</li>
-                <li>3. Noticed the endpoint only checks authentication, not authorization</li>
-                <li>4. Modified the target_user parameter to "StanleyYelnats"</li>
-                <li>5. Disabled MFA for StanleyYelnats via the vulnerable endpoint</li>
+                <li>2. Toggled MFA and intercepted the request in Burp Suite</li>
+                <li>3. Found X-User-UUID header containing the user's UUID</li>
+                <li>4. Changed the UUID to StanleyYelnats' UUID: <code className="bg-blue-100 px-1">f9e8d7c6-b5a4-3210-fedc-ba0987654321</code></li>
+                <li>5. Replayed the request to disable MFA for Stanley</li>
                 <li>6. Logged in as StanleyYelnats - MFA bypassed!</li>
               </ol>
             </div>
@@ -363,9 +393,7 @@ function Demo5() {
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-left mb-6">
               <p className="font-semibold text-red-900 mb-2">Vulnerability:</p>
               <p className="text-sm text-red-800">
-                <strong>Broken Access Control (IDOR)</strong> - The /api/mfa/toggle endpoint validates that a user is logged in,
-                but doesn't verify that the authenticated user has permission to modify the target user's MFA settings.
-                Any authenticated user can disable MFA for any other user.
+                <strong>Broken Access Control (IDOR via Header)</strong> - The /api/hive/mfa/toggle endpoint uses the X-User-UUID header to determine whose MFA settings to modify, without validating that the authenticated user owns that UUID. Any authenticated user can modify any other user's MFA by changing the UUID in the header.
               </p>
             </div>
 
@@ -479,8 +507,7 @@ function Demo5() {
                 {decoySettings.map((setting) => (
                   <div
                     key={setting.name}
-                    className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 px-2 rounded"
-                    onClick={() => handleDecoyClick(setting.name)}
+                    className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
                   >
                     <span className="text-gray-700">{setting.name}</span>
                     <span className="text-gray-500 text-sm">{setting.value}</span>
@@ -495,59 +522,24 @@ function Demo5() {
 
               <div className="space-y-4">
                 {/* MFA Toggle for current user */}
-                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <div className="flex items-center justify-between py-3">
                   <div>
                     <span className="text-gray-700 font-medium">Multi-Factor Authentication</span>
                     <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
                   </div>
                   <button
-                    onClick={() => handleToggleMfa(loggedInUser!.username, !mfaStatus[loggedInUser!.username])}
+                    onClick={handleToggleMfa}
+                    disabled={mfaToggleLoading}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      mfaStatus[loggedInUser!.username]
+                      mfaStatusByUUID[loggedInUser!.uuid]
                         ? "bg-red-100 text-red-700 hover:bg-red-200"
                         : "bg-green-100 text-green-700 hover:bg-green-200"
-                    }`}
+                    } ${mfaToggleLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    {mfaStatus[loggedInUser!.username] ? "Disable MFA" : "Enable MFA"}
+                    {mfaToggleLoading ? "..." : mfaStatusByUUID[loggedInUser!.uuid] ? "Disable MFA" : "Enable MFA"}
                   </button>
                 </div>
-
-                {/* Hint about the endpoint */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-xs text-gray-500 font-mono">
-                    POST /api/mfa/toggle
-                    <br />
-                    Content-Type: application/json
-                    <br />
-                    X-Auth-User: {loggedInUser?.username}
-                    <br />
-                    Body: {"{"} target_user: string, mfa_enabled: boolean {"}"}
-                  </p>
-                </div>
               </div>
-            </div>
-
-            {/* API Response Display */}
-            {apiResponse && (
-              <div className="bg-gray-900 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="ml-2 text-gray-400 text-sm font-mono">API Response</span>
-                </div>
-                <pre className="text-green-400 text-sm font-mono whitespace-pre-wrap overflow-x-auto">
-                  {apiResponse}
-                </pre>
-              </div>
-            )}
-
-            {/* Hint Card */}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <p className="text-amber-800 text-sm">
-                <strong>Hint:</strong> The MFA toggle endpoint seems to accept a target_user parameter.
-                What happens if you try to toggle MFA for a different user? Try intercepting the request with Burp Suite...
-              </p>
             </div>
           </div>
         )}
