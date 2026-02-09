@@ -1,60 +1,127 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation } from "react-router-dom";
 
 interface FooterProps {
-  className?: string
+  className?: string;
 }
 
-function Footer({ className = '' }: FooterProps) {
-  const location = useLocation()
-  const fullUrl = `${window.location.origin.replace('https://', '').replace('http://', '')}${location.pathname}`
-  const maxLength = 30
-  const displayUrl = fullUrl.length > maxLength
-    ? fullUrl.slice(0, maxLength) + '...'
-    : fullUrl
+function Footer({ className = "" }: FooterProps) {
+  const location = useLocation();
+  const currentYear = new Date().getFullYear();
 
   return (
-    <footer className={`mt-16 pb-10 pt-8 border-t border-terminal-border ${className}`}>
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <p className="text-sm text-gray-600 font-terminal">
-            <span className="text-matrix neon-text-subtle">$</span> ping{' '}
-            <span className="text-matrix/70" title={fullUrl}>{displayUrl}</span>
-          </p>
-          <div className="text-sm text-gray-600 font-terminal">
-            <span className="text-matrix/50">[</span>
-            <span className="text-matrix neon-text">200</span> OK
-            <span className="text-matrix/50">]</span>
+    <footer className={`border-t border-matrix/20 ${className}`}>
+      {/* Top status bar */}
+      <div className="border-b border-matrix/20 px-6 py-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-between font-mono text-[10px] text-gray-600 uppercase tracking-wider flex-wrap gap-2">
+          <span className="flex items-center gap-2">
+            <span className="text-matrix">&gt;</span>
+            <span className="text-gray-500">
+              /{location.pathname.split("/").filter(Boolean).join("/")}
+            </span>
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-matrix inline-block animate-pulse" />
+            <span className="text-matrix/50">[200]</span> OK
+          </span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="grid md:grid-cols-3 gap-8 mb-8">
+          {/* About */}
+          <div>
+            <h3 className="font-mono text-sm font-bold text-matrix uppercase mb-3 tracking-wider">
+              ABOUT
+            </h3>
+            <p className="font-mono text-xs text-gray-500 leading-relaxed">
+              De Anza Cybersecurity Club — hands-on workshops, CTF competitions,
+              and industry certifications for students of all skill levels.
+            </p>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h3 className="font-mono text-sm font-bold text-matrix uppercase mb-3 tracking-wider">
+              QUICK LINKS
+            </h3>
+            <ul className="space-y-2 font-mono text-xs">
+              <li>
+                <Link
+                  to="/meetings"
+                  className="text-gray-500 hover:text-matrix transition-colors"
+                >
+                  &gt; Events
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/ctf"
+                  className="text-gray-500 hover:text-matrix transition-colors"
+                >
+                  &gt; CTF
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/legal"
+                  className="text-gray-500 hover:text-matrix transition-colors"
+                >
+                  &gt; Legal
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="https://discord.gg/v5JWDrZVNp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-500 hover:text-matrix transition-colors"
+                >
+                  &gt; Discord
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Developers */}
+          <div>
+            <h3 className="font-mono text-sm font-bold text-matrix uppercase mb-3 tracking-wider">
+              DEVELOPERS
+            </h3>
+            <ul className="space-y-2 font-mono text-xs">
+              <li>
+                <a
+                  href="https://github.com/aaronhma"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-500 hover:text-matrix transition-colors"
+                >
+                  &gt; Aaron Ma
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/boredcreator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-500 hover:text-matrix transition-colors"
+                >
+                  &gt; Neel Anshu
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
-        <p className="text-sm text-gray-500 text-center">
-          Made with ❤️ from Cupertino, CA by{' '}
-          <a
-            href="https://github.com/aaronhma"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all"
-          >
-            Aaron Ma ↗
-          </a>
-          {' '}and{' '}
-          <a
-            href="https://github.com/boredcreator"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all"
-          >
-            Neel Anshu ↗
-          </a>
-          .
-        </p>
-        <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
-          <Link to="/legal" className="text-matrix/70 hover:text-matrix hover:neon-text-subtle transition-all">
-            Terms & Privacy
-          </Link>
+
+        {/* Bottom copyright */}
+        <div className="border-t border-matrix/20 pt-6">
+          <p className="font-mono text-xs text-gray-600 text-center uppercase tracking-wider">
+            © {currentYear} DE ANZA CYBERSECURITY CLUB — ALL RIGHTS RESERVED
+          </p>
         </div>
       </div>
     </footer>
-  )
+  );
 }
 
-export default Footer
+export default Footer;

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Discord,
   Calendar,
@@ -15,148 +15,141 @@ import {
   ChevronDown,
   X,
   Trophy,
+  Shield,
+  Flag,
 } from "@/lib/cyberIcon";
 import { supabase } from "@/lib/supabase";
 import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import type { Meeting } from "@/types/database.types";
+import { useAuth } from "@/contexts/AuthContext";
 
 const prefetchMeetings = () => import("./Meetings");
 
-// Matrix rain characters
-const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*<>[]{}=/\\|";
+// ─── Typewriter for hero heading ─────────────────────
+const heroLines = ["LEARN TO HACK.", "LEARN TO DEFEND."];
 
-const AUTO_ROTATE_INTERVAL = 5000; // 5 seconds
+function HeroTypewriter() {
+  const [displayedChars, setDisplayedChars] = useState(0);
+  const fullText = heroLines.join("\n");
 
-interface EventCarouselProps {
-  meetings: Meeting[];
+  useEffect(() => {
+    if (displayedChars < fullText.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedChars((prev) => prev + 1);
+      }, 40);
+      return () => clearTimeout(timeout);
+    }
+  }, [displayedChars, fullText.length]);
+
+  const visibleText = fullText.slice(0, displayedChars);
+  const lines = visibleText.split("\n");
+
+  return (
+    <h1 className="font-mono font-bold text-matrix leading-tight">
+      {lines.map((line, i) => (
+        <span key={i} className="block text-5xl md:text-6xl lg:text-7xl">
+          {line}
+          {i === lines.length - 1 && displayedChars < fullText.length && (
+            <span className="cli-cursor">_</span>
+          )}
+        </span>
+      ))}
+    </h1>
+  );
 }
 
-function EventCarousel({ meetings }: EventCarouselProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+// ─── Stats Bar ───────────────────────────────────────
+const stats = [
+  { label: "ACTIVE MEMBERS", value: "90+", sub: "And growing" },
+  { label: "WORKSHOPS", value: "20+", sub: "Hands-on sessions" },
+  { label: "TOOLS COVERED", value: "15+", sub: "Industry standard" },
+  { label: "CTF CHALLENGES", value: "30+", sub: "All difficulty levels" },
+];
 
-  // Auto-rotate through cards
-  useEffect(() => {
-    if (meetings.length <= 1 || isPaused) return;
-
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % meetings.length);
-    }, AUTO_ROTATE_INTERVAL);
-
-    return () => clearInterval(timer);
-  }, [meetings.length, isPaused]);
-
-  // Pause auto-rotate when tab is hidden
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsPaused(document.hidden);
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  if (meetings.length === 0) {
-    return (
-      <div className="card-hack rounded-lg p-8 text-center">
-        <p className="text-gray-500">No recent events</p>
+function StatsBar({ loaded }: { loaded: boolean }) {
+  return (
+    <div
+      className={`border-t border-b border-matrix/20 transition-all duration-700 delay-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+    >
+      <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4">
+        {stats.map((stat, i) => (
+          <div
+            key={i}
+            className={`px-6 py-8 ${i < stats.length - 1 ? "md:border-r md:border-matrix/20" : ""} ${i < 2 ? "border-b md:border-b-0 border-matrix/20" : ""}`}
+          >
+            <p className="font-mono text-xs text-matrix/60 uppercase tracking-widest mb-2">
+              {stat.label}
+            </p>
+            <p className="font-mono text-3xl md:text-4xl font-bold text-matrix neon-text-subtle">
+              {stat.value}
+            </p>
+            <p className="font-mono text-xs text-gray-600 mt-1">{stat.sub}</p>
+          </div>
+        ))}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  const meeting = meetings[currentIndex];
-
-  // Parse date as local timezone (not UTC)
+// ─── Recent Events Section ───────────────────────────
+function RecentEvents({ meetings }: { meetings: Meeting[] }) {
   const parseLocalDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split("-").map(Number);
     return new Date(year, month - 1, day);
   };
 
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      {/* Card stack visual - cards behind */}
-      {meetings.slice(currentIndex + 1, currentIndex + 3).map((_, idx) => (
-        <div
-          key={idx}
-          className="absolute inset-0 card-hack rounded-lg"
-          style={{
-            transform: `scale(${1 - (idx + 1) * 0.05}) translateY(${(idx + 1) * 8}px)`,
-            opacity: 0.5 - idx * 0.2,
-            zIndex: -idx - 1,
-          }}
-        />
-      ))}
+  if (meetings.length === 0) return null;
 
-      {/* Main card */}
-      <div className="card-hack rounded-lg p-5 transition-opacity duration-300">
-        <Link to={`/meetings/${meeting.slug}`} className="block">
-          {/* Date Box */}
-          <div className="flex items-start gap-4 mb-3">
-            <div className="text-center shrink-0 w-14">
-              <div className="text-3xl font-bold text-matrix">
+  return (
+    <div className="space-y-3">
+      {meetings.map((meeting) => (
+        <Link
+          key={meeting.id}
+          to={`/meetings/${meeting.slug}`}
+          className="block border border-matrix/20 p-4 hover:border-matrix/50 hover:bg-matrix/5 transition-all group"
+        >
+          <div className="flex items-start gap-4">
+            <div className="text-center shrink-0 w-12">
+              <div className="text-2xl font-bold font-mono text-matrix">
                 {parseLocalDate(meeting.date).getDate()}
               </div>
-              <div className="text-xs text-gray-500 uppercase font-terminal">
+              <div className="text-[10px] text-gray-600 uppercase font-mono">
                 {parseLocalDate(meeting.date).toLocaleDateString("en-US", {
                   month: "short",
-                  year: "numeric",
                 })}
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-1">
                 <span
-                  className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}
+                  className={`inline-block px-1.5 py-0 text-[10px] font-mono uppercase border ${TYPE_COLORS[meeting.type]}`}
                 >
                   {TYPE_LABELS[meeting.type]}
                 </span>
               </div>
+              <h3 className="text-matrix font-mono font-semibold text-sm group-hover:neon-text-subtle truncate">
+                {meeting.title}
+              </h3>
+              <div className="flex items-center gap-3 mt-1 text-gray-600 font-mono text-xs">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {meeting.time}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {meeting.location}
+                </span>
+              </div>
             </div>
-          </div>
-
-          {/* Meeting Info */}
-          <h3 className="text-matrix font-semibold text-xl mb-2">
-            {meeting.title}
-          </h3>
-          <p className="text-gray-500 text-sm mb-4 line-clamp-3">
-            {meeting.description}
-          </p>
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              {meeting.time}
-            </span>
-            <span className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              {meeting.location}
-            </span>
+            <ChevronRight className="w-4 h-4 text-matrix/30 group-hover:text-matrix shrink-0 mt-1 transition-colors" />
           </div>
         </Link>
-      </div>
-
-      {/* Navigation dots */}
-      {meetings.length > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
-          {meetings.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentIndex(idx)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                idx === currentIndex
-                  ? "bg-matrix w-4"
-                  : "bg-gray-600 hover:bg-gray-500"
-              }`}
-            />
-          ))}
-        </div>
-      )}
+      ))}
     </div>
   );
 }
 
+// ─── FAQ Section ─────────────────────────────────────
 const faqs = [
   {
     question: "Do I need prior experience?",
@@ -171,7 +164,7 @@ const faqs = [
   {
     question: "What will I learn?",
     answer:
-      "Everything from networking fundamentals and Linux basics to penetration testing, CTF competitions, and industry certifications like Security+ and Network+. We'll also cover game and app hacking in the future, so stay tuned!", 
+      "Everything from networking fundamentals and Linux basics to penetration testing, CTF competitions, and industry certifications like Security+ and Network+. We'll also cover game and app hacking in the future, so stay tuned!",
   },
   {
     question: "How do I join?",
@@ -190,146 +183,137 @@ function FAQSection({ loaded }: { loaded: boolean }) {
 
   return (
     <section
-      className={`mt-16 transition-all duration-700 delay-300 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+      className={`transition-all duration-700 delay-300 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
     >
-      <div className="flex items-center gap-3 mb-6">
-        <span className="text-matrix neon-text-subtle text-lg">$</span>
-        <span className="text-gray-400 font-terminal">cat /etc/faq.md</span>
+      <div className="border-t border-b border-dashed border-matrix/30 py-8 mb-8">
+        <h2 className="font-mono text-4xl md:text-5xl font-bold text-matrix uppercase text-center mb-3 tracking-wide">
+          FREQUENTLY ASKED
+          <br />
+          QUESTIONS
+        </h2>
       </div>
 
-      <div className="space-y-3">
-        {faqs.map((faq, index) => (
-          <div key={index} className="card-hack rounded-lg overflow-hidden">
-            <button
-              onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              className="w-full p-5 text-left flex items-center justify-between hover:bg-matrix/5 transition-colors"
-            >
-              <span className="text-matrix font-semibold pr-4">
-                {faq.question}
-              </span>
-              <ChevronDown
-                className={`w-5 h-5 text-matrix shrink-0 transition-transform duration-200 ${
-                  openIndex === index ? "rotate-180" : ""
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Left: Usage info box */}
+        <div className="border border-dashed border-matrix/30 p-6">
+          <p className="font-mono text-xs text-matrix/60 mb-4">
+            Usage: read_faq [OPTIONS]
+          </p>
+          <div className="font-mono text-xs text-matrix/50 space-y-2">
+            <p>
+              <span className="text-matrix">Options:</span>
+            </p>
+            <p className="pl-4">
+              <span className="text-matrix/70">--all</span>{" "}
+              <span className="text-gray-600">Display all questions</span>
+            </p>
+            <p className="pl-4">
+              <span className="text-matrix/70">--verbose</span>{" "}
+              <span className="text-gray-600">Show detailed answers</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Right: FAQ list */}
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div key={index}>
+              <button
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                className="w-full text-left font-mono text-sm text-matrix hover:text-matrix/80 transition-colors flex items-start gap-2 group"
+              >
+                <span className="shrink-0">
+                  {openIndex === index ? "v" : ">"}
+                </span>
+                <span className="group-hover:underline">{faq.question}</span>
+              </button>
+              <div
+                className={`overflow-hidden transition-all duration-200 ${
+                  openIndex === index ? "max-h-60 mt-3" : "max-h-0"
                 }`}
-              />
-            </button>
-            <div
-              className={`overflow-hidden transition-all duration-200 ${
-                openIndex === index ? "max-h-40" : "max-h-0"
-              }`}
-            >
-              <div className="px-5 pb-5">
-                <p className="text-gray-400 leading-relaxed text-sm">
-                  {faq.answer}
-                </p>
+              >
+                <div className="ml-6 border-l-2 border-matrix/30 pl-4">
+                  <p className="font-mono text-xs text-gray-600 mb-2">
+                    root@dacc:~$ echo $ANSWER
+                  </p>
+                  <p className="font-mono text-xs text-matrix/70 leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-function MatrixRain() {
-  const [isVisible, setIsVisible] = useState(true);
-
-  // Pause animations when tab is not visible
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsVisible(!document.hidden);
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  const columns = useMemo(() => {
-    const cols = [];
-    // Reduce column count significantly for better performance
-    const columnCount = Math.min(Math.floor(window.innerWidth / 60), 25);
-    for (let i = 0; i < columnCount; i++) {
-      const chars = Array.from(
-        { length: Math.floor(Math.random() * 12) + 6 },
-        () => matrixChars[Math.floor(Math.random() * matrixChars.length)],
-      ).join("");
-      cols.push({
-        left: `${(i / columnCount) * 100}%`,
-        animationDuration: `${Math.random() * 10 + 12}s`,
-        animationDelay: `${Math.random() * 5}s`,
-        chars,
-      });
-    }
-    return cols;
-  }, []);
-
-  if (!isVisible) return null;
-
+// ─── Officer Card ────────────────────────────────────
+function OfficerCard({
+  name,
+  role,
+  photo,
+  links,
+}: {
+  name: string;
+  role: string;
+  photo?: string;
+  links?: {
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    href: string;
+    label: string;
+  }[];
+}) {
   return (
-    <div className="matrix-rain">
-      {columns.map((col, i) => (
-        <div
-          key={i}
-          className="matrix-column"
-          style={{
-            left: col.left,
-            animationDuration: col.animationDuration,
-            animationDelay: col.animationDelay,
-          }}
-        >
-          {col.chars}
+    <div className="border border-matrix/20 p-4 hover:border-matrix/40 transition-colors">
+      <div className="flex items-center gap-3 mb-3">
+        {photo ? (
+          <img
+            src={photo}
+            alt={name}
+            className="w-10 h-10 border border-matrix/30 object-cover"
+          />
+        ) : (
+          <div className="w-10 h-10 border border-matrix/30 bg-matrix/10 flex items-center justify-center">
+            <Code className="w-5 h-5 text-matrix" />
+          </div>
+        )}
+        <div>
+          <p className="text-xs text-matrix/50 font-mono uppercase tracking-widest">
+            {role}
+          </p>
+          <p className="text-matrix font-mono font-semibold text-sm">{name}</p>
         </div>
-      ))}
+      </div>
+      {links && links.length > 0 && (
+        <div className="flex gap-1.5 ml-[52px]">
+          {links.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+              rel="noopener noreferrer"
+              aria-label={link.label}
+              className="w-6 h-6 border border-matrix/20 flex items-center justify-center hover:border-matrix hover:text-matrix transition-colors text-gray-600"
+            >
+              <link.icon className="w-3 h-3" />
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-const typewriterWords = ["hack", "defend", "penetrate", "attack"];
-
-function TypewriterText() {
-  const [wordIndex, setWordIndex] = useState(0);
-  const [text, setText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const currentWord = typewriterWords[wordIndex];
-    const typeSpeed = isDeleting ? 80 : 120;
-    const pauseTime = 1500;
-
-    const timeout = setTimeout(() => {
-      if (!isDeleting) {
-        // Typing
-        if (text.length < currentWord.length) {
-          setText(currentWord.slice(0, text.length + 1));
-        } else {
-          // Finished typing, pause then start deleting
-          setTimeout(() => setIsDeleting(true), pauseTime);
-        }
-      } else {
-        // Deleting
-        if (text.length > 0) {
-          setText(text.slice(0, -1));
-        } else {
-          // Finished deleting, move to next word
-          setIsDeleting(false);
-          setWordIndex((prev) => (prev + 1) % typewriterWords.length);
-        }
-      }
-    }, typeSpeed);
-
-    return () => clearTimeout(timeout);
-  }, [text, isDeleting, wordIndex]);
-
-  return (
-    <span className="glitch neon-text" data-text={text || "\u00A0"}>
-      {text}
-      <span className="animate-pulse">|</span>
-    </span>
-  );
-}
-
+// ═══════════════════════════════════════════════════════
+// MAIN APP COMPONENT
+// ═══════════════════════════════════════════════════════
 function App() {
   const [loaded, setLoaded] = useState(false);
   const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([]);
+  const { userProfile, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLoaded(true);
@@ -350,392 +334,332 @@ function App() {
     }
   };
 
-  const renderContent = () => (
-    <div className="relative">
-      {/* Hero Section - Full Viewport */}
-      <section
-        className={`min-h-screen flex items-center justify-center transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-      >
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Left side - Text content */}
-            <div>
-              <div className="mb-8">
-                <div className="mb-4">
-                  <span className="text-matrix font-terminal text-sm uppercase tracking-wider border border-matrix/40 px-3 py-1.5 rounded-md inline-block">
-                    De Anza Cybersecurity Club
-                  </span>
-                </div>
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
-                  <span className="text-white">Learn to</span>
-                  <br />
-                  <TypewriterText />
-                </h1>
-                <p className="text-gray-400 text-lg md:text-xl leading-relaxed mb-8">
-                  Break into cybersecurity with hands-on workshops, earn
-                  industry certifications, and join a crew of future security
-                  professionals. No experience required! We'll teach you
-                  everything from the ground up. All you need is curiosity.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-4">
-                <a
-                  href="https://discord.gg/v5JWDrZVNp"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-hack-filled rounded-lg px-8 py-4 text-lg flex items-center justify-center gap-3 w-full"
-                >
-                  <Discord className="w-5 h-5" />
-                  Join Discord
-                </a>
-              </div>
-            </div>
-
-            {/* Right side - Recent Events Cards */}
-            <div className="relative w-full max-w-sm mx-auto md:mx-0">
-              <h3 className="text-gray-400 text-sm font-terminal mb-4 uppercase tracking-wider">
-                Recent Events
-              </h3>
-              <EventCarousel meetings={recentMeetings} />
-              <Link
-                to="/meetings"
-                className="block w-full btn-hack rounded-lg p-4 text-center group hover:scale-[1.01] transition-transform mt-4"
-                onMouseEnter={prefetchMeetings}
-                onFocus={prefetchMeetings}
-              >
-                <div className="flex items-center justify-center gap-3">
-                  <Calendar className="w-4 h-4" />
-                  <span className="font-semibold text-sm">VIEW ALL EVENTS</span>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        {/* Club Officers Section */}
-        <section
-          className={`mb-16 transition-all duration-700 delay-375 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">
-              cat /etc/officers.conf
-            </span>
-          </div>
-
-          <div className="terminal-window">
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
-                club_leadership
-              </span>
-            </div>
-            <div className="terminal-body">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* President */}
-                <div className="card-hack p-4 rounded-lg">
-                  <div className="flex items-center gap-3 mb-3">
-                    <img
-                      src="/neel-anshu.jpeg"
-                      alt="Neel Anshu"
-                      className="w-10 h-10 rounded-lg border border-matrix/40 object-cover"
-                    />
-                    <div>
-                      <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">
-                        President
-                      </p>
-                      <p className="text-matrix font-semibold">Neel Anshu</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-13">
-                    <a
-                      href="https://github.com/boredcreator"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500"
-                    >
-                      <GitHub className="w-4 h-4" />
-                    </a>
-                    <a
-                      href="https://instagram.com/neel_reddy455"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500"
-                    >
-                      <Instagram className="w-4 h-4" />
-                    </a>
-                    <a
-                      href="https://flippedbyneel.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500"
-                    >
-                      <Globe className="w-4 h-4" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* Vice President */}
-                <div className="card-hack p-4 rounded-lg">
-                  <div className="flex items-center gap-3 mb-3">
-                    <img
-                      src="/aaron-ma.jpeg"
-                      alt="Aaron Ma"
-                      className="w-10 h-10 rounded-lg border border-matrix/40 object-cover"
-                    />
-                    <div>
-                      <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">
-                        Vice President
-                      </p>
-                      <p className="text-matrix font-semibold">Aaron Ma</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-13">
-                    <a
-                      href="https://github.com/aaronhma"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500"
-                    >
-                      <GitHub className="w-4 h-4" />
-                    </a>
-                    <a
-                      href="https://x.com/aaronhma"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500"
-                    >
-                      <X className="w-4 h-4" />
-                    </a>
-                    <a
-                      href="https://www.linkedin.com/in/air-rn/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500"
-                    >
-                      <LinkedIn className="w-4 h-4" />
-                    </a>
-                    <a
-                      href="mailto:hi@aaronhma.com"
-                      className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500"
-                    >
-                      <Mail className="w-4 h-4" />
-                    </a>
-                    <a
-                      href="https://aaronhma.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500"
-                    >
-                      <Globe className="w-4 h-4" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* Officer - Thant Thu Hein */}
-                <div className="card-hack p-4 rounded-lg">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-matrix/20 border border-matrix/40 flex items-center justify-center">
-                      <Code className="w-5 h-5 text-matrix" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">
-                        Outreach Manager
-                      </p>
-                      <p className="text-matrix font-semibold">
-                        Thant Thu Hein
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-13">
-                    <a
-                      href="https://www.instagram.com/butter.daxxton"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-7 h-7 rounded bg-terminal-alt border border-gray-700 flex items-center justify-center hover:border-matrix hover:text-matrix transition-all text-gray-500"
-                    >
-                      <Instagram className="w-4 h-4" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* Officer - Mobin Norouzi */}
-                <div className="card-hack p-4 rounded-lg">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-matrix/20 border border-matrix/40 flex items-center justify-center">
-                      <Code className="w-5 h-5 text-matrix" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-hack-cyan font-terminal uppercase tracking-wider">
-                        Curriculum Lead
-                      </p>
-                      <p className="text-matrix font-semibold">Mobin Norouzi</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Modules Section */}
-        <section
-          className={`transition-all duration-700 delay-100 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">
-              ls -la ./what-youll-learn/
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            <div className="card-hack p-5 rounded-lg group">
-              <div className="flex items-start gap-4">
-                <div className="text-matrix text-2xl font-terminal opacity-50 group-hover:opacity-100 transition-opacity">
-                  01
-                </div>
-                <div>
-                  <h3 className="font-semibold text-matrix mb-1 group-hover:neon-text-subtle transition-all">
-                    hacking_fundamentals.sh
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Think like an attacker. Learn reconnaissance, exploitation,
-                    and how real breaches happen.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card-hack p-5 rounded-lg group">
-              <div className="flex items-start gap-4">
-                <div className="text-matrix text-2xl font-terminal opacity-50 group-hover:opacity-100 transition-opacity">
-                  02
-                </div>
-                <div>
-                  <h3 className="font-semibold text-matrix mb-1 group-hover:neon-text-subtle transition-all">
-                    get_certified.sh
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Study groups for Security+, Network+, and more. Land your
-                    first cybersecurity job.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card-hack p-5 rounded-lg group">
-              <div className="flex items-start gap-4">
-                <div className="text-matrix text-2xl font-terminal opacity-50 group-hover:opacity-100 transition-opacity">
-                  03
-                </div>
-                <div>
-                  <h3 className="font-semibold text-matrix mb-1 group-hover:neon-text-subtle transition-all">
-                    real_tools.sh
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Get hands-on with Burp Suite, Nmap, Wireshark,
-                    Metasploit—the same tools pros use.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card-hack p-5 rounded-lg group">
-              <div className="flex items-start gap-4">
-                <div className="text-matrix text-2xl font-terminal opacity-50 group-hover:opacity-100 transition-opacity">
-                  04
-                </div>
-                <div>
-                  <h3 className="font-semibold text-matrix mb-1 group-hover:neon-text-subtle transition-all">
-                    ctf_competitions.sh
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Compete in capture-the-flag events. Solve puzzles. Win
-                    bragging rights (and prizes).
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTF Hackathon Teaser */}
-        <section
-          className={`mt-16 transition-all duration-700 delay-200 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
-          <Link to="/ctf" className="block group">
-            <div className="relative overflow-hidden rounded-xl border border-matrix/30 bg-gradient-to-br from-terminal-bg via-matrix/5 to-terminal-bg p-8 hover:border-matrix/60 transition-all">
-              {/* Animated background effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-matrix/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-
-              <div className="relative flex flex-col md:flex-row items-center gap-6">
-                <div className="shrink-0">
-                  <div className="w-20 h-20 rounded-xl bg-matrix/20 border border-matrix/40 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Trophy className="w-10 h-10 text-matrix" />
-                  </div>
-                </div>
-
-                <div className="flex-1 text-center md:text-left">
-                  <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-                    <span className="px-2 py-0.5 rounded text-xs font-terminal bg-matrix/20 border border-matrix/40 text-matrix animate-pulse">
-                      COMING SOON
-                    </span>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 group-hover:text-matrix transition-colors">
-                    DACC Capture The Flag
-                  </h3>
-                  <p className="text-gray-400 mb-4">
-                    A full-day cybersecurity competition with $500+ in prizes,
-                    30+ challenges, and hackers of all skill levels welcome.
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4 text-matrix" />
-                      TBA 2026
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4 text-matrix" />
-                      De Anza College
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4 text-matrix" />6 Hours
-                    </span>
-                  </div>
-                </div>
-
-                <div className="shrink-0">
-                  <div className="flex items-center gap-2 text-matrix group-hover:translate-x-1 transition-transform">
-                    <span className="font-terminal text-sm">Learn More</span>
-                    <ChevronRight className="w-5 h-5" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </section>
-
-        {/* FAQ Section */}
-        <FAQSection loaded={loaded} />
-      </div>
-    </div>
-  );
-
   return (
-    <div className="bg-terminal-bg text-matrix min-h-screen">
-      {/* Matrix Rain Background */}
-      <MatrixRain />
-
+    <div className="bg-[#0a0a0a] text-matrix min-h-screen">
       {/* CRT Scanline Overlay */}
       <div className="crt-overlay" />
 
-      {/* Main Content */}
-      <div className="relative z-10">{renderContent()}</div>
+      <div className="relative z-10">
+        {/* ════════════════════════════════════════════
+            HERO SECTION
+            ════════════════════════════════════════════ */}
+        <section
+          className={`min-h-screen flex flex-col justify-center transition-all duration-700 relative overflow-hidden ${loaded ? "opacity-100" : "opacity-0"}`}
+        >
+          {/* Background ASCII Art - responsive sizing */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+            <pre className="font-mono text-[clamp(60px,15vw,200px)] leading-[0.85] text-matrix/[0.03] whitespace-pre">
+              {`██████╗  █████╗  ██████╗ ██████╗
+██╔══██╗██╔══██╗██╔════╝██╔════╝
+██║  ██║███████║██║     ██║
+██║  ██║██╔══██║██║     ██║
+██████╔╝██║  ██║╚██████╗╚██████╗
+╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═════╝`}
+            </pre>
+          </div>
+
+          <div className="max-w-5xl mx-auto px-6 py-24 md:py-32 relative z-10">
+            {/* Status text */}
+            {authLoading ? (
+              <p className="font-mono text-sm text-matrix/60 mb-8">
+                <span className="text-matrix">&gt;</span> INITIALIZING SECURITY
+                PROTOCOLS...
+              </p>
+            ) : userProfile ? (
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="font-mono text-sm text-matrix/60 hover:text-matrix transition-colors mb-8 group"
+              >
+                <span className="text-matrix">&gt;</span> WELCOME,{" "}
+                <span className="text-matrix uppercase group-hover:underline">
+                  {userProfile.display_name}
+                </span>
+              </button>
+            ) : (
+              <Link
+                to="/auth/sign-in"
+                className="font-mono text-sm text-matrix/60 hover:text-matrix transition-colors mb-8 inline-block group"
+              >
+                <span className="text-matrix">&gt;</span>{" "}
+                <span className="group-hover:underline">SIGN IN</span>
+              </Link>
+            )}
+
+            {/* Big heading */}
+            <div className="mb-8">
+              <HeroTypewriter />
+            </div>
+
+            {/* Description with left border */}
+            <div className="border-l-2 border-matrix/30 pl-5 mb-10 max-w-2xl">
+              <p className="font-mono text-gray-400 text-sm md:text-base leading-relaxed">
+                De Anza Cybersecurity Club brings students together with
+                hands-on workshops, CTF competitions, and industry
+                certifications. No experience required — we&apos;ll teach you
+                everything from the ground up.
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-10">
+              <a
+                href="https://discord.gg/v5JWDrZVNp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cli-btn-filled font-mono w-full sm:w-auto justify-center uppercase"
+              >
+                <Discord className="w-4 h-4" />
+                Join Discord
+              </a>
+              <Link
+                to="/meetings"
+                className="cli-btn-dashed font-mono w-full sm:w-auto justify-center uppercase"
+                onMouseEnter={prefetchMeetings}
+                onFocus={prefetchMeetings}
+              >
+                [ View events ]
+              </Link>
+            </div>
+
+            {/* Status line */}
+            <p className="font-mono text-xs text-gray-400 uppercase tracking-wider">
+              STATUS: Join 90+ members learning cybersecurity at De Anza College
+            </p>
+          </div>
+        </section>
+
+        {/* ════════════════════════════════════════════
+            STATS BAR
+            ════════════════════════════════════════════ */}
+        <StatsBar loaded={loaded} />
+
+        {/* ════════════════════════════════════════════
+            CONTENT SECTIONS
+            ════════════════════════════════════════════ */}
+        <div className="max-w-5xl mx-auto px-6 py-20 space-y-24">
+          {/* ── RECENT EVENTS ── */}
+          <section
+            className={`transition-all duration-700 delay-100 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          >
+            <div className="border-t border-b border-dashed border-matrix/30 py-8 mb-8">
+              <h2 className="font-mono text-4xl md:text-5xl font-bold text-matrix uppercase text-center mb-3 tracking-wide">
+                RECENT EVENTS
+              </h2>
+              <p className="font-mono text-sm text-matrix/60 text-center">
+                Upcoming workshops, CTFs, and club meetings
+              </p>
+            </div>
+            <RecentEvents meetings={recentMeetings} />
+            <div className="mt-6 text-center">
+              <Link
+                to="/meetings"
+                className="font-mono text-sm text-matrix/50 hover:text-matrix transition-colors inline-flex items-center gap-1"
+                onMouseEnter={prefetchMeetings}
+              >
+                VIEW ALL EVENTS <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </section>
+
+          {/* ── WHAT YOU'LL LEARN ── */}
+          <section
+            className={`transition-all duration-700 delay-150 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          >
+            <div className="border-t border-b border-dashed border-matrix/30 py-8 mb-8">
+              <h2 className="font-mono text-4xl md:text-5xl font-bold text-matrix uppercase text-center mb-3 tracking-wide">
+                WHAT YOU&apos;LL LEARN
+              </h2>
+              <p className="font-mono text-sm text-matrix/60 text-center">
+                Hands-on skills from industry professionals
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-3">
+              {[
+                {
+                  icon: Shield,
+                  title: "HACKING FUNDAMENTALS",
+                  file: "hacking_fundamentals.sh",
+                  desc: "Think like an attacker. Learn reconnaissance, exploitation, and how real breaches happen.",
+                },
+                {
+                  icon: Flag,
+                  title: "GET CERTIFIED",
+                  file: "get_certified.sh",
+                  desc: "Study groups for Security+, Network+, and more. Land your first cybersecurity job.",
+                },
+                {
+                  icon: Code,
+                  title: "REAL TOOLS",
+                  file: "real_tools.sh",
+                  desc: "Get hands-on with Burp Suite, Nmap, Wireshark, Metasploit—the same tools pros use.",
+                },
+                {
+                  icon: Trophy,
+                  title: "CTF COMPETITIONS",
+                  file: "ctf_competitions.sh",
+                  desc: "Compete in capture-the-flag events. Solve puzzles. Win bragging rights (and prizes).",
+                },
+              ].map((mod) => (
+                <div
+                  key={mod.file}
+                  className="border border-matrix/20 p-5 hover:border-matrix/40 transition-colors group"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <mod.icon className="w-5 h-5 text-matrix/40 group-hover:text-matrix transition-colors" />
+                    <span className="font-mono text-xs text-matrix/40 group-hover:text-matrix/70 transition-colors">
+                      {mod.file}
+                    </span>
+                  </div>
+                  <h3 className="font-mono font-bold text-matrix text-sm mb-2 uppercase">
+                    {mod.title}
+                  </h3>
+                  <p className="font-mono text-xs text-gray-500 leading-relaxed">
+                    {mod.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── CTF HACKATHON TEASER ── */}
+          <section
+            className={`transition-all duration-700 delay-200 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          >
+            <Link to="/ctf" className="block group">
+              <div className="border border-matrix/20 p-8 hover:border-matrix/50 transition-all relative overflow-hidden">
+                {/* Scan line effect on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-matrix/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+
+                <div className="relative flex flex-col md:flex-row items-center gap-6">
+                  <div className="shrink-0">
+                    <div className="w-16 h-16 border border-matrix/30 bg-matrix/10 flex items-center justify-center group-hover:border-matrix/60 transition-colors">
+                      <Trophy className="w-8 h-8 text-matrix" />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                      <span className="px-2 py-0.5 text-[10px] font-mono uppercase border border-dashed border-matrix/50 text-matrix animate-pulse">
+                        COMING SOON
+                      </span>
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-mono font-bold text-white mb-2 group-hover:text-matrix transition-colors uppercase">
+                      DACC CAPTURE THE FLAG
+                    </h3>
+                    <p className="font-mono text-gray-500 text-sm mb-3">
+                      A full-day cybersecurity competition with $500+ in prizes,
+                      30+ challenges, and hackers of all skill levels welcome.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs text-gray-600 font-mono">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-matrix" />
+                        TBA 2026
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-matrix" />
+                        De Anza College
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-matrix" />6 Hours
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0">
+                    <div className="flex items-center gap-2 text-matrix/40 group-hover:text-matrix group-hover:translate-x-1 transition-all font-mono text-sm">
+                      Learn more
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </section>
+
+          {/* ── OFFICERS ── */}
+          <section
+            className={`transition-all duration-700 delay-250 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          >
+            <div className="border-t border-b border-dashed border-matrix/30 py-8 mb-8">
+              <h2 className="font-mono text-4xl md:text-5xl font-bold text-matrix uppercase text-center mb-3 tracking-wide">
+                CLUB LEADERSHIP
+              </h2>
+              <p className="font-mono text-sm text-matrix/60 text-center">
+                Meet the team building DACC
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <OfficerCard
+                name="Neel Anshu"
+                role="President"
+                photo="/neel-anshu.jpeg"
+                links={[
+                  {
+                    icon: GitHub,
+                    href: "https://github.com/boredcreator",
+                    label: "GitHub",
+                  },
+                  {
+                    icon: Instagram,
+                    href: "https://instagram.com/neel_reddy455",
+                    label: "Instagram",
+                  },
+                  {
+                    icon: Globe,
+                    href: "https://flippedbyneel.com",
+                    label: "Website",
+                  },
+                ]}
+              />
+              <OfficerCard
+                name="Aaron Ma"
+                role="Vice President"
+                photo="/aaron-ma.jpeg"
+                links={[
+                  {
+                    icon: GitHub,
+                    href: "https://github.com/aaronhma",
+                    label: "GitHub",
+                  },
+                  { icon: X, href: "https://x.com/aaronhma", label: "X" },
+                  {
+                    icon: LinkedIn,
+                    href: "https://www.linkedin.com/in/air-rn/",
+                    label: "LinkedIn",
+                  },
+                  {
+                    icon: Mail,
+                    href: "mailto:hi@aaronhma.com",
+                    label: "Email",
+                  },
+                  {
+                    icon: Globe,
+                    href: "https://aaronhma.com/",
+                    label: "Website",
+                  },
+                ]}
+              />
+              <OfficerCard
+                name="Thant Thu Hein"
+                role="Outreach Manager"
+                links={[
+                  {
+                    icon: Instagram,
+                    href: "https://www.instagram.com/butter.daxxton",
+                    label: "Instagram",
+                  },
+                ]}
+              />
+              <OfficerCard name="Mobin Norouzi" role="Curriculum Lead" />
+            </div>
+          </section>
+
+          {/* ── FAQ ── */}
+          <FAQSection loaded={loaded} />
+        </div>
+      </div>
     </div>
   );
 }

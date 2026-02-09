@@ -752,6 +752,59 @@ button {
 }
 
 /* ============================================
+   CLI DESIGN SYSTEM (App.tsx)
+   ============================================ */
+
+/* Filled button: solid green bg, black text */
+.cli-btn-filled {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--matrix-green);
+    color: var(--terminal-bg);
+    border: none;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.cli-btn-filled:hover {
+    background: #00ff6a;
+    box-shadow: 0 0 20px var(--matrix-green-glow);
+}
+
+/* Dashed outline button */
+.cli-btn-dashed {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--matrix-green);
+    border: 1px dashed var(--matrix-green);
+    padding: 12px 24px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.cli-btn-dashed:hover {
+    background: rgba(0, 255, 65, 0.1);
+    border-style: solid;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.15);
+}
+
+/* Blinking cursor */
+.cli-cursor {
+    color: var(--matrix-green);
+    animation: blink 1s step-end infinite;
+    text-shadow: 0 0 5px var(--matrix-green-glow);
+}
+
+/* ============================================
    UTILITY CLASSES
    ============================================ */
 .text-matrix {
