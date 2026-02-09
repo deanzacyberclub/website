@@ -54,7 +54,7 @@ function CustomSelect({ options, value, onChange, placeholder = 'Select an optio
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
-          w-full text-left px-4 py-3 rounded-lg
+          w-full text-left px-4 py-3 
           bg-terminal-alt/30 backdrop-blur-md
           border border-matrix/20
           hover:border-matrix/40 hover:bg-terminal-alt/40
@@ -68,7 +68,7 @@ function CustomSelect({ options, value, onChange, placeholder = 'Select an optio
             {selectedOption ? (
               <div>
                 {selectedOption.badge && (
-                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border mb-1 ${selectedOption.badge.color}`}>
+                  <span className={`inline-block px-2 py-0.5 text-xs font-terminal border mb-1 ${selectedOption.badge.color}`}>
                     {selectedOption.badge.text}
                   </span>
                 )}
@@ -89,7 +89,7 @@ function CustomSelect({ options, value, onChange, placeholder = 'Select an optio
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute z-[9999] w-full mt-2 rounded-lg border border-matrix/30 bg-terminal-bg/95 backdrop-blur-lg shadow-2xl shadow-matrix/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute z-[9999] w-full mt-2  border border-matrix/30 bg-terminal-bg/95 backdrop-blur-lg shadow-2xl shadow-matrix/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-matrix/30 scrollbar-track-transparent">
             {options.map((option) => (
               <button
@@ -108,7 +108,7 @@ function CustomSelect({ options, value, onChange, placeholder = 'Select an optio
               >
                 <div>
                   {option.badge && (
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border mb-1 ${option.badge.color}`}>
+                    <span className={`inline-block px-2 py-0.5 text-xs font-terminal border mb-1 ${option.badge.color}`}>
                       {option.badge.text}
                     </span>
                   )}

@@ -310,9 +310,9 @@ function Officer() {
   // Don't render any dashboard content until officer status is verified server-side
   if (!officerVerified) {
     return (
-      <div className="bg-terminal-bg text-matrix min-h-screen flex items-center justify-center">
+      <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-3">
-          <Spinner className="animate-spin h-6 w-6 text-matrix" />
+          <Spinner className="animate-spin h-6 w-6 text-gray-900 dark:text-matrix" />
           <span className="font-terminal text-lg">Verifying access...</span>
         </div>
       </div>
@@ -320,28 +320,28 @@ function Officer() {
   }
 
   return (
-    <div className="bg-terminal-bg text-matrix min-h-screen">
+    <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
       <div className="relative max-w-6xl mx-auto px-6">
         {/* Header */}
         <header
           className={`mb-8 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-matrix neon-text-subtle">$</span>
+            <span className="text-gray-900 dark:text-matrix neon-text-subtle">$</span>
             <span className="text-gray-400 font-terminal">
               sudo ./officer-dashboard.sh
             </span>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-hack-purple/20 border border-hack-purple/50">
+            <div className="p-3  bg-hack-purple/20 border border-hack-purple/50">
               <Shield className="w-8 h-8 text-hack-purple" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-matrix neon-text">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-matrix neon-text">
                 Officer Dashboard
               </h1>
-              <p className="text-gray-500">Manage club operations</p>
+              <p className="text-gray-600 dark:text-gray-500">Manage club operations</p>
             </div>
           </div>
         </header>
@@ -351,74 +351,74 @@ function Officer() {
           className={`mb-8 transition-all duration-700 delay-100 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-matrix/50 transition-colors">
+            <div className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-matrix/50 transition-colors">
               <div className="flex items-center gap-2 mb-2">
-                <Users className="w-4 h-4 text-matrix" />
-                <span className="text-xs text-gray-500 font-terminal">
+                <Users className="w-4 h-4 text-gray-900 dark:text-matrix" />
+                <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal">
                   MEMBERS
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {loadingStats ? "-" : stats.totalUsers}
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-hack-purple/50 transition-colors">
+            <div className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-hack-purple/50 transition-colors">
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="w-4 h-4 text-hack-purple" />
-                <span className="text-xs text-gray-500 font-terminal">
+                <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal">
                   OFFICERS
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {loadingStats ? "-" : stats.totalOfficers}
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-hack-cyan/50 transition-colors">
+            <div className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-hack-cyan/50 transition-colors">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="w-4 h-4 text-hack-cyan" />
-                <span className="text-xs text-gray-500 font-terminal">
+                <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal">
                   MEETINGS
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {loadingStats ? "-" : stats.totalMeetings}
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-hack-yellow/50 transition-colors">
+            <div className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-hack-yellow/50 transition-colors">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="w-4 h-4 text-hack-yellow" />
-                <span className="text-xs text-gray-500 font-terminal">
+                <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal">
                   UPCOMING
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {loadingStats ? "-" : stats.upcomingMeetings}
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-matrix/50 transition-colors">
+            <div className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-matrix/50 transition-colors">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-4 h-4 text-matrix" />
-                <span className="text-xs text-gray-500 font-terminal">
+                <CheckCircle className="w-4 h-4 text-blue-600 dark:text-matrix" />
+                <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal">
                   RSVPS
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {loadingStats ? "-" : stats.totalRegistrations}
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-hack-red/50 transition-colors">
+            <div className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-hack-red/50 transition-colors">
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="w-4 h-4 text-hack-red" />
-                <span className="text-xs text-gray-500 font-terminal">
+                <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal">
                   CTF TEAMS
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {loadingStats ? "-" : stats.totalTeams}
               </div>
             </div>
@@ -429,68 +429,68 @@ function Officer() {
         <section
           className={`mb-8 transition-all duration-700 delay-150 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
-          <h2 className="text-lg font-semibold text-white mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Quick Actions
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               to="/meetings"
-              className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-hack-cyan/50 transition-all group"
+              className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-hack-cyan/50 transition-all group"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-hack-cyan/10 text-hack-cyan">
+                  <div className="p-2  bg-hack-cyan/10 text-hack-cyan">
                     <Calendar className="w-5 h-5" />
                   </div>
                   <span className="font-medium text-gray-200">
                     Manage Meetings
                   </span>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-hack-cyan group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-500 group-hover:text-hack-cyan group-hover:translate-x-1 transition-all" />
               </div>
             </Link>
 
             <Link
               to="/ctf/leaderboard"
-              className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-hack-red/50 transition-all group"
+              className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-hack-red/50 transition-all group"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-hack-red/10 text-hack-red">
+                  <div className="p-2  bg-hack-red/10 text-hack-red">
                     <Trophy className="w-5 h-5" />
                   </div>
                   <span className="font-medium text-gray-200">
                     CTF Leaderboard
                   </span>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-hack-red group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-500 group-hover:text-hack-red group-hover:translate-x-1 transition-all" />
               </div>
             </Link>
 
             <Link
               to="/ctf/challenges"
-              className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-hack-purple/50 transition-all group"
+              className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-hack-purple/50 transition-all group"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-hack-purple/10 text-hack-purple">
+                  <div className="p-2  bg-hack-purple/10 text-hack-purple">
                     <Star className="w-5 h-5" />
                   </div>
                   <span className="font-medium text-gray-200">
                     CTF Challenges
                   </span>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-hack-purple group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-500 group-hover:text-hack-purple group-hover:translate-x-1 transition-all" />
               </div>
             </Link>
 
             <button
               onClick={toggleShowUsers}
-              className="p-4 rounded-xl bg-terminal-alt border border-gray-800 hover:border-matrix/50 transition-all group text-left"
+              className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-matrix/50 transition-all group text-left"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-matrix/10 text-matrix">
+                  <div className="p-2  bg-matrix/10 text-gray-900 dark:text-matrix">
                     <Users className="w-5 h-5" />
                   </div>
                   <span className="font-medium text-gray-200">
@@ -498,7 +498,7 @@ function Officer() {
                   </span>
                 </div>
                 <ChevronRight
-                  className={`w-5 h-5 text-gray-500 group-hover:text-matrix transition-all ${showUsers ? "rotate-90" : ""}`}
+                  className={`w-5 h-5 text-gray-600 dark:text-gray-500 group-hover:text-gray-900 dark:text-matrix transition-all ${showUsers ? "rotate-90" : ""}`}
                 />
               </div>
             </button>
@@ -515,25 +515,25 @@ function Officer() {
                 <div className="terminal-dot red" />
                 <div className="terminal-dot yellow" />
                 <div className="terminal-dot green" />
-                <span className="ml-4 text-xs text-gray-500 font-terminal">
+                <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
                   user_management.sh
                 </span>
               </div>
               <div className="terminal-body">
-                <h3 className="text-lg font-semibold text-white mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   All Users ({users.length})
                 </h3>
 
                 {loadingUsers ? (
                   <div className="flex items-center justify-center py-8">
-                    <Spinner className="animate-spin h-6 w-6 text-matrix" />
+                    <Spinner className="animate-spin h-6 w-6 text-gray-900 dark:text-matrix" />
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {users.map((u) => (
                       <div
                         key={u.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-terminal-alt border border-gray-800"
+                        className="flex items-center justify-between p-3  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800"
                       >
                         <Link
                           to={`/@/${u.id}`}
@@ -543,10 +543,10 @@ function Officer() {
                             <img
                               src={u.photo_url}
                               alt={u.display_name}
-                              className="w-10 h-10 rounded-full border border-gray-600 hover:border-matrix transition-colors"
+                              className="w-10 h-10  border border-gray-300 dark:border-gray-600 hover:border-matrix transition-colors"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600 hover:border-matrix transition-colors">
+                            <div className="w-10 h-10  bg-gray-200 dark:bg-gray-700 flex items-center justify-center border border-gray-300 dark:border-gray-600 hover:border-matrix transition-colors">
                               <span className="text-gray-400 font-bold">
                                 {u.display_name.charAt(0).toUpperCase()}
                               </span>
@@ -554,16 +554,16 @@ function Officer() {
                           )}
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-200 hover:text-matrix transition-colors">
+                              <span className="font-medium text-gray-200 hover:text-gray-900 dark:text-matrix transition-colors">
                                 {u.display_name}
                               </span>
                               {u.is_officer && (
-                                <span className="px-1.5 py-0.5 rounded text-xs bg-hack-purple/20 text-hack-purple border border-hack-purple/30">
+                                <span className="px-1.5 py-0.5text-xs bg-hack-purple/20 text-hack-purple border border-hack-purple/30">
                                   OFFICER
                                 </span>
                               )}
                             </div>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-600 dark:text-gray-500">
                               {u.email}
                             </span>
                           </div>
@@ -576,7 +576,7 @@ function Officer() {
                           disabled={
                             togglingOfficer === u.id || u.id === userProfile?.id
                           }
-                          className={`px-3 py-1.5 rounded-lg text-xs font-terminal transition-colors disabled:opacity-50 ${
+                          className={`px-3 py-1.5  text-xs font-terminal transition-colors disabled:opacity-50 ${
                             u.is_officer
                               ? "bg-hack-red/10 text-hack-red border border-hack-red/30 hover:bg-hack-red/20"
                               : "bg-hack-purple/10 text-hack-purple border border-hack-purple/30 hover:bg-hack-purple/20"
@@ -608,21 +608,21 @@ function Officer() {
               <div className="terminal-dot red" />
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
+              <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
                 recent_registrations.log
               </span>
             </div>
             <div className="terminal-body">
-              <h3 className="text-lg font-semibold text-white mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Recent Registrations
               </h3>
 
               {loadingStats ? (
                 <div className="flex items-center justify-center py-8">
-                  <Spinner className="animate-spin h-6 w-6 text-matrix" />
+                  <Spinner className="animate-spin h-6 w-6 text-gray-900 dark:text-matrix" />
                 </div>
               ) : recentRegistrations.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
+                <p className="text-gray-600 dark:text-gray-500 text-center py-8">
                   No registrations yet
                 </p>
               ) : (
@@ -630,7 +630,7 @@ function Officer() {
                   {recentRegistrations.map((reg) => (
                     <div
                       key={reg.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-terminal-alt border border-gray-800"
+                      className="flex items-center justify-between p-3  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800"
                     >
                       <div className="flex items-center gap-3">
                         <Link to={`/@/${reg.user_id}`} className="shrink-0">
@@ -638,10 +638,10 @@ function Officer() {
                             <img
                               src={reg.user.photo_url}
                               alt={reg.user.display_name}
-                              className="w-8 h-8 rounded-full border border-gray-600 hover:border-matrix transition-colors"
+                              className="w-8 h-8  border border-gray-300 dark:border-gray-600 hover:border-matrix transition-colors"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600 hover:border-matrix transition-colors">
+                            <div className="w-8 h-8  bg-gray-200 dark:bg-gray-700 flex items-center justify-center border border-gray-300 dark:border-gray-600 hover:border-matrix transition-colors">
                               <span className="text-gray-400 text-xs font-bold">
                                 {reg.user?.display_name
                                   ?.charAt(0)
@@ -653,11 +653,11 @@ function Officer() {
                         <div>
                           <Link
                             to={`/@/${reg.user_id}`}
-                            className="font-medium text-gray-200 hover:text-matrix transition-colors"
+                            className="font-medium text-gray-200 hover:text-gray-900 dark:text-matrix transition-colors"
                           >
                             {reg.user?.display_name || "Unknown"}
                           </Link>
-                          <span className="text-gray-500 mx-2">
+                          <span className="text-gray-600 dark:text-gray-500 mx-2">
                             registered for
                           </span>
                           {reg.meeting ? (
@@ -674,25 +674,25 @@ function Officer() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`px-2 py-0.5 rounded text-xs font-terminal ${
+                          className={`px-2 py-0.5text-xs font-terminal ${
                             reg.status === "attended"
-                              ? "bg-matrix/20 text-matrix border border-matrix/30"
+                              ? "bg-matrix/20 text-gray-900 dark:text-matrix border border-matrix/30"
                               : reg.status === "registered"
                                 ? "bg-hack-cyan/20 text-hack-cyan border border-hack-cyan/30"
                                 : reg.status === "waitlist"
                                   ? "bg-hack-yellow/20 text-hack-yellow border border-hack-yellow/30"
-                                  : "bg-gray-700 text-gray-400 border border-gray-600"
+                                  : "bg-gray-200 dark:bg-gray-700 text-gray-400 border border-gray-300 dark:border-gray-600"
                           }`}
                         >
                           {reg.status.toUpperCase()}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-600 dark:text-gray-500">
                           {formatTime(reg.registered_at)}
                         </span>
                         <button
                           onClick={() => deleteRegistration(reg.id)}
                           disabled={deletingRegistration === reg.id}
-                          className="px-2 py-1 text-xs rounded text-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors disabled:opacity-50 shrink-0"
+                          className="px-2 py-1 text-xstext-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors disabled:opacity-50 shrink-0"
                         >
                           {deletingRegistration === reg.id ? "..." : "Remove"}
                         </button>

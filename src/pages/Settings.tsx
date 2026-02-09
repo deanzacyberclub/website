@@ -187,20 +187,20 @@ function Settings() {
   const getLinkedAccount = (provider: string) => linkedAccounts.find(a => a.provider === provider)
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6">
         {/* Header */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">./settings --edit-profile</span>
+            <span className="text-blue-600 dark:text-matrix neon-text-subtle text-lg">$</span>
+            <span className="text-gray-600 dark:text-gray-400 font-terminal">./settings --edit-profile</span>
           </div>
 
-          <h1 className="text-3xl font-bold neon-text tracking-tight mb-2">SETTINGS</h1>
-          <p className="text-gray-500">
-            <span className="text-hack-cyan">[INFO]</span> Manage your profile and account
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-matrix neon-text tracking-tight mb-2">SETTINGS</h1>
+          <p className="text-gray-600 dark:text-gray-500">
+            <span className="text-blue-500 dark:text-hack-cyan">[INFO]</span> Manage your profile and account
           </p>
         </header>
 
@@ -221,17 +221,17 @@ function Settings() {
               <div className="flex items-center gap-4">
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-20 h-20 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center cursor-pointer hover:neon-box transition-shadow overflow-hidden"
+                  className="w-20 h-20 bg-blue-50 dark:bg-matrix/10 border border-blue-200 dark:border-matrix/30 flex items-center justify-center cursor-pointer hover:shadow-lg dark:hover:neon-box transition-shadow overflow-hidden"
                 >
                   {profilePreview ? (
                     <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
-                    <User className="w-8 h-8 text-matrix/50" />
+                    <User className="w-8 h-8 text-blue-300 dark:text-matrix/50" />
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-matrix font-terminal">Profile Picture</p>
-                  <p className="text-xs text-gray-600 mb-2">Max 5MB, click to change</p>
+                  <p className="text-sm text-blue-600 dark:text-matrix font-terminal">Profile Picture</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-600 mb-2">Max 5MB, click to change</p>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -243,7 +243,7 @@ function Settings() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-xs text-matrix hover:underline"
+                      className="text-xs text-blue-600 dark:text-matrix hover:underline"
                     >
                       Upload new
                     </button>
@@ -251,7 +251,7 @@ function Settings() {
                       <button
                         type="button"
                         onClick={handleRemovePhoto}
-                        className="text-xs text-hack-red hover:underline"
+                        className="text-xs text-red-600 dark:text-hack-red hover:underline"
                       >
                         Remove
                       </button>
@@ -262,54 +262,54 @@ function Settings() {
 
               {/* Display Name */}
               <div>
-                <label className="block text-sm mb-2 text-gray-500 font-terminal">--display-name *</label>
+                <label className="block text-sm mb-2 text-gray-600 dark:text-gray-500 font-terminal">--display-name *</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
-                  className="input-hack w-full rounded-lg"
+                  className="input-hack w-full"
                   placeholder="Your display name"
                 />
               </div>
 
               {/* Student ID (read-only) */}
               <div>
-                <label className="block text-sm mb-2 text-gray-500 font-terminal">--student-id (read-only)</label>
+                <label className="block text-sm mb-2 text-gray-600 dark:text-gray-500 font-terminal">--student-id (read-only)</label>
                 <input
                   type="text"
                   value={studentId}
                   disabled
-                  className="input-hack w-full rounded-lg opacity-50 cursor-not-allowed"
+                  className="input-hack w-full opacity-50 cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-600 font-terminal mt-1">
-                  <span className="text-matrix">&gt;</span> Student ID cannot be changed after account creation
+                <p className="text-xs text-gray-500 dark:text-gray-600 font-terminal mt-1">
+                  <span className="text-blue-600 dark:text-matrix">&gt;</span> Student ID cannot be changed after account creation
                 </p>
               </div>
 
               {/* Email (read-only) */}
               <div>
-                <label className="block text-sm mb-2 text-gray-500 font-terminal">--email (read-only)</label>
+                <label className="block text-sm mb-2 text-gray-600 dark:text-gray-500 font-terminal">--email (read-only)</label>
                 <input
                   type="email"
                   value={user.email || ''}
                   disabled
-                  className="input-hack w-full rounded-lg opacity-50 cursor-not-allowed"
+                  className="input-hack w-full opacity-50 cursor-not-allowed"
                 />
               </div>
 
               {error && (
-                <div className="text-hack-red text-sm font-terminal">{error}</div>
+                <div className="text-red-600 dark:text-hack-red text-sm font-terminal">{error}</div>
               )}
 
               {success && (
-                <div className="text-matrix text-sm font-terminal">{success}</div>
+                <div className="text-green-600 dark:text-matrix text-sm font-terminal">{success}</div>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-hack-filled rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="cli-btn-filled disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -336,12 +336,12 @@ function Settings() {
             <span className="ml-4 text-xs text-gray-500 font-terminal">link_accounts.sh</span>
           </div>
           <div className="terminal-body">
-            <p className="text-sm text-gray-500 font-terminal mb-4">
-              <span className="text-matrix">&gt;</span> Link additional accounts to sign in with multiple providers
+            <p className="text-sm text-gray-600 dark:text-gray-500 font-terminal mb-4">
+              <span className="text-blue-600 dark:text-matrix">&gt;</span> Link additional accounts to sign in with multiple providers
             </p>
 
             {linkError && (
-              <div className="text-hack-red text-sm font-terminal mb-4">{linkError}</div>
+              <div className="text-red-600 dark:text-hack-red text-sm font-terminal mb-4">{linkError}</div>
             )}
 
             <div className="space-y-3">
@@ -354,19 +354,19 @@ function Settings() {
                 return (
                   <div
                     key={provider}
-                    className="flex items-center justify-between p-3 rounded-lg border border-gray-700 bg-terminal-bg/50"
+                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-terminal-bg/50"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                      <div className={`p-2 ${config.bgColor}`}>
                         {config.icon}
                       </div>
                       <div>
-                        <span className="font-medium">{config.name}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{config.name}</span>
                         {linked && (
-                          <span className="ml-2 text-xs text-matrix font-terminal">[LINKED]</span>
+                          <span className="ml-2 text-xs text-green-600 dark:text-matrix font-terminal">[LINKED]</span>
                         )}
                         {linkedAccount?.provider_username && (
-                          <p className="text-xs text-gray-500">@{linkedAccount.provider_username}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">@{linkedAccount.provider_username}</p>
                         )}
                       </div>
                     </div>
@@ -375,7 +375,7 @@ function Settings() {
                         <button
                           onClick={() => setUnlinkConfirmProvider(provider)}
                           disabled={linkedAccounts.length <= 1}
-                          className="px-3 py-1.5 text-xs font-terminal border border-hack-red/50 text-hack-red rounded-lg hover:bg-hack-red/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1.5 text-xs font-terminal border border-red-300 dark:border-hack-red/50 text-red-600 dark:text-hack-red hover:bg-red-50 dark:hover:bg-hack-red/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           title={linkedAccounts.length <= 1 ? 'You must have at least one linked account' : undefined}
                         >
                           UNLINK
@@ -384,7 +384,7 @@ function Settings() {
                         <button
                           onClick={() => handleLinkAccount(provider)}
                           disabled={isLinking}
-                          className="px-3 py-1.5 text-xs font-terminal border border-matrix/50 text-matrix rounded-lg hover:bg-matrix/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1.5 text-xs font-terminal border border-blue-300 dark:border-matrix/50 text-blue-600 dark:text-matrix hover:bg-blue-50 dark:hover:bg-matrix/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isLinking ? (
                             <span className="flex items-center gap-1">
@@ -402,8 +402,8 @@ function Settings() {
               })}
             </div>
 
-            <p className="text-xs text-gray-600 font-terminal mt-4">
-              <span className="text-matrix">&gt;</span> You can sign in with any linked account
+            <p className="text-xs text-gray-500 dark:text-gray-600 font-terminal mt-4">
+              <span className="text-blue-600 dark:text-matrix">&gt;</span> You can sign in with any linked account
             </p>
           </div>
         </div>
@@ -420,14 +420,14 @@ function Settings() {
             <span className="ml-4 text-xs text-hack-red font-terminal">danger_zone.sh</span>
           </div>
           <div className="terminal-body">
-            <div className="border border-hack-red/30 rounded-lg p-4 bg-hack-red/5">
-              <h3 className="text-hack-red font-semibold mb-2">Delete Account</h3>
-              <p className="text-gray-500 text-sm mb-4">
+            <div className="border border-red-200 dark:border-hack-red/30 p-4 bg-red-50 dark:bg-hack-red/5">
+              <h3 className="text-red-700 dark:text-hack-red font-semibold mb-2">Delete Account</h3>
+              <p className="text-gray-600 dark:text-gray-500 text-sm mb-4">
                 Permanently delete your account and all associated data. This action cannot be undone.
               </p>
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="px-4 py-2 bg-hack-red/20 border border-hack-red/50 text-hack-red rounded-lg hover:bg-hack-red/30 transition-colors font-terminal text-sm"
+                className="px-4 py-2 bg-red-100 dark:bg-hack-red/20 border border-red-300 dark:border-hack-red/50 text-red-700 dark:text-hack-red hover:bg-red-200 dark:hover:bg-hack-red/30 transition-colors font-terminal text-sm"
               >
                 DELETE ACCOUNT
               </button>

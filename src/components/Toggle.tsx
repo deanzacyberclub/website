@@ -20,14 +20,14 @@ function Toggle({ isActive, onToggle, leftLabel, rightLabel }: ToggleProps) {
       <button
         type="button"
         onClick={() => onToggle(!isActive)}
-        className={`relative w-14 h-7 rounded-full transition-all border-2 ${
+        className={`relative w-14 h-7  transition-all border-2 ${
           isActive
             ? 'bg-matrix/30 border-matrix'
             : 'bg-terminal-alt border-gray-600'
         }`}
       >
         <span
-          className={`absolute top-0.5 w-5 h-5 rounded-full transition-all duration-200 ${
+          className={`absolute top-0.5 w-5 h-5  transition-all duration-200 ${
             isActive
               ? 'left-7 bg-white'
               : 'left-1 bg-gray-400'

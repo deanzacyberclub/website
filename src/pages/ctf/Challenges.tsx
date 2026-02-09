@@ -116,7 +116,7 @@ function Challenges() {
   }
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
@@ -124,7 +124,7 @@ function Challenges() {
         <div className={`mb-12 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <Link
             to="/ctf"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors mb-6"
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="font-terminal text-sm">Back to CTF</span>
@@ -133,10 +133,10 @@ function Challenges() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-2">
-                <span className="text-white">CTF</span>{' '}
+                <span className="text-gray-900 dark:text-white">CTF</span>{' '}
                 <span className="glitch neon-text" data-text="Challenges">Challenges</span>
               </h1>
-              <p className="text-gray-400">
+              <p className="text-gray-600 dark:text-gray-400">
                 {challenges.length} challenges across {Object.keys(categoryInfo).length} categories
               </p>
             </div>
@@ -145,26 +145,26 @@ function Challenges() {
             <div className="flex items-center gap-4">
               {user && teamId && (
                 <>
-                  <div className="card-hack rounded-lg p-4 text-center min-w-[100px]">
-                    <div className="text-2xl font-bold text-matrix">{stats.solved}/{stats.total}</div>
-                    <div className="text-xs text-gray-500 font-terminal">SOLVED</div>
+                  <div className="card-hack  p-4 text-center min-w-[100px]">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-matrix">{stats.solved}/{stats.total}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-500 font-terminal">SOLVED</div>
                   </div>
-                  <div className="card-hack rounded-lg p-4 text-center min-w-[100px]">
-                    <div className="text-2xl font-bold text-matrix">{stats.points}</div>
-                    <div className="text-xs text-gray-500 font-terminal">POINTS</div>
+                  <div className="card-hack  p-4 text-center min-w-[100px]">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-matrix">{stats.points}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-500 font-terminal">POINTS</div>
                   </div>
                 </>
               )}
               <Link
                 to="/ctf/leaderboard"
-                className="btn-hack rounded-lg px-4 py-3 flex items-center gap-2"
+                className="cli-btn-dashed px-4 py-3 flex items-center gap-2"
               >
                 <Trophy className="w-4 h-4" />
                 <span className="hidden sm:inline">Leaderboard</span>
               </Link>
               <Link
                 to="/ctf/team"
-                className="btn-hack rounded-lg px-4 py-3 flex items-center gap-2"
+                className="cli-btn-dashed px-4 py-3 flex items-center gap-2"
               >
                 <Users className="w-4 h-4" />
                 <span className="hidden sm:inline">My Team</span>
@@ -172,7 +172,7 @@ function Challenges() {
               {isOfficer && (
                 <Link
                   to="/ctf/challenges/new"
-                  className="btn-hack-filled rounded-lg px-4 py-3 flex items-center gap-2"
+                  className="cli-btn-filled  px-4 py-3 flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">New Challenge</span>
@@ -185,13 +185,13 @@ function Challenges() {
         {/* Team Required Notice */}
         {user && !teamId && !loading && (
           <div className={`mb-8 transition-all duration-700 delay-50 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 flex items-center gap-4">
-              <Users className="w-6 h-6 text-yellow-400 shrink-0" />
+            <div className="p-4  bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-300 dark:border-yellow-500/30 flex items-center gap-4">
+              <Users className="w-6 h-6 text-yellow-600 dark:text-yellow-400 shrink-0" />
               <div className="flex-1">
-                <p className="text-yellow-400 font-medium">Join a team to participate</p>
-                <p className="text-yellow-400/70 text-sm">You need to be in a team to submit flags and track progress.</p>
+                <p className="text-yellow-700 dark:text-yellow-400 font-medium">Join a team to participate</p>
+                <p className="text-yellow-600 dark:text-yellow-400/70 text-sm">You need to be in a team to submit flags and track progress.</p>
               </div>
-              <Link to="/ctf/team" className="btn-hack-filled rounded-lg px-4 py-2 text-sm shrink-0">
+              <Link to="/ctf/team" className="cli-btn-filled  px-4 py-2 text-sm shrink-0">
                 Create/Join Team
               </Link>
             </div>
@@ -205,20 +205,20 @@ function Challenges() {
               <div className="terminal-dot red" />
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">filter_challenges.sh</span>
+              <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">filter_challenges.sh</span>
             </div>
             <div className="terminal-body">
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Difficulty Filter */}
                 <div className="flex-1">
-                  <div className="text-xs text-gray-500 font-terminal mb-3">DIFFICULTY</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-500 font-terminal mb-3">DIFFICULTY</div>
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => setSelectedDifficulty('all')}
-                      className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all ${
+                      className={`px-4 py-2  text-sm font-terminal transition-all ${
                         selectedDifficulty === 'all'
-                          ? 'bg-matrix/20 text-matrix border border-matrix/50'
-                          : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:border-gray-600'
+                          ? 'bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix/50'
+                          : 'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                     >
                       All
@@ -227,10 +227,10 @@ function Challenges() {
                       <button
                         key={diff}
                         onClick={() => setSelectedDifficulty(diff)}
-                        className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all ${
+                        className={`px-4 py-2  text-sm font-terminal transition-all ${
                           selectedDifficulty === diff
                             ? getDifficultyColor(diff) + ' border'
-                            : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:border-gray-600'
+                            : 'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                       >
                         {difficultyInfo[diff].name}
@@ -241,14 +241,14 @@ function Challenges() {
 
                 {/* Category Filter */}
                 <div className="flex-1">
-                  <div className="text-xs text-gray-500 font-terminal mb-3">CATEGORY</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-500 font-terminal mb-3">CATEGORY</div>
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => setSelectedCategory('all')}
-                      className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all ${
+                      className={`px-4 py-2  text-sm font-terminal transition-all ${
                         selectedCategory === 'all'
-                          ? 'bg-matrix/20 text-matrix border border-matrix/50'
-                          : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:border-gray-600'
+                          ? 'bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix/50'
+                          : 'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                     >
                       All
@@ -257,10 +257,10 @@ function Challenges() {
                       <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
-                        className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all ${
+                        className={`px-4 py-2  text-sm font-terminal transition-all ${
                           selectedCategory === cat
-                            ? 'bg-gray-700/50 border border-gray-600 ' + getCategoryColor(cat)
-                            : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:border-gray-600'
+                            ? 'bg-gray-200 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 ' + getCategoryColor(cat)
+                            : 'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                       >
                         {categoryInfo[cat].name.split(' ')[0]}
@@ -300,15 +300,15 @@ function Challenges() {
                         ? 'border-green-500/30 bg-green-500/5'
                         : isBeast
                           ? 'border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent'
-                          : 'border-gray-700 bg-gray-800/30'
+                          : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30'
                       }
-                      group-hover:border-matrix/50 group-hover:bg-matrix/5
+                      group-hover:border-blue-300 dark:group-hover:border-matrix/50 group-hover:bg-blue-50 dark:group-hover:bg-matrix/5
                     `}>
                       {/* Beast glow effect */}
                       {isBeast && (
                         <>
-                          <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl" />
-                          <div className="absolute bottom-0 left-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl" />
+                          <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/20  blur-3xl" />
+                          <div className="absolute bottom-0 left-0 w-32 h-32 bg-pink-500/10  blur-3xl" />
                         </>
                       )}
 
@@ -318,27 +318,27 @@ function Challenges() {
                           <div className="flex items-center gap-3 mb-2">
                             {/* Solved indicator */}
                             {isSolved ? (
-                              <div className="w-8 h-8 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center">
+                              <div className="w-8 h-8  bg-green-500/20 border border-green-500/50 flex items-center justify-center">
                                 <Check className="w-4 h-4 text-green-400" />
                               </div>
                             ) : isBeast ? (
-                              <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/50 flex items-center justify-center">
+                              <div className="w-8 h-8  bg-purple-500/20 border border-purple-500/50 flex items-center justify-center">
                                 <Star className="w-4 h-4 text-purple-400" />
                               </div>
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-gray-700/50 border border-gray-600 flex items-center justify-center">
+                              <div className="w-8 h-8  bg-gray-200 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 flex items-center justify-center">
                                 <Lock className="w-4 h-4 text-gray-500" />
                               </div>
                             )}
 
                             <h3 className={`text-lg font-bold ${
-                              isSolved ? 'text-green-400' : isBeast ? 'text-purple-400 neon-text-subtle' : 'text-white'
-                            } group-hover:text-matrix transition-colors`}>
+                              isSolved ? 'text-green-400' : isBeast ? 'text-purple-400 neon-text-subtle' : 'text-gray-900 dark:text-white'
+                            } group-hover:text-blue-600 dark:group-hover:text-matrix transition-colors`}>
                               {challenge.title}
                             </h3>
                           </div>
 
-                          <p className="text-gray-500 text-sm line-clamp-2 mb-3 break-words">
+                          <p className="text-gray-600 dark:text-gray-500 text-sm line-clamp-2 mb-3 break-words">
                             {challenge.description.split('\n')[0]}
                           </p>
 
@@ -349,13 +349,13 @@ function Challenges() {
                             </span>
 
                             {/* Difficulty */}
-                            <span className={`px-2 py-1 rounded text-xs font-terminal border ${getDifficultyColor(challenge.difficulty)}`}>
+                            <span className={`px-2 py-1 text-xs font-terminal border ${getDifficultyColor(challenge.difficulty)}`}>
                               {difficultyInfo[challenge.difficulty].name}
                             </span>
 
                             {/* Files indicator */}
                             {challenge.files && challenge.files.length > 0 && (
-                              <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <span className="text-xs text-gray-600 dark:text-gray-500 flex items-center gap-1">
                                 <Flag className="w-3 h-3" />
                                 {challenge.files.length} file{challenge.files.length > 1 ? 's' : ''}
                               </span>
@@ -367,15 +367,15 @@ function Challenges() {
                         <div className="flex items-center gap-4">
                           <div className={`text-right ${isBeast ? 'animate-pulse' : ''}`}>
                             <div className={`text-2xl font-bold ${
-                              isSolved ? 'text-green-400' : isBeast ? 'text-purple-400' : 'text-matrix'
+                              isSolved ? 'text-green-400' : isBeast ? 'text-purple-400' : 'text-blue-600 dark:text-matrix'
                             }`}>
                               {challenge.points}
                             </div>
-                            <div className="text-xs text-gray-500 font-terminal">POINTS</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-500 font-terminal">POINTS</div>
                           </div>
 
-                          <div className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-gray-700/50 group-hover:bg-matrix/20 transition-colors">
-                            <Trophy className={`w-5 h-5 ${isBeast ? 'text-purple-400' : 'text-gray-500'} group-hover:text-matrix transition-colors`} />
+                          <div className="hidden md:flex items-center justify-center w-10 h-10  bg-gray-200 dark:bg-gray-700/50 group-hover:bg-blue-100 dark:group-hover:bg-matrix/20 transition-colors">
+                            <Trophy className={`w-5 h-5 ${isBeast ? 'text-purple-400' : 'text-gray-500'} group-hover:text-blue-600 dark:group-hover:text-matrix transition-colors`} />
                           </div>
                         </div>
                       </div>
@@ -389,21 +389,21 @@ function Challenges() {
 
         {/* Legend */}
         <div className={`mt-12 transition-all duration-700 delay-300 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600 dark:text-gray-500">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500/50" />
+              <div className="w-3 h-3  bg-green-500/50" />
               <span>Easy (100 pts)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+              <div className="w-3 h-3  bg-yellow-500/50" />
               <span>Medium (200 pts)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/50" />
+              <div className="w-3 h-3  bg-red-500/50" />
               <span>Hard (300 pts)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-purple-500/50" />
+              <div className="w-3 h-3  bg-purple-500/50" />
               <span>Beast (500 pts)</span>
             </div>
           </div>

@@ -159,18 +159,18 @@ function ChallengeDetail() {
 
   if (!challenge) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="w-16 h-16 text-hack-red mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Challenge Not Found
           </h1>
-          <p className="text-gray-400 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             The challenge you're looking for doesn't exist.
           </p>
           <Link
             to="/ctf/challenges"
-            className="btn-hack-filled rounded-lg px-6 py-3"
+            className="cli-btn-filled  px-6 py-3"
           >
             Back to Challenges
           </Link>
@@ -288,7 +288,7 @@ function ChallengeDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
@@ -298,7 +298,7 @@ function ChallengeDetail() {
         >
           <Link
             to="/ctf/challenges"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors mb-6"
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="font-terminal text-sm">Back to Challenges</span>
@@ -307,7 +307,7 @@ function ChallengeDetail() {
           <div className="flex flex-wrap items-start gap-4 mb-4">
             {/* Solved Badge */}
             {isSolved && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/50">
+              <div className="flex items-center gap-2 px-3 py-1  bg-green-500/20 border border-green-500/50">
                 <Check className="w-4 h-4 text-green-400" />
                 <span className="text-green-400 text-sm font-terminal">
                   SOLVED
@@ -317,7 +317,7 @@ function ChallengeDetail() {
 
             {/* Beast Badge */}
             {isBeast && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/50 animate-pulse">
+              <div className="flex items-center gap-2 px-3 py-1  bg-purple-500/20 border border-purple-500/50 animate-pulse">
                 <Star className="w-4 h-4 text-purple-400" />
                 <span className="text-purple-400 text-sm font-terminal">
                   LEGENDARY
@@ -334,13 +334,13 @@ function ChallengeDetail() {
 
             {/* Difficulty */}
             <span
-              className={`px-3 py-1 rounded text-sm font-terminal border ${getDifficultyColor(challenge.difficulty)}`}
+              className={`px-3 py-1 text-sm font-terminal border ${getDifficultyColor(challenge.difficulty)}`}
             >
               {difficultyInfo[challenge.difficulty].name}
             </span>
 
             {/* Points */}
-            <div className="flex items-center gap-2 text-matrix">
+            <div className="flex items-center gap-2 text-blue-600 dark:text-matrix">
               <Trophy className="w-4 h-4" />
               <span className="font-terminal">{challenge.points} pts</span>
             </div>
@@ -352,7 +352,7 @@ function ChallengeDetail() {
             {isBeast && (
               <Star className="inline w-8 h-8 mr-2 text-purple-400" />
             )}
-            <span className={isBeast ? "text-purple-400" : "text-white"}>
+            <span className={isBeast ? "text-purple-400" : "text-gray-900 dark:text-white"}>
               {challenge.title}
             </span>
             {isBeast && (
@@ -361,9 +361,9 @@ function ChallengeDetail() {
           </h1>
 
           {challenge.author && (
-            <p className="text-gray-500 text-sm mt-2">
+            <p className="text-gray-600 dark:text-gray-500 text-sm mt-2">
               Created by{" "}
-              <span className="text-gray-400">{challenge.author}</span>
+              <span className="text-gray-600 dark:text-gray-400">{challenge.author}</span>
             </p>
           )}
 
@@ -372,14 +372,14 @@ function ChallengeDetail() {
             <div className="flex items-center gap-3 mt-4">
               <Link
                 to={`/ctf/challenge/${challenge.id}/edit`}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2  border border-blue-300 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors text-sm"
               >
                 <Edit className="w-4 h-4" />
                 Edit Challenge
               </Link>
               <button
                 onClick={() => setShowDeleteDialog(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2  border border-red-300 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-sm"
               >
                 <Trash className="w-4 h-4" />
                 Delete
@@ -399,23 +399,23 @@ function ChallengeDetail() {
               <div className="terminal-dot red" />
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
+              <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
                 challenge_description.md
               </span>
             </div>
             <div className="terminal-body">
-              <div className="prose prose-invert prose-green max-w-none">
+              <div className="prose dark:prose-invert prose-green max-w-none">
                 {challenge.description.split("\n").map((line, i) => {
                   if (line.startsWith("```")) return null;
                   if (line.includes("`")) {
                     const parts = line.split(/(`[^`]+`)/);
                     return (
-                      <p key={i} className="text-gray-300 leading-relaxed mb-4">
+                      <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                         {parts.map((part, j) =>
                           part.startsWith("`") && part.endsWith("`") ? (
                             <code
                               key={j}
-                              className="bg-gray-800 px-2 py-1 rounded text-matrix text-sm"
+                              className="bg-gray-200 dark:bg-gray-800 px-2 py-1 text-blue-600 dark:text-matrix text-sm"
                             >
                               {part.slice(1, -1)}
                             </code>
@@ -429,10 +429,10 @@ function ChallengeDetail() {
                   if (line.includes("**")) {
                     const parts = line.split(/(\*\*[^*]+\*\*)/);
                     return (
-                      <p key={i} className="text-gray-300 leading-relaxed mb-4">
+                      <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                         {parts.map((part, j) =>
                           part.startsWith("**") && part.endsWith("**") ? (
-                            <strong key={j} className="text-matrix font-bold">
+                            <strong key={j} className="text-blue-600 dark:text-matrix font-bold">
                               {part.slice(2, -2)}
                             </strong>
                           ) : (
@@ -443,7 +443,7 @@ function ChallengeDetail() {
                     );
                   }
                   return line ? (
-                    <p key={i} className="text-gray-300 leading-relaxed mb-4">
+                    <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                       {line}
                     </p>
                   ) : (
@@ -460,7 +460,7 @@ function ChallengeDetail() {
           <div
             className={`mb-8 transition-all duration-700 delay-150 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
           >
-            <h3 className="text-sm text-gray-500 font-terminal mb-3 flex items-center gap-2">
+            <h3 className="text-sm text-gray-600 dark:text-gray-500 font-terminal mb-3 flex items-center gap-2">
               <Download className="w-4 h-4" />
               ATTACHMENTS
             </h3>
@@ -470,10 +470,10 @@ function ChallengeDetail() {
                   key={i}
                   href={file.url}
                   download
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700 hover:border-matrix/50 hover:bg-matrix/5 transition-all group"
+                  className="flex items-center gap-2 px-4 py-2  bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-matrix/50 hover:bg-blue-50 dark:hover:bg-matrix/5 transition-all group"
                 >
-                  <Flag className="w-4 h-4 text-gray-500 group-hover:text-matrix transition-colors" />
-                  <span className="text-gray-300 group-hover:text-matrix transition-colors">
+                  <Flag className="w-4 h-4 text-gray-500 group-hover:text-blue-600 dark:group-hover:text-matrix transition-colors" />
+                  <span className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-matrix transition-colors">
                     {file.name}
                   </span>
                 </a>
@@ -497,8 +497,8 @@ function ChallengeDetail() {
               </span>
             </button>
             {showHint && (
-              <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                <p className="text-yellow-400/80 text-sm">{challenge.hint}</p>
+              <div className="p-4  bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-300 dark:border-yellow-500/30">
+                <p className="text-yellow-700 dark:text-yellow-400/80 text-sm">{challenge.hint}</p>
               </div>
             )}
           </div>
@@ -524,12 +524,12 @@ function ChallengeDetail() {
                   <div className="terminal-dot red" />
                   <div className="terminal-dot yellow" />
                   <div className="terminal-dot green" />
-                  <span className="ml-4 text-xs text-gray-500 font-terminal">
+                  <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
                     solution_walkthrough.md
                   </span>
                 </div>
                 <div className="terminal-body">
-                  <div className="prose prose-invert prose-blue max-w-none">
+                  <div className="prose dark:prose-invert prose-blue max-w-none">
                     {challenge.solution.split("\n").map((line, i) => {
                       // Handle step numbers (e.g., "1.", "2.", etc.)
                       if (/^\d+\./.test(line)) {
@@ -538,7 +538,7 @@ function ChallengeDetail() {
                             <span className="text-blue-400 font-bold font-terminal shrink-0">
                               {line.match(/^\d+\./)?.[0]}
                             </span>
-                            <p className="text-gray-300 leading-relaxed">
+                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                               {line.replace(/^\d+\.\s*/, "")}
                             </p>
                           </div>
@@ -548,12 +548,12 @@ function ChallengeDetail() {
                       if (line.includes("`")) {
                         const parts = line.split(/(`[^`]+`)/);
                         return (
-                          <p key={i} className="text-gray-300 leading-relaxed mb-4">
+                          <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                             {parts.map((part, j) =>
                               part.startsWith("`") && part.endsWith("`") ? (
                                 <code
                                   key={j}
-                                  className="bg-gray-800 px-2 py-1 rounded text-blue-400 text-sm"
+                                  className="bg-gray-200 dark:bg-gray-800 px-2 py-1 text-blue-600 dark:text-blue-400 text-sm"
                                 >
                                   {part.slice(1, -1)}
                                 </code>
@@ -568,10 +568,10 @@ function ChallengeDetail() {
                       if (line.includes("**")) {
                         const parts = line.split(/(\*\*[^*]+\*\*)/);
                         return (
-                          <p key={i} className="text-gray-300 leading-relaxed mb-4">
+                          <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                             {parts.map((part, j) =>
                               part.startsWith("**") && part.endsWith("**") ? (
-                                <strong key={j} className="text-blue-400 font-bold">
+                                <strong key={j} className="text-blue-600 dark:text-blue-400 font-bold">
                                   {part.slice(2, -2)}
                                 </strong>
                               ) : (
@@ -582,7 +582,7 @@ function ChallengeDetail() {
                         );
                       }
                       return line ? (
-                        <p key={i} className="text-gray-300 leading-relaxed mb-4">
+                        <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                           {line}
                         </p>
                       ) : (
@@ -613,7 +613,7 @@ function ChallengeDetail() {
               <div className="terminal-dot red" />
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
+              <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
                 submit_flag.sh
               </span>
             </div>
@@ -621,15 +621,15 @@ function ChallengeDetail() {
               {!user ? (
                 <div className="text-center py-8">
                   <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-bold text-white mb-2">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                     Login Required
                   </h3>
-                  <p className="text-gray-400 mb-4">
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
                     You need to be logged in to submit flags.
                   </p>
                   <Link
                     to="/auth"
-                    className="btn-hack-filled rounded-lg px-6 py-3"
+                    className="cli-btn-filled  px-6 py-3"
                   >
                     Login
                   </Link>
@@ -637,31 +637,31 @@ function ChallengeDetail() {
               ) : !team ? (
                 <div className="text-center py-8">
                   <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-bold text-white mb-2">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                     Join a Team First
                   </h3>
-                  <p className="text-gray-400 mb-4">
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
                     You must be in a team to submit flags.
                   </p>
                   <Link
                     to="/ctf/team"
-                    className="btn-hack-filled rounded-lg px-6 py-3"
+                    className="cli-btn-filled  px-6 py-3"
                   >
                     Create or Join Team
                   </Link>
                 </div>
               ) : submitStatus === "correct" ? (
                 <div className="text-center py-8">
-                  <div className="w-20 h-20 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center mx-auto mb-4 animate-bounce">
+                  <div className="w-20 h-20  bg-green-500/20 border-2 border-green-500 flex items-center justify-center mx-auto mb-4 animate-bounce">
                     <Check className="w-10 h-10 text-green-400" />
                   </div>
                   <h3 className="text-2xl font-bold text-green-400 mb-2 neon-text-subtle">
                     Correct!
                   </h3>
-                  <p className="text-gray-400 mb-4">
-                    <span className="text-matrix font-bold">{team.name}</span>{" "}
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    <span className="text-blue-600 dark:text-matrix font-bold">{team.name}</span>{" "}
                     earned{" "}
-                    <span className="text-matrix font-bold">
+                    <span className="text-blue-600 dark:text-matrix font-bold">
                       {challenge.points}
                     </span>{" "}
                     points!
@@ -671,7 +671,7 @@ function ChallengeDetail() {
                       onClick={() =>
                         navigate(`/ctf/challenge/${nextChallenge.id}`)
                       }
-                      className="btn-hack-filled rounded-lg px-6 py-3 inline-flex items-center gap-2"
+                      className="cli-btn-filled  px-6 py-3 inline-flex items-center gap-2"
                     >
                       Next Challenge
                       <ChevronRight className="w-4 h-4" />
@@ -680,11 +680,11 @@ function ChallengeDetail() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit}>
-                  <div className="flex items-center gap-2 text-gray-500 mb-4">
-                    <span className="text-matrix">$</span>
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500 mb-4">
+                    <span className="text-blue-600 dark:text-matrix">$</span>
                     <span className="font-terminal">./submit_flag</span>
                     {team && (
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-gray-500 dark:text-gray-600">
                         (as {team.name})
                       </span>
                     )}
@@ -695,7 +695,7 @@ function ChallengeDetail() {
                       value={flagInput}
                       onChange={(e) => setFlagInput(e.target.value)}
                       placeholder="DACC{your_flag_here}"
-                      className={`flex-1 input-hack rounded-lg ${
+                      className={`flex-1 input-hack  ${
                         submitStatus === "incorrect"
                           ? "border-red-500 shake"
                           : ""
@@ -704,7 +704,7 @@ function ChallengeDetail() {
                     />
                     <button
                       type="submit"
-                      className="btn-hack-filled rounded-lg px-6 disabled:opacity-50"
+                      className="cli-btn-filled  px-6 disabled:opacity-50"
                       disabled={!flagInput.trim() || isSolved || loading}
                     >
                       Submit
@@ -735,11 +735,11 @@ function ChallengeDetail() {
           {prevChallenge ? (
             <Link
               to={`/ctf/challenge/${prevChallenge.id}`}
-              className="flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors"
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
               <div className="text-left">
-                <div className="text-xs font-terminal text-gray-500">
+                <div className="text-xs font-terminal text-gray-600 dark:text-gray-500">
                   PREVIOUS
                 </div>
                 <div className="font-medium">{prevChallenge.title}</div>
@@ -752,10 +752,10 @@ function ChallengeDetail() {
           {nextChallenge ? (
             <Link
               to={`/ctf/challenge/${nextChallenge.id}`}
-              className="flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors"
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors"
             >
               <div className="text-right">
-                <div className="text-xs font-terminal text-gray-500">NEXT</div>
+                <div className="text-xs font-terminal text-gray-600 dark:text-gray-500">NEXT</div>
                 <div className="font-medium">{nextChallenge.title}</div>
               </div>
               <ChevronRight className="w-5 h-5" />

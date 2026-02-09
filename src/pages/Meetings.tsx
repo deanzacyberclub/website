@@ -255,10 +255,10 @@ function Meetings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
           <div className="flex items-center gap-3 justify-center">
-            <Spinner className="animate-spin h-6 w-6 text-matrix" />
+            <Spinner className="animate-spin h-6 w-6 text-blue-600 dark:text-matrix" />
             <span className="font-terminal text-lg">Loading meetings...</span>
           </div>
         </div>
@@ -267,10 +267,10 @@ function Meetings() {
   }
 
   return (
-    <div className="bg-terminal-bg text-matrix min-h-screen">
+    <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
       {/* Create Meeting Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80">
           <div className="terminal-window w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="terminal-header sticky top-0 z-10 bg-terminal-header">
               <div className="terminal-dot red" />
@@ -290,11 +290,11 @@ function Meetings() {
             </div>
             <div className="terminal-body space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-matrix">Create New Meeting</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-matrix">Create New Meeting</h2>
               </div>
 
               {createError && (
-                <div className="p-3 rounded-lg bg-hack-red/10 border border-hack-red/50 text-hack-red text-sm">
+                <div className="p-3 bg-red-50 dark:bg-hack-red/10 border border-red-300 dark:border-hack-red/50 text-red-700 dark:text-hack-red text-sm">
                   {createError}
                 </div>
               )}
@@ -302,36 +302,36 @@ function Meetings() {
               <div className="grid gap-4 md:grid-cols-2">
                 {/* Title */}
                 <div className="md:col-span-2">
-                  <label className="block text-xs text-gray-500 font-terminal mb-1">TITLE *</label>
+                  <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">TITLE *</label>
                   <input
                     type="text"
                     value={createForm.title}
                     onChange={(e) => handleCreateFormChange('title', e.target.value)}
-                    className="input-hack w-full rounded-lg"
+                    className="input-hack w-full"
                     placeholder="Introduction to Ethical Hacking"
                   />
                 </div>
 
                 {/* Slug */}
                 <div>
-                  <label className="block text-xs text-gray-500 font-terminal mb-1">URL SLUG</label>
+                  <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">URL SLUG</label>
                   <input
                     type="text"
                     value={createForm.slug}
                     onChange={(e) => handleCreateFormChange('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                    className="input-hack w-full rounded-lg"
+                    className="input-hack w-full"
                     placeholder="auto-generated-from-title"
                   />
-                  <p className="text-xs text-gray-600 mt-1">/meetings/{createForm.slug || generateSlugFromTitle(createForm.title) || 'slug'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">/meetings/{createForm.slug || generateSlugFromTitle(createForm.title) || 'slug'}</p>
                 </div>
 
                 {/* Type */}
                 <div>
-                  <label className="block text-xs text-gray-500 font-terminal mb-1">TYPE</label>
+                  <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">TYPE</label>
                   <select
                     value={createForm.type}
                     onChange={(e) => handleCreateFormChange('type', e.target.value)}
-                    className="input-hack w-full rounded-lg"
+                    className="input-hack w-full"
                   >
                     <option value="general">General</option>
                     <option value="workshop">Workshop</option>
@@ -343,70 +343,70 @@ function Meetings() {
 
                 {/* Date */}
                 <div>
-                  <label className="block text-xs text-gray-500 font-terminal mb-1">DATE *</label>
+                  <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">DATE *</label>
                   <input
                     type="date"
                     value={createForm.date}
                     onChange={(e) => handleCreateFormChange('date', e.target.value)}
-                    className="input-hack w-full rounded-lg"
+                    className="input-hack w-full"
                   />
                 </div>
 
                 {/* Time */}
                 <div>
-                  <label className="block text-xs text-gray-500 font-terminal mb-1">TIME *</label>
+                  <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">TIME *</label>
                   <input
                     type="text"
                     value={createForm.time}
                     onChange={(e) => handleCreateFormChange('time', e.target.value)}
-                    className="input-hack w-full rounded-lg"
+                    className="input-hack w-full"
                     placeholder="4:00 PM - 6:00 PM"
                   />
                 </div>
 
                 {/* Location */}
                 <div className="md:col-span-2">
-                  <label className="block text-xs text-gray-500 font-terminal mb-1">LOCATION</label>
+                  <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">LOCATION</label>
                   <input
                     type="text"
                     value={createForm.location}
                     onChange={(e) => handleCreateFormChange('location', e.target.value)}
-                    className="input-hack w-full rounded-lg"
+                    className="input-hack w-full"
                     placeholder="S43 Room 120"
                   />
                 </div>
 
                 {/* Description */}
                 <div className="md:col-span-2">
-                  <label className="block text-xs text-gray-500 font-terminal mb-1">DESCRIPTION</label>
+                  <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">DESCRIPTION</label>
                   <textarea
                     value={createForm.description}
                     onChange={(e) => handleCreateFormChange('description', e.target.value)}
-                    className="input-hack w-full rounded-lg min-h-[80px] resize-y"
+                    className="input-hack w-full min-h-[80px] resize-y"
                     placeholder="Describe the meeting..."
                   />
                 </div>
 
                 {/* Topics */}
                 <div className="md:col-span-2">
-                  <label className="block text-xs text-gray-500 font-terminal mb-1">TOPICS (comma-separated)</label>
+                  <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">TOPICS (comma-separated)</label>
                   <input
                     type="text"
                     value={createForm.topics}
                     onChange={(e) => handleCreateFormChange('topics', e.target.value)}
-                    className="input-hack w-full rounded-lg"
+                    className="input-hack w-full"
                     placeholder="Security, Hacking, CTF"
                   />
                 </div>
 
                 {/* Secret Code */}
                 <div>
-                  <label className="block text-xs text-gray-500 font-terminal mb-1">ATTENDANCE CODE</label>
+                  <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">ATTENDANCE CODE</label>
                   <input
                     type="text"
                     value={createForm.secret_code}
                     onChange={(e) => handleCreateFormChange('secret_code', e.target.value.toUpperCase())}
-                    className="input-hack w-full rounded-lg font-mono"
+                    className="input-hack w-full font-mono"
                     placeholder="SECRETCODE"
                   />
                 </div>
@@ -416,16 +416,16 @@ function Meetings() {
                   <button
                     type="button"
                     onClick={() => handleCreateFormChange('featured', !createForm.featured)}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${createForm.featured ? 'bg-matrix' : 'bg-gray-600'}`}
+                    className={`relative w-12 h-6 transition-colors border ${createForm.featured ? 'bg-blue-600 dark:bg-matrix border-blue-600 dark:border-matrix' : 'bg-gray-300 dark:bg-gray-600 border-gray-300 dark:border-gray-600'}`}
                   >
-                    <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${createForm.featured ? 'left-7' : 'left-1'}`} />
+                    <span className={`absolute top-1 w-4 h-4 bg-white transition-transform ${createForm.featured ? 'left-7' : 'left-1'}`} />
                   </button>
-                  <label className="text-sm text-gray-400">Featured meeting</label>
+                  <label className="text-sm text-gray-700 dark:text-gray-400">Featured meeting</label>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => {
                     setShowCreateModal(false)
@@ -433,14 +433,14 @@ function Meetings() {
                     setCreateError('')
                   }}
                   disabled={creating}
-                  className="px-4 py-2 text-sm font-terminal text-gray-400 hover:text-white border border-gray-600 rounded-lg transition-colors disabled:opacity-50"
+                  className="cli-btn-dashed disabled:opacity-50"
                 >
                   CANCEL
                 </button>
                 <button
                   onClick={createMeeting}
                   disabled={creating}
-                  className="px-4 py-2 text-sm font-terminal bg-matrix/20 text-matrix border border-matrix rounded-lg hover:bg-matrix/30 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="cli-btn-filled disabled:opacity-50 flex items-center gap-2"
                 >
                   {creating && <Spinner className="animate-spin h-4 w-4" />}
                   {creating ? 'CREATING...' : 'CREATE MEETING'}
@@ -455,23 +455,23 @@ function Meetings() {
         {/* Header */}
         <header className={`mb-12 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-matrix neon-text-subtle">$</span>
-            <span className="text-gray-400 font-terminal">cat /var/log/meetings.log</span>
+            <span className="text-blue-600 dark:text-matrix neon-text-subtle">$</span>
+            <span className="text-gray-600 dark:text-gray-400 font-terminal">cat /var/log/meetings.log</span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-matrix neon-text mb-2">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-matrix neon-text mb-2">
                 Club Meetings
               </h1>
-              <p className="text-gray-500">
+              <p className="text-gray-600 dark:text-gray-500">
                 Explore our upcoming events and past sessions
               </p>
             </div>
             {isOfficer && (
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="btn-hack-filled px-4 py-2 flex items-center gap-2 self-start sm:self-auto"
+                className="cli-btn-filled px-4 py-2 flex items-center gap-2 self-start sm:self-auto"
               >
                 <Plus className="w-5 h-5" />
                 New Meeting
@@ -484,8 +484,8 @@ function Meetings() {
         {featuredMeetings.length > 0 && (
           <section className={`mb-12 transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-matrix neon-text-subtle text-lg">$</span>
-              <span className="text-gray-400 font-terminal">./highlight --featured</span>
+              <span className="text-blue-600 dark:text-matrix neon-text-subtle text-lg">$</span>
+              <span className="text-gray-600 dark:text-gray-400 font-terminal">./highlight --featured</span>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -493,39 +493,39 @@ function Meetings() {
                 <Link
                   to={`/meetings/${meeting.slug}`}
                   key={meeting.id}
-                  className="relative overflow-hidden rounded-xl border-2 border-matrix bg-gradient-to-br from-matrix/10 via-terminal-bg to-matrix/5 p-6 group hover:shadow-neon transition-all duration-300 cursor-pointer"
+                  className="relative overflow-hidden border-2 border-blue-300 dark:border-matrix bg-gradient-to-br from-blue-50 via-white to-blue-25 dark:from-matrix/10 dark:via-terminal-bg dark:to-matrix/5 p-6 group hover:shadow-xl dark:hover:shadow-neon transition-all duration-300 cursor-pointer"
                 >
                   <div className="absolute top-3 right-3">
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-terminal bg-matrix/20 text-matrix border border-matrix/50">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-terminal bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix/50">
                       <Star className="w-3 h-3" />
                       FEATURED
                     </span>
                   </div>
 
                   <div className="mb-4">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
+                    <span className={`inline-block px-2 py-0.5 text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
                       {TYPE_LABELS[meeting.type]}
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-matrix mb-2 group-hover:neon-text-subtle transition-all">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-matrix mb-2 group-hover:text-blue-600 dark:group-hover:neon-text-subtle transition-all">
                     {meeting.title}
                   </h3>
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
                     {meeting.description}
                   </p>
 
                   <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Calendar className="w-4 h-4 text-matrix/70" />
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500">
+                      <Calendar className="w-4 h-4 text-blue-500 dark:text-matrix/70" />
                       {formatDate(meeting.date)}
                     </div>
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Clock className="w-4 h-4 text-matrix/70" />
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500">
+                      <Clock className="w-4 h-4 text-blue-500 dark:text-matrix/70" />
                       {meeting.time}
                     </div>
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <MapPin className="w-4 h-4 text-matrix/70" />
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500">
+                      <MapPin className="w-4 h-4 text-blue-500 dark:text-matrix/70" />
                       {meeting.location}
                     </div>
                   </div>
@@ -535,7 +535,7 @@ function Meetings() {
                       {meeting.topics.map((topic) => (
                         <span
                           key={topic}
-                          className="px-2 py-0.5 rounded text-xs bg-terminal-alt border border-gray-700 text-gray-400"
+                          className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-terminal-alt border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-400"
                         >
                           {topic}
                         </span>
@@ -555,7 +555,7 @@ function Meetings() {
               <div className="terminal-dot red" />
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">search_meetings</span>
+              <span className="ml-4 text-xs text-gray-500 dark:text-gray-500 font-terminal">search_meetings</span>
             </div>
             <div className="terminal-body">
               <div className="flex flex-col gap-4">
@@ -567,7 +567,7 @@ function Meetings() {
                       placeholder="Search meetings, topics, locations..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="input-hack w-full rounded-lg pl-10"
+                      className="input-hack w-full pl-10"
                     />
                   </div>
 
@@ -575,27 +575,27 @@ function Meetings() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setFilter('all')}
-                      className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all ${filter === 'all'
-                        ? 'bg-matrix/20 text-matrix border border-matrix'
-                        : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-matrix/50'
+                      className={`px-4 py-2 text-sm font-terminal transition-all ${filter === 'all'
+                        ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
+                        : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
                         }`}
                     >
                       ALL
                     </button>
                     <button
                       onClick={() => setFilter('upcoming')}
-                      className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all ${filter === 'upcoming'
-                        ? 'bg-matrix/20 text-matrix border border-matrix'
-                        : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-matrix/50'
+                      className={`px-4 py-2 text-sm font-terminal transition-all ${filter === 'upcoming'
+                        ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
+                        : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
                         }`}
                     >
                       UPCOMING
                     </button>
                     <button
                       onClick={() => setFilter('past')}
-                      className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all ${filter === 'past'
-                        ? 'bg-matrix/20 text-matrix border border-matrix'
-                        : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-matrix/50'
+                      className={`px-4 py-2 text-sm font-terminal transition-all ${filter === 'past'
+                        ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
+                        : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
                         }`}
                     >
                       PAST
@@ -605,57 +605,57 @@ function Meetings() {
 
                 {/* Type Filter Buttons */}
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-xs text-gray-500 font-terminal self-center mr-2">TYPE:</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal self-center mr-2">TYPE:</span>
                   <button
                     onClick={() => setTypeFilter('all')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-terminal transition-all ${typeFilter === 'all'
-                      ? 'bg-matrix/20 text-matrix border border-matrix'
-                      : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-matrix/50'
+                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'all'
+                      ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
+                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
                       }`}
                   >
                     ALL TYPES
                   </button>
                   <button
                     onClick={() => setTypeFilter('workshop')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-terminal transition-all ${typeFilter === 'workshop'
-                      ? 'bg-hack-cyan/20 text-hack-cyan border border-hack-cyan'
-                      : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-cyan/50'
+                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'workshop'
+                      ? 'bg-cyan-100 dark:bg-hack-cyan/20 text-cyan-700 dark:text-hack-cyan border border-cyan-300 dark:border-hack-cyan'
+                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-cyan-400 dark:hover:border-hack-cyan/50'
                       }`}
                   >
                     WORKSHOP
                   </button>
                   <button
                     onClick={() => setTypeFilter('lecture')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-terminal transition-all ${typeFilter === 'lecture'
-                      ? 'bg-hack-yellow/20 text-hack-yellow border border-hack-yellow'
-                      : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-yellow/50'
+                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'lecture'
+                      ? 'bg-yellow-100 dark:bg-hack-yellow/20 text-yellow-700 dark:text-hack-yellow border border-yellow-300 dark:border-hack-yellow'
+                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-yellow-400 dark:hover:border-hack-yellow/50'
                       }`}
                   >
                     LECTURE
                   </button>
                   <button
                     onClick={() => setTypeFilter('ctf')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-terminal transition-all ${typeFilter === 'ctf'
-                      ? 'bg-hack-red/20 text-hack-red border border-hack-red'
-                      : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-red/50'
+                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'ctf'
+                      ? 'bg-red-100 dark:bg-hack-red/20 text-red-700 dark:text-hack-red border border-red-300 dark:border-hack-red'
+                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-red-400 dark:hover:border-hack-red/50'
                       }`}
                   >
                     CTF
                   </button>
                   <button
                     onClick={() => setTypeFilter('social')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-terminal transition-all ${typeFilter === 'social'
-                      ? 'bg-purple-400/20 text-purple-400 border border-purple-400'
-                      : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-purple-400/50'
+                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'social'
+                      ? 'bg-purple-100 dark:bg-purple-400/20 text-purple-700 dark:text-purple-400 border border-purple-300 dark:border-purple-400'
+                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-400/50'
                       }`}
                   >
                     SOCIAL
                   </button>
                   <button
                     onClick={() => setTypeFilter('general')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-terminal transition-all ${typeFilter === 'general'
-                      ? 'bg-matrix/20 text-matrix border border-matrix'
-                      : 'bg-terminal-alt text-gray-400 border border-gray-700 hover:border-matrix/50'
+                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'general'
+                      ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
+                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
                       }`}
                   >
                     GENERAL
@@ -669,8 +669,8 @@ function Meetings() {
         {/* Meetings List */}
         <section className={`mb-16 transition-all duration-700 delay-300 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">
+            <span className="text-blue-600 dark:text-matrix neon-text-subtle text-lg">$</span>
+            <span className="text-gray-600 dark:text-gray-400 font-terminal">
               ls -la ./meetings/ {filter !== 'all' && `--filter=${filter}`}
               {typeFilter !== 'all' && ` --type=${typeFilter}`}
               {searchQuery && ` | grep "${searchQuery}"`}
@@ -686,8 +686,8 @@ function Meetings() {
                 <span className="ml-4 text-xs text-gray-500 font-terminal">no_results</span>
               </div>
               <div className="terminal-body text-center py-8">
-                <p className="text-gray-500 mb-2">
-                  <span className="text-hack-yellow">[INFO]</span> No meetings found matching your criteria.
+                <p className="text-gray-600 dark:text-gray-500 mb-2">
+                  <span className="text-yellow-600 dark:text-hack-yellow">[INFO]</span> No meetings found matching your criteria.
                 </p>
                 <button
                   onClick={() => {
@@ -695,7 +695,7 @@ function Meetings() {
                     setFilter('all')
                     setTypeFilter('all')
                   }}
-                  className="text-matrix hover:neon-text-subtle transition-all text-sm"
+                  className="text-blue-600 dark:text-matrix hover:text-blue-700 dark:hover:neon-text-subtle transition-all text-sm"
                 >
                   Clear filters
                 </button>
@@ -707,19 +707,19 @@ function Meetings() {
                 <Link
                   to={`/meetings/${meeting.slug}`}
                   key={meeting.id}
-                  className={`card-hack p-5 rounded-lg group transition-all block ${isPast(meeting.date) ? 'opacity-70' : ''
+                  className={`card-hack p-5 group transition-all block ${isPast(meeting.date) ? 'opacity-70' : ''
                     }`}
                 >
                   <div className="flex flex-col md:flex-row md:items-start gap-4">
                     {/* Date Badge */}
                     <div className="flex-shrink-0 w-16 text-center">
-                      <div className={`text-2xl font-bold font-terminal ${isPast(meeting.date) ? 'text-gray-500' : 'text-matrix'}`}>
+                      <div className={`text-2xl font-bold font-terminal ${isPast(meeting.date) ? 'text-gray-400 dark:text-gray-500' : 'text-blue-600 dark:text-matrix'}`}>
                         {parseLocalDate(meeting.date).getDate()}
                       </div>
-                      <div className="text-xs text-gray-500 uppercase">
+                      <div className="text-xs text-gray-500 dark:text-gray-500 uppercase">
                         {parseLocalDate(meeting.date).toLocaleDateString('en-US', { month: 'short' })}
                       </div>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-gray-500 dark:text-gray-600">
                         {parseLocalDate(meeting.date).getFullYear()}
                       </div>
                     </div>
@@ -727,31 +727,31 @@ function Meetings() {
                     {/* Content */}
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
+                        <span className={`inline-block px-2 py-0.5 text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
                           {TYPE_LABELS[meeting.type]}
                         </span>
                         {isPast(meeting.date) && (
-                          <span className="inline-block px-2 py-0.5 rounded text-xs font-terminal border border-gray-600 text-gray-500">
+                          <span className="inline-block px-2 py-0.5 text-xs font-terminal border border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-500">
                             COMPLETED
                           </span>
                         )}
                       </div>
 
-                      <h3 className={`text-lg font-semibold mb-2 group-hover:neon-text-subtle transition-all ${isPast(meeting.date) ? 'text-gray-400' : 'text-matrix'
+                      <h3 className={`text-lg font-semibold mb-2 group-hover:text-blue-600 dark:group-hover:neon-text-subtle transition-all ${isPast(meeting.date) ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-matrix'
                         }`}>
                         {meeting.title}
                       </h3>
-                      <p className="text-gray-500 text-sm mb-3">
+                      <p className="text-gray-600 dark:text-gray-500 text-sm mb-3">
                         {meeting.description}
                       </p>
 
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-500">
                         <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4 text-matrix/50" />
+                          <Clock className="w-4 h-4 text-blue-500 dark:text-matrix/50" />
                           {meeting.time}
                         </div>
                         <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4 text-matrix/50" />
+                          <MapPin className="w-4 h-4 text-blue-500 dark:text-matrix/50" />
                           {meeting.location}
                         </div>
                       </div>
@@ -761,7 +761,7 @@ function Meetings() {
                           {meeting.topics.map((topic) => (
                             <span
                               key={topic}
-                              className="px-2 py-0.5 rounded text-xs bg-terminal-alt border border-gray-700 text-gray-400"
+                              className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-terminal-alt border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-400"
                             >
                               {topic}
                             </span>
@@ -788,28 +788,28 @@ function Meetings() {
             <div className="terminal-body">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-matrix neon-text-subtle">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-matrix neon-text-subtle">
                     {meetings.length}
                   </div>
-                  <div className="text-xs text-gray-500 uppercase">Total Meetings</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">Total Meetings</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-hack-cyan">
+                  <div className="text-2xl font-bold text-cyan-600 dark:text-hack-cyan">
                     {meetings.filter(m => parseLocalDate(m.date) >= today).length}
                   </div>
-                  <div className="text-xs text-gray-500 uppercase">Upcoming</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">Upcoming</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-hack-yellow">
+                  <div className="text-2xl font-bold text-yellow-600 dark:text-hack-yellow">
                     {meetings.filter(m => m.type === 'workshop').length}
                   </div>
-                  <div className="text-xs text-gray-500 uppercase">Workshops</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">Workshops</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-hack-red">
+                  <div className="text-2xl font-bold text-red-600 dark:text-hack-red">
                     {meetings.filter(m => m.type === 'ctf').length}
                   </div>
-                  <div className="text-xs text-gray-500 uppercase">CTF Events</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">CTF Events</div>
                 </div>
               </div>
             </div>

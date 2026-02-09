@@ -345,7 +345,7 @@ function Leaderboard() {
       case 3:
         return "bg-gradient-to-r from-orange-600/20 to-transparent border-orange-600/50";
       default:
-        return "border-gray-700 hover:border-gray-600";
+        return "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600";
     }
   };
 
@@ -380,7 +380,7 @@ function Leaderboard() {
   };
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
@@ -390,7 +390,7 @@ function Leaderboard() {
         >
           <Link
             to="/ctf"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-900 dark:text-matrix transition-colors mb-6"
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="font-terminal text-sm">Back to CTF</span>
@@ -400,7 +400,7 @@ function Leaderboard() {
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-2">
                 <Trophy className="inline w-10 h-10 text-yellow-400 mr-3" />
-                <span className="text-white">CTF</span>{" "}
+                <span className="text-gray-900 dark:text-white">CTF</span>{" "}
                 <span className="glitch neon-text" data-text="Leaderboard">
                   Leaderboard
                 </span>
@@ -430,10 +430,10 @@ function Leaderboard() {
               {isOfficer && (
                 <button
                   onClick={() => setShowSettings(!showSettings)}
-                  className={`p-2 rounded-lg border transition-all ${
+                  className={`p-2  border transition-all ${
                     showSettings
-                      ? "border-matrix bg-matrix/10 text-matrix"
-                      : "border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white"
+                      ? "border-matrix bg-matrix/10 text-gray-900 dark:text-matrix"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-500 text-gray-400 hover:text-gray-900 dark:text-white"
                   }`}
                   title="Leaderboard Settings"
                 >
@@ -465,7 +465,7 @@ function Leaderboard() {
 
         {loading ? (
           <div className="text-center py-20">
-            <div className="font-terminal text-lg neon-pulse">
+            <div className="font-terminal text-lg text-blue-600 dark:text-matrix dark:neon-pulse">
               Loading leaderboard...
             </div>
           </div>
@@ -491,7 +491,7 @@ function Leaderboard() {
                   </p>
                   <Link
                     to="/ctf/team"
-                    className="inline-block mt-4 btn-hack-filled rounded-lg px-6 py-3"
+                    className="inline-block mt-4 cli-btn-filled  px-6 py-3"
                   >
                     Create a Team
                   </Link>
@@ -524,7 +524,7 @@ function Leaderboard() {
                         {/* Team Name & Members */}
                         <div className="col-span-4 mb-3 md:mb-0">
                           <h3
-                            className={`font-bold text-lg ${rank <= 3 ? "text-matrix" : "text-white"}`}
+                            className={`font-bold text-lg ${rank <= 3 ? "text-blue-600 dark:text-matrix" : "text-gray-900 dark:text-white"}`}
                           >
                             {entry.team_name}
                           </h3>
@@ -534,11 +534,11 @@ function Leaderboard() {
                                 <img
                                   src={member.photo_url}
                                   alt={member.display_name}
-                                  className={`w-6 h-6 rounded-full border border-gray-600 ${isOfficer ? "cursor-pointer hover:border-matrix transition-colors" : ""}`}
+                                  className={`w-6 h-6  border border-gray-300 dark:border-gray-600 ${isOfficer ? "cursor-pointer hover:border-blue-500 dark:hover:border-matrix transition-colors" : ""}`}
                                 />
                               ) : (
                                 <div
-                                  className={`w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-xs text-gray-400 border border-gray-600 ${isOfficer ? "cursor-pointer hover:border-matrix transition-colors" : ""}`}
+                                  className={`w-6 h-6  bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 ${isOfficer ? "cursor-pointer hover:border-blue-500 dark:hover:border-matrix transition-colors" : ""}`}
                                 >
                                   {member.display_name.charAt(0).toUpperCase()}
                                 </div>
@@ -557,19 +557,19 @@ function Leaderboard() {
                                     avatarContent
                                   )}
                                   {/* Tooltip */}
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/avatar:opacity-100 pointer-events-none transition-opacity duration-150 z-10 border border-gray-700">
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-xs whitespace-nowrap opacity-0 group-hover/avatar:opacity-100 pointer-events-none transition-opacity duration-150 z-10 border border-gray-200 dark:border-gray-700">
                                     {member.display_name}
                                     {isOfficer && (
-                                      <span className="text-matrix ml-1">
+                                      <span className="text-blue-600 dark:text-matrix ml-1">
                                         (view)
                                       </span>
                                     )}
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white dark:border-t-gray-900" />
                                   </div>
                                 </div>
                               );
                             })}
-                            <span className="text-xs text-gray-500 ml-1">
+                            <span className="text-xs text-gray-600 dark:text-gray-500 ml-1">
                               {entry.members.length} member
                               {entry.members.length !== 1 ? "s" : ""}
                             </span>
@@ -579,11 +579,11 @@ function Leaderboard() {
                         {/* Points */}
                         <div className="col-span-1 text-center mb-3 md:mb-0">
                           <div
-                            className={`text-2xl font-bold ${rank <= 3 ? "text-matrix neon-text-subtle" : "text-white"}`}
+                            className={`text-2xl font-bold ${rank <= 3 ? "text-blue-600 dark:text-matrix dark:neon-text-subtle" : "text-gray-900 dark:text-white"}`}
                           >
                             {entry.total_points}
                           </div>
-                          <div className="text-xs text-gray-500">points</div>
+                          <div className="text-xs text-gray-600 dark:text-gray-500">points</div>
                         </div>
 
                         {/* Solves Breakdown - Clickable */}
@@ -600,28 +600,28 @@ function Leaderboard() {
                           >
                             <div className="flex items-center justify-center gap-2 flex-wrap">
                               {entry.beast_solves > 0 && (
-                                <span className="px-2 py-1 rounded text-xs font-terminal bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1">
+                                <span className="px-2 py-1 text-xs font-terminal bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1">
                                   <Star className="w-3 h-3" />
                                   {entry.beast_solves} Beast
                                 </span>
                               )}
                               {entry.hard_solves > 0 && (
-                                <span className="px-2 py-1 rounded text-xs font-terminal bg-red-500/20 text-red-400 border border-red-500/30">
+                                <span className="px-2 py-1 text-xs font-terminal bg-red-500/20 text-red-400 border border-red-500/30">
                                   {entry.hard_solves} Hard
                                 </span>
                               )}
                               {entry.medium_solves > 0 && (
-                                <span className="px-2 py-1 rounded text-xs font-terminal bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                                <span className="px-2 py-1 text-xs font-terminal bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
                                   {entry.medium_solves} Med
                                 </span>
                               )}
                               {entry.easy_solves > 0 && (
-                                <span className="px-2 py-1 rounded text-xs font-terminal bg-green-500/20 text-green-400 border border-green-500/30">
+                                <span className="px-2 py-1 text-xs font-terminal bg-green-500/20 text-green-400 border border-green-500/30">
                                   {entry.easy_solves} Easy
                                 </span>
                               )}
                               {entry.incorrect_attempts > 0 && (
-                                <span className="px-2 py-1 rounded text-xs font-terminal bg-red-500/10 text-red-400/70 border border-red-500/20">
+                                <span className="px-2 py-1 text-xs font-terminal bg-red-500/10 text-red-400/70 border border-red-500/20">
                                   {entry.incorrect_attempts} wrong
                                 </span>
                               )}
@@ -659,7 +659,7 @@ function Leaderboard() {
                       {/* Expanded Challenge Details */}
                       {expandedTeam === entry.team_id &&
                         teamChallengeDetails[entry.team_id] && (
-                          <div className="mt-4 pt-4 border-t border-gray-700/50 animate-in slide-in-from-top-2 duration-200">
+                          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700/50 animate-in slide-in-from-top-2 duration-200">
                             <div className="grid md:grid-cols-2 gap-4">
                               {/* Solved Challenges */}
                               <div>
@@ -684,11 +684,11 @@ function Leaderboard() {
                                     ].solved.map((challenge) => (
                                       <div
                                         key={challenge.id}
-                                        className="flex items-center justify-between p-2 rounded-lg bg-green-500/5 border border-green-500/20"
+                                        className="flex items-center justify-between p-2  bg-green-500/5 border border-green-500/20"
                                       >
                                         <div className="flex items-center gap-2 min-w-0">
                                           <span
-                                            className={`px-1.5 py-0.5 rounded text-xs font-terminal shrink-0 ${
+                                            className={`px-1.5 py-0.5 text-xs font-terminal shrink-0 ${
                                               challenge.difficulty === "beast"
                                                 ? "bg-purple-500/20 text-purple-400"
                                                 : challenge.difficulty ===
@@ -744,11 +744,11 @@ function Leaderboard() {
                                     ].wrong.map((submission) => (
                                       <div
                                         key={submission.id}
-                                        className="flex items-center justify-between p-2 rounded-lg bg-red-500/5 border border-red-500/20"
+                                        className="flex items-center justify-between p-2  bg-red-500/5 border border-red-500/20"
                                       >
                                         <div className="flex items-center gap-2 min-w-0">
                                           <span
-                                            className={`px-1.5 py-0.5 rounded text-xs font-terminal shrink-0 ${
+                                            className={`px-1.5 py-0.5 text-xs font-terminal shrink-0 ${
                                               submission.difficulty === "beast"
                                                 ? "bg-purple-500/20 text-purple-400"
                                                 : submission.difficulty ===
@@ -818,14 +818,14 @@ function Leaderboard() {
                       return (
                         <div
                           key={sub.id}
-                          className={`flex items-center gap-4 p-3 rounded-lg border ${
+                          className={`flex items-center gap-4 p-3  border ${
                             sub.is_correct
                               ? "border-green-500/30 bg-green-500/5"
                               : "border-red-500/30 bg-red-500/5"
                           }`}
                         >
                           <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            className={`w-8 h-8  flex items-center justify-center ${
                               sub.is_correct
                                 ? "bg-green-500/20"
                                 : "bg-red-500/20"
@@ -848,12 +848,12 @@ function Leaderboard() {
                               <span className="text-gray-500">
                                 {sub.is_correct ? "solved" : "attempted"}
                               </span>
-                              <span className="text-white font-medium truncate">
+                              <span className="text-gray-900 dark:text-white font-medium truncate">
                                 {challenge?.title || sub.challenge_id}
                               </span>
                               {challenge && (
                                 <span
-                                  className={`px-2 py-0.5 rounded text-xs font-terminal ${
+                                  className={`px-2 py-0.5 text-xs font-terminal ${
                                     challenge.difficulty === "beast"
                                       ? "bg-purple-500/20 text-purple-400"
                                       : challenge.difficulty === "hard"
@@ -898,15 +898,15 @@ function Leaderboard() {
               <span>Beast (500 pts)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/50" />
+              <div className="w-3 h-3  bg-red-500/50" />
               <span>Hard (300 pts)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+              <div className="w-3 h-3  bg-yellow-500/50" />
               <span>Medium (200 pts)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500/50" />
+              <div className="w-3 h-3  bg-green-500/50" />
               <span>Easy (100 pts)</span>
             </div>
           </div>
@@ -924,17 +924,17 @@ function Leaderboard() {
           {/* Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <div
-              className="bg-terminal-bg border border-gray-700 rounded-xl shadow-2xl w-full max-w-md pointer-events-auto animate-in zoom-in-95 duration-200"
+              className="bg-white dark:bg-terminal-bg border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl w-full max-w-md pointer-events-auto animate-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-                <h3 className="font-terminal text-matrix text-sm flex items-center gap-2">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="font-terminal text-blue-600 dark:text-matrix text-sm flex items-center gap-2">
                   <Settings className="w-4 h-4" />
                   Leaderboard Settings
                 </h3>
                 <button
                   onClick={() => setShowSettings(false)}
-                  className="text-gray-500 hover:text-white transition-colors"
+                  className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   <Close className="w-5 h-5" />
                 </button>
@@ -944,8 +944,8 @@ function Leaderboard() {
                   <div className="flex items-center gap-3">
                     <Lock className="w-5 h-5 text-hack-yellow" />
                     <div className="flex-1">
-                      <div className="text-white font-medium">Freeze Leaderboard</div>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <div className="text-gray-900 dark:text-white font-medium">Freeze Leaderboard</div>
+                      <p className="text-xs text-gray-600 dark:text-gray-500 mt-0.5">
                         ICPC-style freeze. Hides new submissions from public view.
                       </p>
                     </div>
@@ -963,12 +963,12 @@ function Leaderboard() {
                     />
                   </div>
                   {togglingFreeze && (
-                    <div className="text-center text-sm text-gray-400 neon-pulse">
+                    <div className="text-center text-sm text-gray-600 dark:text-gray-400 dark:neon-pulse">
                       Updating...
                     </div>
                   )}
                   {freezeState.is_frozen && freezeState.frozen_at && (
-                    <div className="p-3 rounded-lg bg-hack-yellow/10 border border-hack-yellow/30 text-sm text-hack-yellow text-center">
+                    <div className="p-3  bg-hack-yellow/10 border border-hack-yellow/30 text-sm text-hack-yellow text-center">
                       Frozen at {new Date(freezeState.frozen_at).toLocaleString()}
                     </div>
                   )}

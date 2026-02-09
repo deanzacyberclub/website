@@ -32,18 +32,18 @@ function ConfirmDialog({
 
   const variantStyles = {
     danger: {
-      iconBg: 'bg-hack-red/20 border-hack-red/50',
-      iconColor: 'text-hack-red',
-      buttonBg: 'bg-hack-red/20 border-hack-red/50 text-hack-red hover:bg-hack-red/30',
-      titleColor: 'text-hack-red',
-      headerColor: 'text-hack-red'
+      iconBg: 'bg-red-50 dark:bg-hack-red/20 border-red-300 dark:border-hack-red/50',
+      iconColor: 'text-red-600 dark:text-hack-red',
+      buttonBg: 'bg-red-100 dark:bg-hack-red/20 border-red-300 dark:border-hack-red/50 text-red-700 dark:text-hack-red hover:bg-red-200 dark:hover:bg-hack-red/30',
+      titleColor: 'text-red-700 dark:text-hack-red',
+      headerColor: 'text-red-600 dark:text-hack-red'
     },
     warning: {
-      iconBg: 'bg-hack-yellow/20 border-hack-yellow/50',
-      iconColor: 'text-hack-yellow',
-      buttonBg: 'bg-hack-yellow/20 border-hack-yellow/50 text-hack-yellow hover:bg-hack-yellow/30',
-      titleColor: 'text-hack-yellow',
-      headerColor: 'text-hack-yellow'
+      iconBg: 'bg-yellow-50 dark:bg-hack-yellow/20 border-yellow-300 dark:border-hack-yellow/50',
+      iconColor: 'text-yellow-600 dark:text-hack-yellow',
+      buttonBg: 'bg-yellow-100 dark:bg-hack-yellow/20 border-yellow-300 dark:border-hack-yellow/50 text-yellow-700 dark:text-hack-yellow hover:bg-yellow-200 dark:hover:bg-hack-yellow/30',
+      titleColor: 'text-yellow-700 dark:text-hack-yellow',
+      headerColor: 'text-yellow-600 dark:text-hack-yellow'
     }
   }
 
@@ -52,7 +52,7 @@ function ConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
       <div className="relative terminal-window max-w-md w-full">
@@ -64,29 +64,29 @@ function ConfirmDialog({
         </div>
         <div className="terminal-body">
           <div className="text-center mb-6">
-            <div className={`w-16 h-16 mx-auto mb-4 rounded-full border flex items-center justify-center ${styles.iconBg}`}>
+            <div className={`w-16 h-16 mx-auto mb-4 border flex items-center justify-center ${styles.iconBg}`}>
               {icon || <Warning className={`w-8 h-8 ${styles.iconColor}`} />}
             </div>
             <h3 className={`font-bold text-lg mb-2 ${styles.titleColor}`}>{title}</h3>
-            <p className="text-gray-500 text-sm">{message}</p>
+            <p className="text-gray-600 dark:text-gray-500 text-sm">{message}</p>
           </div>
 
           {error && (
-            <div className="text-hack-red text-sm font-terminal mb-4 text-center">{error}</div>
+            <div className="text-red-600 dark:text-hack-red text-sm font-terminal mb-4 text-center">{error}</div>
           )}
 
           <div className="flex gap-3">
             <button
               onClick={onClose}
               disabled={loading}
-              className="btn-hack rounded-lg flex-1 disabled:opacity-50"
+              className="cli-btn-dashed flex-1 disabled:opacity-50"
             >
               {cancelText}
             </button>
             <button
               onClick={onConfirm}
               disabled={loading}
-              className={`flex-1 px-4 py-2 border rounded-lg transition-colors font-terminal text-sm disabled:opacity-50 disabled:cursor-not-allowed ${styles.buttonBg}`}
+              className={`flex-1 px-4 py-2 border transition-colors font-terminal text-sm disabled:opacity-50 disabled:cursor-not-allowed ${styles.buttonBg}`}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

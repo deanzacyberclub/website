@@ -136,14 +136,14 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6">
         {/* Header with user info */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div>
-            <h1 className="text-3xl font-bold neon-text tracking-tight mb-1">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-matrix neon-text tracking-tight mb-1">
               Welcome, {userProfile.display_name}
             </h1>
           </div>
@@ -167,16 +167,16 @@ function Dashboard() {
             </div>
             <div className="terminal-body">
               <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center group-hover:neon-box transition-shadow shrink-0">
-                  <CheckCircle className="w-8 h-8 text-matrix" />
+                <div className="w-16 h-16 bg-blue-50 dark:bg-matrix/10 border border-blue-200 dark:border-matrix/30 flex items-center justify-center group-hover:shadow-lg dark:group-hover:neon-box transition-shadow shrink-0">
+                  <CheckCircle className="w-8 h-8 text-blue-600 dark:text-matrix" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-matrix mb-1">Mark Attendance</h2>
-                  <p className="text-gray-500 text-sm">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-matrix mb-1">Mark Attendance</h2>
+                  <p className="text-gray-600 dark:text-gray-500 text-sm">
                     At a meeting? Enter the secret code to check in and record your attendance.
                   </p>
                 </div>
-                <ChevronRight className="w-6 h-6 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-6 h-6 text-gray-400 dark:text-matrix/50 group-hover:text-blue-600 dark:group-hover:text-matrix group-hover:translate-x-1 transition-all" />
               </div>
             </div>
           </Link>
@@ -201,16 +201,16 @@ function Dashboard() {
               </div>
               <div className="terminal-body">
                 <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-lg bg-hack-purple/10 border border-hack-purple/30 flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-shadow shrink-0">
-                    <Shield className="w-8 h-8 text-hack-purple" />
+                  <div className="w-16 h-16 bg-purple-50 dark:bg-hack-purple/10 border border-purple-200 dark:border-hack-purple/30 flex items-center justify-center group-hover:shadow-lg dark:group-hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-shadow shrink-0">
+                    <Shield className="w-8 h-8 text-purple-600 dark:text-hack-purple" />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-xl font-bold text-hack-purple mb-1">Officer Dashboard</h2>
-                    <p className="text-gray-500 text-sm">
+                    <h2 className="text-xl font-bold text-purple-700 dark:text-hack-purple mb-1">Officer Dashboard</h2>
+                    <p className="text-gray-600 dark:text-gray-500 text-sm">
                       Manage members, view registrations, and access admin tools.
                     </p>
                   </div>
-                  <ChevronRight className="w-6 h-6 text-hack-purple/50 group-hover:text-hack-purple group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="w-6 h-6 text-purple-400 dark:text-hack-purple/50 group-hover:text-purple-600 dark:group-hover:text-hack-purple group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
             </Link>
@@ -223,7 +223,7 @@ function Dashboard() {
           style={{ transitionDelay: '300ms' }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-matrix">My Events</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-matrix">My Events</h2>
             <Tabs
               tabs={[
                 { id: 'upcoming', label: 'Upcoming' },
@@ -241,17 +241,17 @@ function Dashboard() {
                   {/* Timeline column */}
                   <div className="flex flex-col items-center shrink-0">
                     <div className="text-left w-24">
-                      <div className="text-sm font-terminal text-gray-400">
+                      <div className="text-sm font-terminal text-gray-700 dark:text-gray-400">
                         {parseLocalDate(meeting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </div>
-                      <div className="text-xs text-gray-600 font-terminal">
+                      <div className="text-xs text-gray-500 dark:text-gray-600 font-terminal">
                         {parseLocalDate(meeting.date).toLocaleDateString('en-US', { weekday: 'long' })}
                       </div>
                     </div>
                     <div className="flex flex-col items-center flex-1 mt-2">
-                      <div className="w-2 h-2 rounded-full bg-gray-600" />
+                      <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600" />
                       {index < displayedMeetings.length - 1 && (
-                        <div className="h-full min-h-[60px] border-l-2 border-dotted border-gray-700" />
+                        <div className="h-full min-h-[60px] border-l-2 border-dotted border-gray-300 dark:border-gray-700" />
                       )}
                     </div>
                   </div>
@@ -259,23 +259,23 @@ function Dashboard() {
                   {/* Event card */}
                   <Link
                     to={`/meetings/${meeting.slug}`}
-                    className="flex-1 card-hack rounded-lg p-5 group hover:scale-[1.01] transition-transform mb-4"
+                    className="flex-1 card-hack p-5 group hover:scale-[1.01] transition-transform mb-4"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-gray-400 text-sm font-terminal">
+                          <span className="text-gray-600 dark:text-gray-400 text-sm font-terminal">
                             {meeting.time}
                           </span>
                         </div>
-                        <h3 className="text-matrix font-semibold text-lg mb-3 group-hover:neon-text-subtle transition-all">
+                        <h3 className="text-gray-900 dark:text-matrix font-semibold text-lg mb-3 group-hover:text-blue-600 dark:group-hover:neon-text-subtle transition-all">
                           {meeting.title}
                         </h3>
                         <div className="flex flex-wrap items-center gap-3 mb-3">
-                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
+                          <span className={`inline-block px-2 py-0.5 text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
                             {TYPE_LABELS[meeting.type]}
                           </span>
-                          <span className="flex items-center gap-1 text-xs text-gray-500">
+                          <span className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-500">
                             <MapPin className="w-3 h-3" />
                             {meeting.location}
                           </span>
@@ -284,11 +284,11 @@ function Dashboard() {
                         {/* Status Badge - Show for both upcoming and past events */}
                         <div className="flex items-center gap-2">
                           {meeting.userRegistration && getStatusBadge(meeting.userRegistration, activeTab === 'past') ? (
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(meeting.userRegistration, activeTab === 'past')!.color}`}>
+                            <span className={`inline-block px-3 py-1 text-xs font-semibold ${getStatusBadge(meeting.userRegistration, activeTab === 'past')!.color}`}>
                               {getStatusBadge(meeting.userRegistration, activeTab === 'past')!.label}
                             </span>
                           ) : activeTab === 'upcoming' && (
-                            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-hack-cyan text-black">
+                            <span className="inline-block px-3 py-1 text-xs font-semibold bg-blue-100 dark:bg-hack-cyan text-blue-900 dark:text-black">
                               Invited
                             </span>
                           )}
@@ -309,17 +309,17 @@ function Dashboard() {
               <div className="terminal-body text-center py-16">
                 <div className="max-w-md mx-auto">
                   {/* Icon */}
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-lg bg-gray-800/50 border border-gray-700 flex items-center justify-center">
-                    <Calendar className="w-10 h-10 text-gray-600" />
+                  <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 flex items-center justify-center">
+                    <Calendar className="w-10 h-10 text-gray-400 dark:text-gray-600" />
                   </div>
 
                   {/* Message */}
-                  <h3 className="text-xl font-bold text-gray-300 mb-3">
+                  <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-3">
                     {activeTab === 'upcoming'
                       ? 'No upcoming events yet'
                       : 'No past events'}
                   </h3>
-                  <p className="text-gray-500 text-sm mb-8">
+                  <p className="text-gray-600 dark:text-gray-500 text-sm mb-8">
                     {activeTab === 'upcoming'
                       ? 'Check out our meetings page to discover and register for upcoming events and workshops.'
                       : 'Events you attend will appear here. Register for upcoming events to start building your event history.'}
@@ -328,7 +328,7 @@ function Dashboard() {
                   {/* CTA Button */}
                   <Link
                     to="/meetings"
-                    className="btn-hack-filled px-8 py-3 rounded-lg inline-flex items-center gap-2"
+                    className="cli-btn-filled px-8 py-3 inline-flex items-center gap-2"
                   >
                     <Calendar className="w-4 h-4" />
                     {activeTab === 'upcoming' ? 'Browse All Events' : 'Explore Events'}
@@ -344,11 +344,11 @@ function Dashboard() {
           className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           style={{ transitionDelay: '400ms' }}
         >
-          <h2 className="text-2xl font-bold text-matrix mb-6">My Stats</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-matrix mb-6">My Stats</h2>
 
           <div className="grid md:grid-cols-3 gap-6">
             {/* Attendance Ring */}
-            <div className="card-hack rounded-lg p-6">
+            <div className="card-hack p-6">
               <div className="flex items-center gap-6">
                 {/* Circular Progress */}
                 <div className="relative w-28 h-28 shrink-0">
@@ -361,7 +361,7 @@ function Dashboard() {
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="8"
-                      className="text-gray-800"
+                      className="text-gray-200 dark:text-gray-800"
                     />
                     {/* Progress circle */}
                     <circle
@@ -372,31 +372,31 @@ function Dashboard() {
                       stroke="currentColor"
                       strokeWidth="8"
                       strokeLinecap="round"
-                      className="text-matrix"
+                      className="text-blue-600 dark:text-matrix"
                       strokeDasharray={`${(attendanceCount / Math.max(pastMeetings.length + attendanceCount, 1)) * 251.2} 251.2`}
                       style={{ transition: 'stroke-dasharray 1s ease-out' }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-matrix">{attendanceCount}</span>
-                    <span className="text-[10px] text-gray-500 font-terminal">ATTENDED</span>
+                    <span className="text-2xl font-bold text-blue-600 dark:text-matrix">{attendanceCount}</span>
+                    <span className="text-[10px] text-gray-600 dark:text-gray-500 font-terminal">ATTENDED</span>
                   </div>
                 </div>
 
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-matrix mb-3">Attendance</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-matrix mb-3">Attendance</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Events Attended</span>
-                      <span className="text-matrix font-terminal">{attendanceCount}</span>
+                      <span className="text-gray-600 dark:text-gray-500">Events Attended</span>
+                      <span className="text-blue-600 dark:text-matrix font-terminal">{attendanceCount}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Total Events</span>
-                      <span className="text-gray-400 font-terminal">{meetings.length}</span>
+                      <span className="text-gray-600 dark:text-gray-500">Total Events</span>
+                      <span className="text-gray-700 dark:text-gray-400 font-terminal">{meetings.length}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Attendance Rate</span>
-                      <span className="text-matrix font-terminal">
+                      <span className="text-gray-600 dark:text-gray-500">Attendance Rate</span>
+                      <span className="text-blue-600 dark:text-matrix font-terminal">
                         {meetings.length > 0 ? Math.round((attendanceCount / meetings.length) * 100) : 0}%
                       </span>
                     </div>
@@ -406,8 +406,8 @@ function Dashboard() {
             </div>
 
             {/* Event Types Breakdown */}
-            <div className="card-hack rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-matrix mb-4">Events by Type</h3>
+            <div className="card-hack p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-matrix mb-4">Events by Type</h3>
               <div className="space-y-3">
                 {(() => {
                   const typeStats = meetings.reduce((acc, m) => {
@@ -428,25 +428,25 @@ function Dashboard() {
                         <span className={`font-terminal ${TYPE_COLORS[type as keyof typeof TYPE_COLORS]?.split(' ')[1] || 'text-gray-400'}`}>
                           {TYPE_LABELS[type as keyof typeof TYPE_LABELS] || type}
                         </span>
-                        <span className="text-gray-500">
-                          <span className="text-matrix">{stats.attended}</span>/{stats.total}
+                        <span className="text-gray-600 dark:text-gray-500">
+                          <span className="text-blue-600 dark:text-matrix">{stats.attended}</span>/{stats.total}
                         </span>
                       </div>
-                      <div className="h-2 bg-gray-800 rounded-full overflow-hidden flex">
+                      <div className="h-2 bg-gray-200 dark:bg-gray-800 overflow-hidden flex">
                         {/* Attended portion - full color */}
                         <div
                           className={`h-full transition-all duration-700 ${
-                            type === 'workshop' ? 'bg-matrix' :
-                            type === 'ctf' ? 'bg-hack-cyan' :
-                            type === 'social' ? 'bg-hack-purple' :
-                            type === 'competition' ? 'bg-hack-orange' :
-                            'bg-gray-400'
+                            type === 'workshop' ? 'bg-green-500 dark:bg-matrix' :
+                            type === 'ctf' ? 'bg-cyan-500 dark:bg-hack-cyan' :
+                            type === 'social' ? 'bg-purple-500 dark:bg-hack-purple' :
+                            type === 'competition' ? 'bg-orange-500 dark:bg-hack-orange' :
+                            'bg-gray-500 dark:bg-gray-400'
                           }`}
                           style={{ width: `${(stats.attended / maxCount) * 100}%` }}
                         />
                         {/* Non-attended portion - grayed out */}
                         <div
-                          className="h-full bg-gray-600 transition-all duration-700"
+                          className="h-full bg-gray-300 dark:bg-gray-600 transition-all duration-700"
                           style={{ width: `${((stats.total - stats.attended) / maxCount) * 100}%` }}
                         />
                       </div>
@@ -454,44 +454,44 @@ function Dashboard() {
                   ))
                 })()}
                 {Object.keys(meetings.reduce((acc, m) => { acc[m.type] = true; return acc }, {} as Record<string, boolean>)).length === 0 && (
-                  <p className="text-gray-500 text-sm text-center py-4">No events yet</p>
+                  <p className="text-gray-600 dark:text-gray-500 text-sm text-center py-4">No events yet</p>
                 )}
               </div>
             </div>
 
             {/* Activity Overview */}
-            <div className="card-hack rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-matrix mb-4">Quick Overview</h3>
+            <div className="card-hack p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-matrix mb-4">Quick Overview</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 rounded-lg bg-matrix/5 border border-matrix/20">
-                  <div className="text-2xl font-bold text-matrix">{upcomingMeetings.length}</div>
-                  <div className="text-[10px] text-gray-500 font-terminal uppercase mt-1">Upcoming</div>
+                <div className="text-center p-3 bg-blue-50 dark:bg-matrix/5 border border-blue-200 dark:border-matrix/20">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-matrix">{upcomingMeetings.length}</div>
+                  <div className="text-[10px] text-gray-600 dark:text-gray-500 font-terminal uppercase mt-1">Upcoming</div>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-hack-cyan/5 border border-hack-cyan/20">
-                  <div className="text-2xl font-bold text-hack-cyan">
+                <div className="text-center p-3 bg-cyan-50 dark:bg-hack-cyan/5 border border-cyan-200 dark:border-hack-cyan/20">
+                  <div className="text-2xl font-bold text-cyan-600 dark:text-hack-cyan">
                     {meetings.filter(m => m.userRegistration && m.userRegistration.status !== 'cancelled').length}
                   </div>
-                  <div className="text-[10px] text-gray-500 font-terminal uppercase mt-1">Registered</div>
+                  <div className="text-[10px] text-gray-600 dark:text-gray-500 font-terminal uppercase mt-1">Registered</div>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-hack-purple/5 border border-hack-purple/20">
-                  <div className="text-2xl font-bold text-hack-purple">
+                <div className="text-center p-3 bg-purple-50 dark:bg-hack-purple/5 border border-purple-200 dark:border-hack-purple/20">
+                  <div className="text-2xl font-bold text-purple-600 dark:text-hack-purple">
                     {upcomingMeetings.filter(m => m.userRegistration).length}
                   </div>
-                  <div className="text-[10px] text-gray-500 font-terminal uppercase mt-1">RSVPs</div>
+                  <div className="text-[10px] text-gray-600 dark:text-gray-500 font-terminal uppercase mt-1">RSVPs</div>
                 </div>
-                <div className={`text-center p-3 rounded-lg ${userProfile.student_id ? 'bg-matrix/5 border-matrix/20' : 'bg-hack-yellow/5 border-hack-yellow/20'} border`}>
-                  <div className={`text-lg font-bold ${userProfile.student_id ? 'text-matrix' : 'text-hack-yellow'}`}>
+                <div className={`text-center p-3 ${userProfile.student_id ? 'bg-green-50 dark:bg-matrix/5 border-green-200 dark:border-matrix/20' : 'bg-yellow-50 dark:bg-hack-yellow/5 border-yellow-200 dark:border-hack-yellow/20'} border`}>
+                  <div className={`text-lg font-bold ${userProfile.student_id ? 'text-green-600 dark:text-matrix' : 'text-yellow-600 dark:text-hack-yellow'}`}>
                     {userProfile.student_id ? '✓' : '?'}
                   </div>
-                  <div className="text-[10px] text-gray-500 font-terminal uppercase mt-1">ID Status</div>
+                  <div className="text-[10px] text-gray-600 dark:text-gray-500 font-terminal uppercase mt-1">ID Status</div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Monthly Activity Chart */}
-          <div className="card-hack rounded-lg p-6 mt-6">
-            <h3 className="text-lg font-semibold text-matrix mb-4">Monthly Activity</h3>
+          <div className="card-hack p-6 mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-matrix mb-4">Monthly Activity</h3>
             <div className="flex items-end gap-2 h-32">
               {(() => {
                 const now = new Date()
@@ -518,37 +518,37 @@ function Dashboard() {
                     <div className="w-full flex flex-col items-center justify-end h-24">
                       {/* Stacked bar: attended (color) on bottom, non-attended (gray) on top */}
                       <div
-                        className="w-full max-w-8 bg-gray-600 rounded-t transition-all duration-500"
+                        className="w-full max-w-8 bg-gray-300 dark:bg-gray-600 transition-all duration-500"
                         style={{
                           height: month.total > 0 ? `${Math.max(((month.total - month.attended) / maxEvents) * 100, 0)}%` : '0'
                         }}
                       />
                       <div
                         className={`w-full max-w-8 transition-all duration-500 ${
-                          month.attended > 0 ? 'bg-gradient-to-t from-matrix/50 to-matrix' : ''
-                        } ${month.total > 0 && month.attended === 0 ? '' : month.total === 0 ? 'rounded-t bg-gray-800' : ''}`}
+                          month.attended > 0 ? 'bg-gradient-to-t from-blue-400 to-blue-600 dark:from-matrix/50 dark:to-matrix' : ''
+                        } ${month.total > 0 && month.attended === 0 ? '' : month.total === 0 ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
                         style={{
                           height: month.attended > 0 ? `${Math.max((month.attended / maxEvents) * 100, 15)}%` : month.total === 0 ? '8px' : '0'
                         }}
                       />
                     </div>
-                    <span className="text-[10px] text-gray-500 font-terminal">{month.label}</span>
+                    <span className="text-[10px] text-gray-600 dark:text-gray-500 font-terminal">{month.label}</span>
                   </div>
                 ))
               })()}
             </div>
-            <div className="flex justify-between mt-4 pt-4 border-t border-gray-800 text-xs text-gray-500">
+            <div className="flex justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-600 dark:text-gray-500">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-matrix"></span>
+                  <span className="w-2 h-2 bg-blue-600 dark:bg-matrix"></span>
                   Attended
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-gray-600"></span>
+                  <span className="w-2 h-2 bg-gray-300 dark:bg-gray-600"></span>
                   Not attended
                 </span>
               </div>
-              <span><span className="text-matrix">{attendanceCount}</span>/{meetings.length} events</span>
+              <span><span className="text-blue-600 dark:text-matrix">{attendanceCount}</span>/{meetings.length} events</span>
             </div>
           </div>
         </div>
@@ -560,12 +560,12 @@ function Dashboard() {
         >
           <Link
             to="/meetings"
-            className="block card-hack rounded-lg p-6 group hover:scale-[1.01] transition-transform text-center"
+            className="block card-hack p-6 group hover:scale-[1.01] transition-transform text-center"
           >
             <div className="flex items-center justify-center gap-3">
-              <Calendar className="w-6 h-6 text-matrix" />
-              <span className="text-matrix font-semibold">Browse All Events & Meetings</span>
-              <ChevronRight className="w-5 h-5 text-matrix/50 group-hover:text-matrix group-hover:translate-x-1 transition-all" />
+              <Calendar className="w-6 h-6 text-blue-600 dark:text-matrix" />
+              <span className="text-gray-900 dark:text-matrix font-semibold">Browse All Events & Meetings</span>
+              <ChevronRight className="w-5 h-5 text-gray-400 dark:text-matrix/50 group-hover:text-blue-600 dark:group-hover:text-matrix group-hover:translate-x-1 transition-all" />
             </div>
           </Link>
         </div>

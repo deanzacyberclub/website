@@ -184,9 +184,9 @@ function JoinTeam() {
   // Show loading state while checking URL invite code
   if (initialLoading) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
-          <div className="font-terminal text-lg neon-pulse">Checking invite link...</div>
+          <div className="font-terminal text-lg text-blue-600 dark:text-matrix dark:neon-pulse">Checking invite link...</div>
         </div>
       </div>
     )
@@ -195,16 +195,16 @@ function JoinTeam() {
   // Show link error first (invalid, expired, max uses, team full)
   if (linkError && code) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center max-w-md px-6">
           <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Invalid Invite Link</h1>
-          <p className="text-gray-400 mb-6">{linkError}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Invalid Invite Link</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{linkError}</p>
           <div className="flex flex-col gap-3">
-            <Link to="/ctf/join" className="btn-hack rounded-lg px-6 py-3">
+            <Link to="/ctf/join" className="cli-btn-dashed px-6 py-3">
               Try Different Code
             </Link>
-            <Link to="/ctf" className="text-gray-500 hover:text-matrix transition-colors text-sm">
+            <Link to="/ctf" className="text-gray-600 dark:text-gray-500 hover:text-blue-600 dark:hover:text-matrix transition-colors text-sm">
               Back to CTF
             </Link>
           </div>
@@ -216,22 +216,22 @@ function JoinTeam() {
   // Show login required only if link is valid (team exists and no link error)
   if (!user && team && !linkError) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center max-w-md px-6">
-          <div className="w-20 h-20 rounded-full bg-matrix/20 border-2 border-matrix flex items-center justify-center mx-auto mb-4">
-            <Users className="w-10 h-10 text-matrix" />
+          <div className="w-20 h-20  bg-blue-100 dark:bg-matrix/20 border-2 border-blue-300 dark:border-matrix flex items-center justify-center mx-auto mb-4">
+            <Users className="w-10 h-10 text-blue-600 dark:text-matrix" />
           </div>
-          <h2 className="text-2xl font-bold text-matrix neon-text-subtle mb-2">
+          <h2 className="text-2xl font-bold text-blue-600 dark:text-matrix dark:neon-text-subtle mb-2">
             {team.name}
           </h2>
-          <p className="text-gray-400 mb-1">{memberCount}/4 members</p>
-          <p className="text-gray-500 text-sm mb-6">You've been invited to join this team!</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-1">{memberCount}/4 members</p>
+          <p className="text-gray-600 dark:text-gray-500 text-sm mb-6">You've been invited to join this team!</p>
 
-          <h1 className="text-xl font-bold text-white mb-2">Login Required</h1>
-          <p className="text-gray-400 mb-6">Sign in to join this team.</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Login Required</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">Sign in to join this team.</p>
           <Link
             to={`/auth?redirect=${encodeURIComponent(`/ctf/join/${code}`)}`}
-            className="btn-hack-filled rounded-lg px-6 py-3"
+            className="cli-btn-filled  px-6 py-3"
           >
             Login to Join
           </Link>
@@ -243,12 +243,12 @@ function JoinTeam() {
   // Show generic login required if no code provided
   if (!user) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
-          <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Login Required</h1>
-          <p className="text-gray-400 mb-6">You need to be logged in to join a team.</p>
-          <Link to="/auth" className="btn-hack-filled rounded-lg px-6 py-3">
+          <Users className="w-16 h-16 text-gray-500 dark:text-gray-600 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Login Required</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">You need to be logged in to join a team.</p>
+          <Link to="/auth" className="cli-btn-filled  px-6 py-3">
             Login
           </Link>
         </div>
@@ -258,14 +258,14 @@ function JoinTeam() {
 
   if (alreadyInTeam) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Already in a Team</h1>
-          <p className="text-gray-400 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Already in a Team</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             You're already a member of a team. Leave your current team first to join another.
           </p>
-          <Link to="/ctf/team" className="btn-hack-filled rounded-lg px-6 py-3">
+          <Link to="/ctf/team" className="cli-btn-filled  px-6 py-3">
             View My Team
           </Link>
         </div>
@@ -274,7 +274,7 @@ function JoinTeam() {
   }
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-md mx-auto px-6 py-12">
@@ -282,14 +282,14 @@ function JoinTeam() {
         <div className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <Link
             to="/ctf/team"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors mb-6"
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="font-terminal text-sm">Back</span>
           </Link>
 
           <h1 className="text-3xl font-bold">
-            <span className="text-white">Join</span>{' '}
+            <span className="text-gray-900 dark:text-white">Join</span>{' '}
             <span className="neon-text">Team</span>
           </h1>
         </div>
@@ -304,11 +304,11 @@ function JoinTeam() {
                 <span className="ml-4 text-xs text-gray-500 font-terminal">success.log</span>
               </div>
               <div className="terminal-body text-center py-8">
-                <div className="w-20 h-20 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center mx-auto mb-4 animate-bounce">
+                <div className="w-20 h-20  bg-green-500/20 border-2 border-green-500 flex items-center justify-center mx-auto mb-4 animate-bounce">
                   <Check className="w-10 h-10 text-green-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-green-400 mb-2">Welcome to the Team!</h2>
-                <p className="text-gray-400">Redirecting to your team dashboard...</p>
+                <p className="text-gray-600 dark:text-gray-400">Redirecting to your team dashboard...</p>
               </div>
             </div>
           </div>
@@ -325,9 +325,9 @@ function JoinTeam() {
                 {!team ? (
                   <>
                     <div className="text-center mb-6">
-                      <Users className="w-12 h-12 text-matrix mx-auto mb-4" />
-                      <h2 className="text-xl font-bold text-white mb-2">Enter Invite Code</h2>
-                      <p className="text-gray-400 text-sm">
+                      <Users className="w-12 h-12 text-blue-600 dark:text-matrix mx-auto mb-4" />
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Enter Invite Code</h2>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">
                         Enter the invite code shared by your team captain.
                       </p>
                     </div>
@@ -340,7 +340,7 @@ function JoinTeam() {
                           onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                           placeholder="Enter invite code..."
                           maxLength={12}
-                          className="w-full input-hack rounded-lg text-center text-xl tracking-widest uppercase"
+                          className="w-full input-hack  text-center text-xl tracking-widest uppercase"
                           required
                         />
                       </div>
@@ -352,17 +352,17 @@ function JoinTeam() {
                       <button
                         type="submit"
                         disabled={loading || !inviteCode.trim()}
-                        className="w-full btn-hack-filled rounded-lg py-3 disabled:opacity-50"
+                        className="w-full cli-btn-filled  py-3 disabled:opacity-50"
                       >
                         {loading ? 'Looking up...' : 'Find Team'}
                       </button>
                     </form>
 
-                    <div className="mt-6 pt-6 border-t border-gray-700 text-center">
-                      <p className="text-gray-500 text-sm mb-3">Want to start your own team?</p>
+                    <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+                      <p className="text-gray-600 dark:text-gray-500 text-sm mb-3">Want to start your own team?</p>
                       <Link
                         to="/ctf/team"
-                        className="btn-hack rounded-lg px-6 py-2 text-sm"
+                        className="cli-btn-dashed px-6 py-2 text-sm"
                       >
                         Create a Team
                       </Link>
@@ -371,19 +371,19 @@ function JoinTeam() {
                 ) : (
                   <>
                     <div className="text-center mb-6">
-                      <div className="w-16 h-16 rounded-full bg-matrix/20 border-2 border-matrix flex items-center justify-center mx-auto mb-4">
-                        <Users className="w-8 h-8 text-matrix" />
+                      <div className="w-16 h-16  bg-blue-100 dark:bg-matrix/20 border-2 border-blue-300 dark:border-matrix flex items-center justify-center mx-auto mb-4">
+                        <Users className="w-8 h-8 text-blue-600 dark:text-matrix" />
                       </div>
-                      <h2 className="text-2xl font-bold text-matrix neon-text-subtle mb-2">
+                      <h2 className="text-2xl font-bold text-blue-600 dark:text-matrix dark:neon-text-subtle mb-2">
                         {team.name}
                       </h2>
-                      <p className="text-gray-400">
+                      <p className="text-gray-600 dark:text-gray-400">
                         {memberCount}/4 members
                       </p>
                     </div>
 
                     {(error || linkError) && (
-                      <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 mb-4">
+                      <div className="p-4  bg-red-500/10 border border-red-500/30 mb-4">
                         <p className="text-red-400 text-sm text-center">{error || linkError}</p>
                       </div>
                     )}
@@ -392,7 +392,7 @@ function JoinTeam() {
                       <button
                         onClick={joinTeam}
                         disabled={joining}
-                        className="w-full btn-hack-filled rounded-lg py-3 disabled:opacity-50"
+                        className="w-full cli-btn-filled  py-3 disabled:opacity-50"
                       >
                         {joining ? 'Joining...' : 'Join Team'}
                       </button>
@@ -405,7 +405,7 @@ function JoinTeam() {
                         setError('')
                         setLinkError('')
                       }}
-                      className="w-full btn-hack rounded-lg py-3 mt-3"
+                      className="w-full cli-btn-dashed py-3 mt-3"
                     >
                       Try Different Code
                     </button>

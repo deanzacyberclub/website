@@ -27,18 +27,18 @@ const demos = [
 
 function BurpSuite() {
   return (
-    <div className="bg-terminal-bg text-matrix min-h-screen">
+    <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-20">
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">cd /demos/burpsuite</span>
+            <span className="text-gray-900 dark:text-matrix neon-text-subtle text-lg">$</span>
+            <span className="text-gray-600 dark:text-gray-400 font-terminal">cd /demos/burpsuite</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Burp Suite <span className="text-matrix neon-text">Demo Lab</span>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Burp Suite <span className="text-gray-900 dark:text-matrix neon-text">Demo Lab</span>
           </h1>
         </div>
 
@@ -55,13 +55,13 @@ function BurpSuite() {
                 <div className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-lg bg-matrix/20 border border-matrix/40 flex items-center justify-center shrink-0">
-                      <Icon className="w-6 h-6 text-matrix" />
+                      <Icon className="w-6 h-6 text-gray-900 dark:text-matrix" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-semibold text-matrix mb-2">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-matrix mb-2">
                         Demo {demo.id}: {demo.title}
                       </h3>
-                      <p className="text-gray-400 text-sm leading-relaxed">
+                      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
                         {demo.description}
                       </p>
                     </div>
@@ -74,22 +74,22 @@ function BurpSuite() {
 
         {/* Instructions */}
         <div className="mt-8 card-hack p-6 rounded-lg">
-          <h2 className="text-2xl font-bold text-matrix mb-4">Getting Started</h2>
-          <ol className="space-y-3 text-gray-400">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-matrix mb-4">Getting Started</h2>
+          <ol className="space-y-3 text-gray-600 dark:text-gray-400">
             <li className="flex gap-3">
-              <span className="text-matrix font-terminal">1.</span>
+              <span className="text-gray-900 dark:text-matrix font-terminal">1.</span>
               <span>Open Burp Suite and configure your browser to use it as a proxy (typically localhost:8080)</span>
             </li>
             <li className="flex gap-3">
-              <span className="text-matrix font-terminal">2.</span>
+              <span className="text-gray-900 dark:text-matrix font-terminal">2.</span>
               <span>Navigate to any demo page above</span>
             </li>
             <li className="flex gap-3">
-              <span className="text-matrix font-terminal">3.</span>
+              <span className="text-gray-900 dark:text-matrix font-terminal">3.</span>
               <span>Follow the on-screen instructions to interact with the vulnerable application</span>
             </li>
             <li className="flex gap-3">
-              <span className="text-matrix font-terminal">4.</span>
+              <span className="text-gray-900 dark:text-matrix font-terminal">4.</span>
               <span>Use Burp Suite's tools (Proxy, Repeater, Intruder, Decoder) to analyze and exploit the vulnerabilities</span>
             </li>
           </ol>

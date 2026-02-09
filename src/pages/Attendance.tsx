@@ -2,13 +2,7 @@ import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import {
-  Spinner,
-  Check,
-  Plus,
-  ArrowLeft,
-  User,
-} from "@/lib/cyberIcon";
+import { Spinner, Check, Plus, ArrowLeft, User } from "@/lib/cyberIcon";
 
 interface AttendanceForm {
   secretCode: string;
@@ -85,8 +79,8 @@ function Attendance() {
     try {
       // Use secure server-side function to verify secret code
       const { data: meetingData, error: lookupError } = await supabase
-        .rpc('verify_meeting_secret_code', {
-          secret_code_input: form.secretCode.trim()
+        .rpc("verify_meeting_secret_code", {
+          secret_code_input: form.secretCode.trim(),
         })
         .single();
 
@@ -101,7 +95,7 @@ function Attendance() {
         title: meetingData.meeting_title,
         date: meetingData.meeting_date,
         time: meetingData.meeting_time,
-        location: meetingData.meeting_location
+        location: meetingData.meeting_location,
       };
 
       // Check if already checked in (by user_id if logged in, or by student_id if not)
@@ -187,83 +181,80 @@ function Attendance() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center p-6">
-        <div className="crt-overlay" />
-        <div className="text-center relative z-10">
-          <div className="w-20 h-20 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center mx-auto mb-6 neon-box">
-            <Check className="w-10 h-10 text-matrix" />
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center p-6">
+        <div className="crt-overlay dark:opacity-100 opacity-0" />
+        <div className="text-center relative z-10 max-w-2xl w-full">
+          {/* Success Icon */}
+          <div className="w-24 h-24 bg-green-100 dark:bg-matrix/10 border-2 border-green-500 dark:border-matrix/50 flex items-center justify-center mx-auto mb-8">
+            <Check className="w-12 h-12 text-green-600 dark:text-matrix" />
           </div>
-          <div className="terminal-window max-w-md mx-auto">
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
-                success
-              </span>
-            </div>
-            <div className="terminal-body text-left">
-              <p className="text-matrix mb-2">
-                <span className="text-hack-cyan">[SUCCESS]</span> Attendance
-                recorded
-              </p>
-              <p className="text-gray-500 text-sm mb-4">
-                Your attendance has been verified and logged in the system.
-              </p>
-              <div className="text-xs text-gray-600 mb-4">
-                <span className="text-matrix">STATUS:</span> CONFIRMED |
-                <span className="text-matrix ml-2">ID:</span>{" "}
-                {userProfile?.student_id || form.studentId}
-              </div>
 
-              {/* User Profile Section */}
-              <div className="border-t border-gray-700 pt-4 mt-4">
-                <div className="flex items-center gap-4 mb-4">
-                  {userProfile.photo_url ? (
-                    <img
-                      src={userProfile.photo_url}
-                      alt="Profile"
-                      className="w-16 h-16 rounded-lg border border-matrix/40"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-lg bg-matrix/10 border border-matrix/40 flex items-center justify-center">
-                      <User className="w-8 h-8 text-matrix/50" />
-                    </div>
-                  )}
-                  <div className="flex-1 text-left">
-                    <p className="text-matrix font-semibold text-lg">
-                      {userProfile.display_name}
-                    </p>
-                    <p className="text-gray-500 text-sm">{user.email}</p>
-                  </div>
+          {/* Success Message */}
+          <h1 className="font-mono font-bold text-green-700 dark:text-matrix text-4xl md:text-5xl mb-4 uppercase">
+            CHECK-IN COMPLETE
+          </h1>
+
+          <div className="border-l-2 border-green-300 dark:border-matrix/30 pl-5 mb-8 text-left max-w-lg mx-auto">
+            <p className="font-mono text-gray-600 dark:text-gray-400 text-sm">
+              Your attendance has been verified and logged in the system.
+            </p>
+          </div>
+
+          {/* User Profile */}
+          <div className="border border-gray-200 dark:border-matrix/20 p-6 mb-6 text-left">
+            <div className="flex items-center gap-4 mb-6">
+              {userProfile.photo_url ? (
+                <img
+                  src={userProfile.photo_url}
+                  alt="Profile"
+                  className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
+                  <User className="w-8 h-8 text-green-700 dark:text-matrix" />
                 </div>
-                <div className="p-4 rounded-lg bg-matrix/5 border border-matrix/20">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-matrix mb-1">
-                      {attendanceCount}
-                    </div>
-                    <div className="text-xs text-gray-500 font-terminal uppercase">
-                      Total Meetings Attended
-                    </div>
-                  </div>
+              )}
+              <div className="flex-1">
+                <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg">
+                  {userProfile.display_name}
+                </p>
+                <p className="text-gray-600 dark:text-gray-500 text-sm font-mono">
+                  {user.email}
+                </p>
+                <p className="text-gray-500 dark:text-gray-600 text-xs font-mono mt-1">
+                  ID: {userProfile?.student_id || form.studentId}
+                </p>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="border-t border-gray-200 dark:border-matrix/20 pt-6">
+              <div className="text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-600 font-mono uppercase tracking-widest mb-2">
+                  Total Meetings Attended
+                </p>
+                <div className="text-5xl font-bold font-mono text-green-700 dark:text-matrix">
+                  {attendanceCount}
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => setSubmitted(false)}
-              className="btn-hack rounded-lg inline-flex items-center justify-center gap-2"
+              className="cli-btn-dashed font-mono inline-flex items-center justify-center gap-2 uppercase"
             >
               <Plus className="w-4 h-4" />
               CHECK IN AGAIN
             </button>
             <Link
               to="/dashboard"
-              className="btn-hack-filled rounded-lg inline-flex items-center justify-center gap-2"
+              className="cli-btn-filled font-mono inline-flex items-center justify-center gap-2 uppercase"
             >
               <ArrowLeft className="w-4 h-4" />
-              BACK TO DASHBOARD
+              DASHBOARD
             </Link>
           </div>
         </div>
@@ -272,120 +263,127 @@ function Attendance() {
   }
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
-      <div className="crt-overlay" />
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
+      <div className="crt-overlay dark:opacity-100 opacity-0" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6">
-        {/* Header */}
+      <div className="relative z-10">
+        {/* Header with ASCII Background */}
         <header
-          className={`mb-8 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          className={`min-h-[40vh] flex flex-col justify-center relative overflow-hidden mb-12 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">
-              ./attendance --check-in
-            </span>
+          {/* Background ASCII Art */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+            <pre className="font-mono text-[clamp(60px,15vw,200px)] leading-[0.85] text-green-200/20 dark:text-matrix/[0.03] whitespace-pre">
+              {`██████╗  █████╗  ██████╗ ██████╗
+██╔══██╗██╔══██╗██╔════╝██╔════╝
+██║  ██║███████║██║     ██║
+██║  ██║██╔══██║██║     ██║
+██████╔╝██║  ██║╚██████╗╚██████╗
+╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═════╝`}
+            </pre>
           </div>
 
-          <h1 className="text-3xl font-bold neon-text tracking-tight mb-2">
-            ATTENDANCE CHECK-IN
-          </h1>
-          <p className="text-gray-500">
-            <span className="text-hack-cyan">[INFO]</span> Verify your
-            attendance at club meetings
-          </p>
+          <div className="relative z-10 max-w-5xl mx-auto px-6">
+            <p className="font-mono text-sm text-gray-600 dark:text-matrix/60 mb-6">
+              <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
+              ./attendance --check-in
+            </p>
+
+            <h1 className="font-mono font-bold text-green-700 dark:text-matrix leading-tight mb-6">
+              <span className="block text-5xl md:text-6xl lg:text-7xl">
+                ATTENDANCE
+              </span>
+              <span className="block text-5xl md:text-6xl lg:text-7xl">
+                CHECK-IN
+              </span>
+            </h1>
+
+            <div className="border-l-2 border-green-300 dark:border-matrix/30 pl-5 max-w-2xl">
+              <p className="font-mono text-gray-600 dark:text-gray-400 text-sm md:text-base">
+                Verify your attendance at club meetings using the secret code
+                provided during the session.
+              </p>
+            </div>
+          </div>
         </header>
 
         {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className={`space-y-6 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-          style={{ transitionDelay: "200ms" }}
-        >
+        <div className="max-w-5xl mx-auto px-6">
+          <form
+            onSubmit={handleSubmit}
+            className={`max-w-2xl space-y-8 pb-20 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            style={{ transitionDelay: "200ms" }}
+          >
           {/* User Identity Section */}
-          <div className="terminal-window">
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
-                user_session.sh
-              </span>
-              <span className="ml-auto text-xs text-hack-cyan font-terminal">
+          <div className="border border-gray-200 dark:border-matrix/20 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest">
+                User Session
+              </p>
+              <span className="text-xs text-green-600 dark:text-matrix font-mono">
                 AUTHENTICATED
               </span>
             </div>
-            <div className="terminal-body">
-              <p className="text-xs text-gray-500 font-terminal mb-3">
-                <span className="text-matrix">&gt;</span> Checking in as:
-              </p>
-              <div className="flex items-center gap-4">
-                {userProfile.photo_url ? (
-                  <img
-                    src={userProfile.photo_url}
-                    alt="Profile"
-                    className="w-14 h-14 rounded-lg border border-matrix/40"
-                  />
-                ) : (
-                  <div className="w-14 h-14 rounded-lg bg-matrix/10 border border-matrix/40 flex items-center justify-center">
-                    <User className="w-7 h-7 text-matrix/50" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-matrix font-semibold text-lg truncate">
-                    {userProfile.display_name}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-gray-500 font-terminal">
-                      <span className="text-matrix">ID:</span>{" "}
-                      {userProfile.student_id}
-                    </span>
-                    <span className="text-gray-600 truncate">{user.email}</span>
-                  </div>
+
+            <div className="flex items-center gap-4">
+              {userProfile.photo_url ? (
+                <img
+                  src={userProfile.photo_url}
+                  alt="Profile"
+                  className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
+                  <User className="w-8 h-8 text-green-700 dark:text-matrix" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg truncate">
+                  {userProfile.display_name}
+                </p>
+                <div className="flex items-center gap-4 text-sm mt-1">
+                  <span className="text-gray-600 dark:text-gray-500 font-mono">
+                    ID: {userProfile.student_id}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-600 truncate font-mono text-xs">
+                    {user.email}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Secret Code */}
-          <div className="terminal-window">
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
-                verify_code.sh
-              </span>
-            </div>
-            <div className="terminal-body">
-              <label className="block text-sm mb-2 text-gray-500 font-terminal">
-                --secret-code
-              </label>
-              <input
-                type="text"
-                name="secretCode"
-                value={form.secretCode}
-                onChange={handleChange}
-                required
-                className="input-hack w-full rounded-lg font-mono uppercase"
-                placeholder="Enter code from meeting"
-                autoComplete="off"
-              />
-              <p className="text-xs mt-2 text-gray-600 font-terminal">
-                <span className="text-matrix">&gt;</span> Enter the secret code
-                provided during the meeting
-              </p>
-            </div>
+          <div className="border border-gray-200 dark:border-matrix/20 p-6">
+            <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-4">
+              Secret Code
+            </label>
+            <input
+              type="text"
+              name="secretCode"
+              value={form.secretCode}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono uppercase text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
+              placeholder="ENTER CODE"
+              autoComplete="off"
+            />
+            <p className="text-xs mt-3 text-gray-500 dark:text-gray-600 font-mono">
+              <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
+              Enter the secret code provided during the meeting
+            </p>
           </div>
 
           {error && (
-            <div className="text-hack-red text-sm font-terminal">{error}</div>
+            <div className="text-red-600 dark:text-hack-red text-sm font-mono border-l-2 border-red-500 dark:border-hack-red pl-4 py-2">
+              {error}
+            </div>
           )}
 
           <button
             type="submit"
             disabled={submitting || !form.secretCode.trim()}
-            className="btn-hack-filled rounded-lg w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cli-btn-filled w-full justify-center font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <span className="flex items-center justify-center gap-2">
@@ -396,7 +394,8 @@ function Attendance() {
               "CHECK IN"
             )}
           </button>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

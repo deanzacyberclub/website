@@ -678,10 +678,10 @@ function MeetingDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
           <div className="flex items-center gap-3 justify-center">
-            <Spinner className="animate-spin h-6 w-6 text-matrix" />
+            <Spinner className="animate-spin h-6 w-6 text-blue-600 dark:text-matrix" />
             <span className="font-terminal text-lg">Loading meeting...</span>
           </div>
         </div>
@@ -691,7 +691,7 @@ function MeetingDetails() {
 
   if (!meeting) {
     return (
-      <div className="bg-terminal-bg text-matrix min-h-screen">
+      <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
         <div className="relative max-w-4xl mx-auto px-6">
           <header className="mb-12">
             <div className="terminal-window">
@@ -699,23 +699,23 @@ function MeetingDetails() {
                 <div className="terminal-dot red" />
                 <div className="terminal-dot yellow" />
                 <div className="terminal-dot green" />
-                <span className="ml-4 text-xs text-gray-500 font-terminal">
+                <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
                   error
                 </span>
               </div>
               <div className="terminal-body text-center py-12">
-                <div className="text-4xl mb-4 text-hack-red">404</div>
-                <p className="text-gray-500 mb-2">
-                  <span className="text-hack-red">[ERROR]</span> Meeting not
+                <div className="text-4xl mb-4 text-red-600 dark:text-hack-red">404</div>
+                <p className="text-gray-600 dark:text-gray-500 mb-2">
+                  <span className="text-red-600 dark:text-hack-red">[ERROR]</span> Meeting not
                   found
                 </p>
-                <p className="text-gray-600 text-sm mb-6">
+                <p className="text-gray-500 dark:text-gray-600 text-sm mb-6">
                   The meeting you're looking for doesn't exist or has been
                   removed.
                 </p>
                 <button
                   onClick={() => navigate("/meetings")}
-                  className="btn-hack px-6 py-2"
+                  className="cli-btn-dashedpx-6 py-2"
                 >
                   Browse All Meetings
                 </button>
@@ -728,7 +728,7 @@ function MeetingDetails() {
   }
 
   return (
-    <div className="bg-terminal-bg text-matrix min-h-screen">
+    <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
       {/* Cancel Registration Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showCancelDialog}
@@ -749,17 +749,17 @@ function MeetingDetails() {
       {/* Fullscreen Attendance Code Overlay */}
       {codeFullscreen && meeting?.secret_code && (
         <div
-          className="fixed inset-0 z-50 bg-terminal-bg flex flex-col items-center justify-center cursor-pointer"
+          className="fixed inset-0 z-50 bg-white dark:bg-terminal-bg flex flex-col items-center justify-center cursor-pointer"
           onClick={() => setCodeFullscreen(false)}
         >
           <div className="text-center">
-            <div className="text-sm text-hack-purple uppercase font-terminal mb-4 tracking-widest">
+            <div className="text-sm text-purple-600 dark:text-hack-purple uppercase font-terminal mb-4 tracking-widest">
               Attendance Code
             </div>
-            <div className="text-6xl sm:text-8xl md:text-9xl font-bold font-mono text-hack-purple tracking-widest neon-text animate-pulse">
+            <div className="text-6xl sm:text-8xl md:text-9xl font-bold font-mono text-purple-600 dark:text-hack-purple tracking-widest neon-text animate-pulse">
               {meeting.secret_code}
             </div>
-            <div className="mt-8 text-gray-500 text-sm font-terminal">
+            <div className="mt-8 text-gray-600 dark:text-gray-500 text-sm font-terminal">
               Click anywhere or press ESC to close
             </div>
           </div>
@@ -768,7 +768,7 @@ function MeetingDetails() {
               e.stopPropagation();
               setCodeFullscreen(false);
             }}
-            className="absolute top-6 right-6 p-3 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+            className="absolute top-6 right-6 p-3 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
           >
             <Close className="w-6 h-6" />
           </button>
@@ -781,8 +781,8 @@ function MeetingDetails() {
           className={`mb-8 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-matrix neon-text-subtle">$</span>
-            <span className="text-gray-400 font-terminal">
+            <span className="text-blue-600 dark:text-matrix neon-text-subtle">$</span>
+            <span className="text-gray-600 dark:text-gray-400 font-terminal">
               cat ./meetings/{slug}/README.md
             </span>
           </div>
@@ -797,7 +797,7 @@ function MeetingDetails() {
               <div className="terminal-dot red" />
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-500 font-terminal">
+              <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
                 {isEditing
                   ? "edit_meeting.sh"
                   : meeting.title.toLowerCase().replace(/\s+/g, "_")}
@@ -805,7 +805,7 @@ function MeetingDetails() {
               {isOfficer && !isEditing && (
                 <button
                   onClick={startEditing}
-                  className="ml-auto text-xs text-hack-cyan hover:text-hack-cyan/80 font-terminal flex items-center gap-1 transition-colors"
+                  className="ml-auto text-xs text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 font-terminal flex items-center gap-1 transition-colors"
                 >
                   <Edit className="w-3 h-3" />
                   EDIT
@@ -817,21 +817,21 @@ function MeetingDetails() {
                 /* Edit Mode */
                 <div className="space-y-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-matrix">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-matrix">
                       Edit Meeting
                     </h2>
                     <div className="flex gap-2">
                       <button
                         onClick={cancelEditing}
                         disabled={saving}
-                        className="px-4 py-2 text-sm font-terminal text-gray-400 hover:text-white border border-gray-600 rounded-lg transition-colors disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-terminal text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 transition-colors disabled:opacity-50"
                       >
                         CANCEL
                       </button>
                       <button
                         onClick={saveChanges}
                         disabled={saving}
-                        className="px-4 py-2 text-sm font-terminal bg-matrix/20 text-matrix border border-matrix rounded-lg hover:bg-matrix/30 transition-colors disabled:opacity-50 flex items-center gap-2"
+                        className="px-4 py-2 text-sm font-terminal bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix hover:bg-blue-100 dark:hover:bg-matrix/30 transition-colors disabled:opacity-50 flex items-center gap-2"
                       >
                         {saving && <Spinner className="animate-spin h-4 w-4" />}
                         {saving ? "SAVING..." : "SAVE"}
@@ -840,7 +840,7 @@ function MeetingDetails() {
                   </div>
 
                   {editError && (
-                    <div className="p-3 rounded-lg bg-hack-red/10 border border-hack-red/50 text-hack-red text-sm">
+                    <div className="p-3 bg-red-50 dark:bg-hack-red/10 border border-red-300 dark:border-hack-red/50 text-red-600 dark:text-hack-red text-sm">
                       {editError}
                     </div>
                   )}
@@ -848,7 +848,7 @@ function MeetingDetails() {
                   <div className="grid gap-4 md:grid-cols-2">
                     {/* Slug */}
                     <div>
-                      <label className="block text-xs text-gray-500 font-terminal mb-1">
+                      <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                         URL SLUG
                       </label>
                       <input
@@ -862,17 +862,17 @@ function MeetingDetails() {
                               .replace(/[^a-z0-9-]/g, ""),
                           )
                         }
-                        className="input-hack w-full rounded-lg"
+                        className="input-hack w-full "
                         placeholder="my-meeting"
                       />
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                         /meetings/{editForm.slug}
                       </p>
                     </div>
 
                     {/* Type */}
                     <div>
-                      <label className="block text-xs text-gray-500 font-terminal mb-1">
+                      <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                         TYPE
                       </label>
                       <select
@@ -880,7 +880,7 @@ function MeetingDetails() {
                         onChange={(e) =>
                           handleEditChange("type", e.target.value)
                         }
-                        className="input-hack w-full rounded-lg"
+                        className="input-hack w-full "
                       >
                         <option value="workshop">Workshop</option>
                         <option value="lecture">Lecture</option>
@@ -902,7 +902,7 @@ function MeetingDetails() {
                       onChange={(e) =>
                         handleEditChange("title", e.target.value)
                       }
-                      className="input-hack w-full rounded-lg"
+                      className="input-hack w-full "
                       placeholder="Meeting title"
                     />
                   </div>
@@ -917,7 +917,7 @@ function MeetingDetails() {
                       onChange={(e) =>
                         handleEditChange("description", e.target.value)
                       }
-                      className="input-hack w-full rounded-lg min-h-[100px] resize-y"
+                      className="input-hack w-full  min-h-[100px] resize-y"
                       placeholder="Meeting description"
                     />
                   </div>
@@ -925,7 +925,7 @@ function MeetingDetails() {
                   <div className="grid gap-4 md:grid-cols-2">
                     {/* Date */}
                     <div>
-                      <label className="block text-xs text-gray-500 font-terminal mb-1">
+                      <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                         DATE
                       </label>
                       <input
@@ -934,13 +934,13 @@ function MeetingDetails() {
                         onChange={(e) =>
                           handleEditChange("date", e.target.value)
                         }
-                        className="input-hack w-full rounded-lg"
+                        className="input-hack w-full "
                       />
                     </div>
 
                     {/* Time */}
                     <div>
-                      <label className="block text-xs text-gray-500 font-terminal mb-1">
+                      <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                         TIME
                       </label>
                       <input
@@ -949,7 +949,7 @@ function MeetingDetails() {
                         onChange={(e) =>
                           handleEditChange("time", e.target.value)
                         }
-                        className="input-hack w-full rounded-lg"
+                        className="input-hack w-full "
                         placeholder="4:00 PM - 6:00 PM"
                       />
                     </div>
@@ -966,7 +966,7 @@ function MeetingDetails() {
                       onChange={(e) =>
                         handleEditChange("location", e.target.value)
                       }
-                      className="input-hack w-full rounded-lg"
+                      className="input-hack w-full "
                       placeholder="S43 Room 120"
                     />
                   </div>
@@ -982,7 +982,7 @@ function MeetingDetails() {
                       onChange={(e) =>
                         handleEditChange("topics", e.target.value)
                       }
-                      className="input-hack w-full rounded-lg"
+                      className="input-hack w-full "
                       placeholder="Security, Hacking, CTF"
                     />
                   </div>
@@ -990,7 +990,7 @@ function MeetingDetails() {
                   <div className="grid gap-4 md:grid-cols-2">
                     {/* Secret Code */}
                     <div>
-                      <label className="block text-xs text-gray-500 font-terminal mb-1">
+                      <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                         ATTENDANCE CODE
                       </label>
                       <input
@@ -1002,10 +1002,10 @@ function MeetingDetails() {
                             e.target.value.toUpperCase(),
                           )
                         }
-                        className="input-hack w-full rounded-lg font-mono"
+                        className="input-hack w-full  font-mono"
                         placeholder="SECRETCODE"
                       />
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                         Code for attendance check-in
                       </p>
                     </div>
@@ -1017,28 +1017,28 @@ function MeetingDetails() {
                         onClick={() =>
                           handleEditChange("featured", !editForm.featured)
                         }
-                        className={`relative w-12 h-6 rounded-full transition-colors ${editForm.featured ? "bg-matrix" : "bg-gray-600"}`}
+                        className={`relative w-12 h-6 transition-colors ${editForm.featured ? "bg-blue-600 dark:bg-matrix" : "bg-gray-400 dark:bg-gray-600"}`}
                       >
                         <span
-                          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${editForm.featured ? "left-7" : "left-1"}`}
+                          className={`absolute top-1 w-4 h-4 bg-white transition-transform ${editForm.featured ? "left-7" : "left-1"}`}
                         />
                       </button>
-                      <label className="text-sm text-gray-400">
+                      <label className="text-sm text-gray-600 dark:text-gray-400">
                         Featured meeting
                       </label>
                     </div>
                   </div>
 
                   {/* Registration Settings */}
-                  <div className="border-t border-gray-700 pt-6">
-                    <h3 className="text-lg font-semibold text-hack-purple mb-4">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h3 className="text-lg font-semibold text-purple-600 dark:text-hack-purple mb-4">
                       Registration Settings
                     </h3>
 
                     <div className="grid gap-4 md:grid-cols-2">
                       {/* Registration Type */}
                       <div>
-                        <label className="block text-xs text-gray-500 font-terminal mb-1">
+                        <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                           REGISTRATION TYPE
                         </label>
                         <select
@@ -1049,7 +1049,7 @@ function MeetingDetails() {
                               e.target.value,
                             )
                           }
-                          className="input-hack w-full rounded-lg"
+                          className="input-hack w-full "
                         >
                           <option value="open">
                             Open (anyone can register)
@@ -1063,7 +1063,7 @@ function MeetingDetails() {
 
                       {/* Registration Capacity */}
                       <div>
-                        <label className="block text-xs text-gray-500 font-terminal mb-1">
+                        <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                           CAPACITY (leave empty for unlimited)
                         </label>
                         <input
@@ -1076,10 +1076,10 @@ function MeetingDetails() {
                               e.target.value ? parseInt(e.target.value) : null,
                             )
                           }
-                          className="input-hack w-full rounded-lg"
+                          className="input-hack w-full "
                           placeholder="50"
                         />
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                           Max number of attendees
                         </p>
                       </div>
@@ -1089,7 +1089,7 @@ function MeetingDetails() {
                     {editForm.registration_type === "invite_only" && (
                       <div className="grid gap-4 md:grid-cols-2 mt-4">
                         <div>
-                          <label className="block text-xs text-gray-500 font-terminal mb-1">
+                          <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                             INVITE CODE
                           </label>
                           <input
@@ -1101,16 +1101,16 @@ function MeetingDetails() {
                                 e.target.value.toUpperCase(),
                               )
                             }
-                            className="input-hack w-full rounded-lg font-mono"
+                            className="input-hack w-full  font-mono"
                             placeholder="INVITE123"
                           />
-                          <p className="text-xs text-gray-600 mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                             Code users enter to register
                           </p>
                         </div>
 
                         <div>
-                          <label className="block text-xs text-gray-500 font-terminal mb-1">
+                          <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                             INVITE REQUEST FORM URL
                           </label>
                           <input
@@ -1122,10 +1122,10 @@ function MeetingDetails() {
                                 e.target.value,
                               )
                             }
-                            className="input-hack w-full rounded-lg"
+                            className="input-hack w-full "
                             placeholder="https://forms.gle/..."
                           />
-                          <p className="text-xs text-gray-600 mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                             Optional form for users to request invites
                           </p>
                         </div>
@@ -1135,16 +1135,16 @@ function MeetingDetails() {
                     {/* Registered Users List */}
                     <div className="mt-6">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold text-gray-300">
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                           Registered Users ({registeredUsers.length})
                         </h4>
                         {loadingRegistrations && (
-                          <Spinner className="animate-spin h-4 w-4 text-matrix" />
+                          <Spinner className="animate-spin h-4 w-4 text-blue-600 dark:text-matrix" />
                         )}
                       </div>
 
                       {registeredUsers.length === 0 ? (
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-gray-600 dark:text-gray-500 text-sm">
                           No registrations yet
                         </p>
                       ) : (
@@ -1152,7 +1152,7 @@ function MeetingDetails() {
                           {registeredUsers.map((registration) => (
                             <div
                               key={registration.id}
-                              className="flex items-center gap-3 p-3 rounded-lg bg-terminal-alt border border-gray-700"
+                              className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
                             >
                               {/* Profile Picture */}
                               <div className="shrink-0">
@@ -1160,11 +1160,11 @@ function MeetingDetails() {
                                   <img
                                     src={registration.user.photo_url}
                                     alt={registration.user.display_name}
-                                    className="w-10 h-10 rounded-full object-cover border border-gray-600"
+                                    className="w-10 h-10 object-cover border border-gray-300 dark:border-gray-600"
                                   />
                                 ) : (
-                                  <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600">
-                                    <span className="text-gray-400 text-sm font-bold">
+                                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 flex items-center justify-center border border-gray-400 dark:border-gray-600">
+                                    <span className="text-gray-600 dark:text-gray-400 text-sm font-bold">
                                       {registration.user?.display_name
                                         .charAt(0)
                                         .toUpperCase()}
@@ -1175,11 +1175,11 @@ function MeetingDetails() {
 
                               {/* User Info */}
                               <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-gray-200 truncate">
+                                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
                                   {registration.user?.display_name ||
                                     "Unknown User"}
                                 </div>
-                                <div className="text-xs text-gray-500 truncate">
+                                <div className="text-xs text-gray-600 dark:text-gray-500 truncate">
                                   {registration.user?.email}
                                 </div>
                               </div>
@@ -1187,16 +1187,16 @@ function MeetingDetails() {
                               {/* Status Badge */}
                               <div>
                                 <span
-                                  className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${
+                                  className={`inline-block px-2 py-0.5text-xs font-terminal border ${
                                     registration.status === "attended"
-                                      ? "border-matrix text-matrix bg-matrix/10"
+                                      ? "border-blue-300 dark:border-matrix text-blue-600 dark:text-matrix bg-blue-50 dark:bg-matrix/10"
                                       : registration.status === "registered"
-                                        ? "border-hack-cyan text-hack-cyan bg-hack-cyan/10"
+                                        ? "border-cyan-300 dark:border-hack-cyan text-cyan-600 dark:text-hack-cyan bg-cyan-50 dark:bg-hack-cyan/10"
                                         : registration.status === "invited"
-                                          ? "border-hack-purple text-hack-purple bg-hack-purple/10"
+                                          ? "border-purple-300 dark:border-hack-purple text-purple-600 dark:text-hack-purple bg-purple-50 dark:bg-hack-purple/10"
                                           : registration.status === "waitlist"
-                                            ? "border-hack-yellow text-hack-yellow bg-hack-yellow/10"
-                                            : "border-gray-600 text-gray-500"
+                                            ? "border-yellow-300 dark:border-hack-yellow text-yellow-600 dark:text-hack-yellow bg-yellow-50 dark:bg-hack-yellow/10"
+                                            : "border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-500"
                                   }`}
                                 >
                                   {registration.status.toUpperCase()}
@@ -1210,8 +1210,8 @@ function MeetingDetails() {
                       {/* Stats Summary */}
                       {registeredUsers.length > 0 && (
                         <div className="mt-4 grid grid-cols-3 gap-3">
-                          <div className="p-2 rounded bg-terminal-alt border border-gray-700 text-center">
-                            <div className="text-lg font-bold text-matrix">
+                          <div className="p-2 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700 text-center">
+                            <div className="text-lg font-bold text-blue-600 dark:text-matrix">
                               {
                                 registeredUsers.filter(
                                   (r) =>
@@ -1220,31 +1220,31 @@ function MeetingDetails() {
                                 ).length
                               }
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-600 dark:text-gray-500">
                               Registered
                             </div>
                           </div>
-                          <div className="p-2 rounded bg-terminal-alt border border-gray-700 text-center">
-                            <div className="text-lg font-bold text-hack-yellow">
+                          <div className="p-2 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700 text-center">
+                            <div className="text-lg font-bold text-yellow-600 dark:text-hack-yellow">
                               {
                                 registeredUsers.filter(
                                   (r) => r.status === "waitlist",
                                 ).length
                               }
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-600 dark:text-gray-500">
                               Waitlist
                             </div>
                           </div>
-                          <div className="p-2 rounded bg-terminal-alt border border-gray-700 text-center">
-                            <div className="text-lg font-bold text-matrix">
+                          <div className="p-2 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700 text-center">
+                            <div className="text-lg font-bold text-blue-600 dark:text-matrix">
                               {
                                 registeredUsers.filter(
                                   (r) => r.status === "attended",
                                 ).length
                               }
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-600 dark:text-gray-500">
                               Attended
                             </div>
                           </div>
@@ -1254,22 +1254,22 @@ function MeetingDetails() {
                   </div>
 
                   {/* Announcements Editor */}
-                  <div className="border-t border-gray-700 pt-6">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-matrix">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-matrix">
                         Announcements
                       </h3>
                       <button
                         type="button"
                         onClick={addAnnouncement}
-                        className="text-xs font-terminal text-hack-cyan hover:text-hack-cyan/80 flex items-center gap-1"
+                        className="text-xs font-terminal text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 flex items-center gap-1"
                       >
                         <Plus className="w-4 h-4" />
                         ADD
                       </button>
                     </div>
                     {editForm.announcements.length === 0 ? (
-                      <p className="text-gray-500 text-sm">
+                      <p className="text-gray-600 dark:text-gray-500 text-sm">
                         No announcements yet
                       </p>
                     ) : (
@@ -1277,7 +1277,7 @@ function MeetingDetails() {
                         {editForm.announcements.map((announcement) => (
                           <div
                             key={announcement.id}
-                            className="p-4 rounded-lg bg-terminal-alt border border-gray-700"
+                            className="p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
                           >
                             <div className="flex justify-between items-start mb-3">
                               <input
@@ -1290,7 +1290,7 @@ function MeetingDetails() {
                                     e.target.value,
                                   )
                                 }
-                                className="input-hack flex-1 rounded-lg text-sm"
+                                className="input-hack flex-1  text-sm"
                                 placeholder="Announcement title"
                               />
                               <button
@@ -1298,7 +1298,7 @@ function MeetingDetails() {
                                 onClick={() =>
                                   deleteAnnouncement(announcement.id)
                                 }
-                                className="ml-2 p-1 text-gray-500 hover:text-hack-red transition-colors"
+                                className="ml-2 p-1 text-gray-600 dark:text-gray-500 hover:text-red-600 dark:hover:text-hack-red transition-colors"
                               >
                                 <Trash className="w-5 h-5" />
                               </button>
@@ -1312,7 +1312,7 @@ function MeetingDetails() {
                                   e.target.value,
                                 )
                               }
-                              className="input-hack w-full rounded-lg text-sm min-h-[60px] resize-y mb-2"
+                              className="input-hack w-full  text-sm min-h-[60px] resize-y mb-2"
                               placeholder="Announcement content"
                             />
                             <input
@@ -1325,7 +1325,7 @@ function MeetingDetails() {
                                   e.target.value,
                                 )
                               }
-                              className="input-hack rounded-lg text-sm"
+                              className="input-hack  text-sm"
                             />
                           </div>
                         ))}
@@ -1334,28 +1334,28 @@ function MeetingDetails() {
                   </div>
 
                   {/* Photos Editor */}
-                  <div className="border-t border-gray-700 pt-6">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-hack-cyan">
+                      <h3 className="text-lg font-semibold text-cyan-600 dark:text-hack-cyan">
                         Photos
                       </h3>
                       <button
                         type="button"
                         onClick={addPhoto}
-                        className="text-xs font-terminal text-hack-cyan hover:text-hack-cyan/80 flex items-center gap-1"
+                        className="text-xs font-terminal text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 flex items-center gap-1"
                       >
                         <Plus className="w-4 h-4" />
                         ADD
                       </button>
                     </div>
                     {editForm.photos.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No photos yet</p>
+                      <p className="text-gray-600 dark:text-gray-500 text-sm">No photos yet</p>
                     ) : (
                       <div className="space-y-4">
                         {editForm.photos.map((photo) => (
                           <div
                             key={photo.id}
-                            className="p-4 rounded-lg bg-terminal-alt border border-gray-700"
+                            className="p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
                           >
                             <div className="flex justify-between items-start mb-3">
                               <input
@@ -1364,13 +1364,13 @@ function MeetingDetails() {
                                 onChange={(e) =>
                                   updatePhoto(photo.id, "url", e.target.value)
                                 }
-                                className="input-hack flex-1 rounded-lg text-sm"
+                                className="input-hack flex-1  text-sm"
                                 placeholder="https://example.com/image.jpg"
                               />
                               <button
                                 type="button"
                                 onClick={() => deletePhoto(photo.id)}
-                                className="ml-2 p-1 text-gray-500 hover:text-hack-red transition-colors"
+                                className="ml-2 p-1 text-gray-600 dark:text-gray-500 hover:text-red-600 dark:hover:text-hack-red transition-colors"
                               >
                                 <Trash className="w-5 h-5" />
                               </button>
@@ -1381,7 +1381,7 @@ function MeetingDetails() {
                               onChange={(e) =>
                                 updatePhoto(photo.id, "caption", e.target.value)
                               }
-                              className="input-hack w-full rounded-lg text-sm"
+                              className="input-hack w-full text-sm"
                               placeholder="Caption (optional)"
                             />
                             {photo.url && (
@@ -1389,7 +1389,7 @@ function MeetingDetails() {
                                 <img
                                   src={photo.url}
                                   alt="Preview"
-                                  className="max-h-32 rounded-lg border border-gray-700"
+                                  className="max-h-32 border border-gray-200 dark:border-gray-700"
                                   onError={(e) =>
                                     ((
                                       e.target as HTMLImageElement
@@ -1405,28 +1405,28 @@ function MeetingDetails() {
                   </div>
 
                   {/* Resources Editor */}
-                  <div className="border-t border-gray-700 pt-6">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-hack-yellow">
+                      <h3 className="text-lg font-semibold text-yellow-600 dark:text-hack-yellow">
                         Resources
                       </h3>
                       <button
                         type="button"
                         onClick={addResource}
-                        className="text-xs font-terminal text-hack-yellow hover:text-hack-yellow/80 flex items-center gap-1"
+                        className="text-xs font-terminal text-yellow-600 dark:text-hack-yellow hover:text-yellow-700 dark:hover:text-hack-yellow/80 flex items-center gap-1"
                       >
                         <Plus className="w-4 h-4" />
                         ADD
                       </button>
                     </div>
                     {editForm.resources.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No resources yet</p>
+                      <p className="text-gray-600 dark:text-gray-500 text-sm">No resources yet</p>
                     ) : (
                       <div className="space-y-4">
                         {editForm.resources.map((resource) => (
                           <div
                             key={resource.id}
-                            className="p-4 rounded-lg bg-terminal-alt border border-gray-700"
+                            className="p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
                           >
                             <div className="flex justify-between items-start mb-3">
                               <input
@@ -1439,13 +1439,13 @@ function MeetingDetails() {
                                     e.target.value,
                                   )
                                 }
-                                className="input-hack flex-1 rounded-lg text-sm"
+                                className="input-hack flex-1  text-sm"
                                 placeholder="Resource title"
                               />
                               <button
                                 type="button"
                                 onClick={() => deleteResource(resource.id)}
-                                className="ml-2 p-1 text-gray-500 hover:text-hack-red transition-colors"
+                                className="ml-2 p-1 text-gray-600 dark:text-gray-500 hover:text-red-600 dark:hover:text-hack-red transition-colors"
                               >
                                 <Trash className="w-5 h-5" />
                               </button>
@@ -1461,7 +1461,7 @@ function MeetingDetails() {
                                     e.target.value,
                                   )
                                 }
-                                className="input-hack w-full rounded-lg text-sm"
+                                className="input-hack w-full  text-sm"
                                 placeholder="https://example.com/resource"
                               />
                               <select
@@ -1473,7 +1473,7 @@ function MeetingDetails() {
                                     e.target.value,
                                   )
                                 }
-                                className="input-hack w-full rounded-lg text-sm"
+                                className="input-hack w-full  text-sm"
                               >
                                 <option value="link">Link</option>
                                 <option value="slides"></option>
@@ -1493,18 +1493,18 @@ function MeetingDetails() {
                   {/* Status Badges */}
                   <div className="flex flex-wrap items-center gap-3 mb-6">
                     <span
-                      className={`inline-block px-3 py-1 rounded text-sm font-terminal border ${TYPE_COLORS[meeting.type]}`}
+                      className={`inline-block px-3 py-1text-sm font-terminal border ${TYPE_COLORS[meeting.type]}`}
                     >
                       {TYPE_LABELS[meeting.type]}
                     </span>
                     {meeting.featured && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded text-sm font-terminal bg-matrix/20 text-matrix border border-matrix/50">
+                      <span className="inline-flex items-center gap-1 px-3 py-1text-sm font-terminal bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix/50">
                         <Star className="w-4 h-4" />
                         FEATURED
                       </span>
                     )}
                     {isPast(meeting.date) && (
-                      <span className="inline-block px-3 py-1 rounded text-sm font-terminal border border-gray-600 text-gray-500">
+                      <span className="inline-block px-3 py-1text-sm font-terminal border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-500">
                         COMPLETED
                       </span>
                     )}
@@ -1512,29 +1512,29 @@ function MeetingDetails() {
 
                   {/* Title */}
                   <h1
-                    className={`text-3xl md:text-4xl font-bold mb-4 ${isPast(meeting.date) ? "text-gray-400" : "text-matrix neon-text"}`}
+                    className={`text-3xl md:text-4xl font-bold mb-4 ${isPast(meeting.date) ? "text-gray-600 dark:text-gray-400" : "text-blue-600 dark:text-matrix neon-text"}`}
                   >
                     {meeting.title}
                   </h1>
 
                   {/* Description */}
-                  <p className="text-gray-400 text-lg mb-8 leading-relaxed">
+                  <p className="text-gray-600 dark:text-gray-400 text-lg mb-8 leading-relaxed">
                     {meeting.description}
                   </p>
 
                   {/* Details Grid */}
                   <div className="grid md:grid-cols-2 gap-6 mb-8">
                     {/* Date */}
-                    <div className="flex items-start gap-4 p-4 rounded-lg bg-terminal-alt border border-gray-800">
-                      <div className="p-2 rounded-lg bg-matrix/10 text-matrix">
+                    <div className="flex items-start gap-4 p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800">
+                      <div className="p-2 bg-blue-50 dark:bg-matrix/10 text-blue-600 dark:text-matrix">
                         <Calendar className="w-6 h-6" />
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500 uppercase font-terminal mb-1">
+                        <div className="text-xs text-gray-600 dark:text-gray-500 uppercase font-terminal mb-1">
                           Date
                         </div>
                         <div
-                          className={`font-semibold ${isPast(meeting.date) ? "text-gray-400" : "text-matrix"}`}
+                          className={`font-semibold ${isPast(meeting.date) ? "text-gray-600 dark:text-gray-400" : "text-blue-600 dark:text-matrix"}`}
                         >
                           {formatDate(meeting.date)}
                         </div>
@@ -1542,30 +1542,30 @@ function MeetingDetails() {
                     </div>
 
                     {/* Time */}
-                    <div className="flex items-start gap-4 p-4 rounded-lg bg-terminal-alt border border-gray-800">
-                      <div className="p-2 rounded-lg bg-matrix/10 text-matrix">
+                    <div className="flex items-start gap-4 p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800">
+                      <div className="p-2 bg-blue-50 dark:bg-matrix/10 text-blue-600 dark:text-matrix">
                         <Clock className="w-6 h-6" />
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500 uppercase font-terminal mb-1">
+                        <div className="text-xs text-gray-600 dark:text-gray-500 uppercase font-terminal mb-1">
                           Time
                         </div>
-                        <div className="text-white font-semibold">
+                        <div className="text-gray-900 dark:text-white font-semibold">
                           {meeting.time}
                         </div>
                       </div>
                     </div>
 
                     {/* Location */}
-                    <div className="flex items-start gap-4 p-4 rounded-lg bg-terminal-alt border border-gray-800 md:col-span-2">
-                      <div className="p-2 rounded-lg bg-matrix/10 text-matrix">
+                    <div className="flex items-start gap-4 p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 md:col-span-2">
+                      <div className="p-2 bg-blue-50 dark:bg-matrix/10 text-blue-600 dark:text-matrix">
                         <MapPin className="w-6 h-6" />
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500 uppercase font-terminal mb-1">
+                        <div className="text-xs text-gray-600 dark:text-gray-500 uppercase font-terminal mb-1">
                           Location
                         </div>
-                        <div className="text-white font-semibold">
+                        <div className="text-gray-900 dark:text-white font-semibold">
                           {meeting.location}
                         </div>
                       </div>
@@ -1573,8 +1573,8 @@ function MeetingDetails() {
 
                     {/* Secret Attendance Code - Officers Only */}
                     {isOfficer && meeting.secret_code && (
-                      <div className="relative flex items-start gap-4 p-4 rounded-lg bg-hack-purple/10 border border-hack-purple/50 md:col-span-2">
-                        <div className="p-2 rounded-lg bg-hack-purple/20 text-hack-purple">
+                      <div className="relative flex items-start gap-4 p-4  bg-hack-purple/10 border border-hack-purple/50 md:col-span-2">
+                        <div className="p-2  bg-hack-purple/20 text-hack-purple">
                           <Key className="w-6 h-6" />
                         </div>
                         <div className="flex-1">
@@ -1590,7 +1590,7 @@ function MeetingDetails() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => setCodeRevealed(!codeRevealed)}
-                            className="p-2 rounded-lg bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors"
+                            className="p-2  bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors"
                             title={codeRevealed ? "Hide code" : "Reveal code"}
                           >
                             {codeRevealed ? (
@@ -1604,7 +1604,7 @@ function MeetingDetails() {
                               setCodeRevealed(true);
                               setCodeFullscreen(true);
                             }}
-                            className="p-2 rounded-lg bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors"
+                            className="p-2  bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors"
                             title="Fullscreen"
                           >
                             <Fullscreen className="w-5 h-5" />
@@ -1624,7 +1624,7 @@ function MeetingDetails() {
                         {meeting.topics.map((topic) => (
                           <span
                             key={topic}
-                            className="px-3 py-1.5 rounded-lg text-sm bg-terminal-alt border border-gray-700 text-gray-300 hover:border-matrix/50 transition-colors"
+                            className="px-3 py-1.5  text-sm bg-terminal-alt border border-gray-700 text-gray-300 hover:border-matrix/50 transition-colors"
                           >
                             {topic}
                           </span>
@@ -1639,8 +1639,8 @@ function MeetingDetails() {
                     userRegistration.status !== "cancelled" && (
                       <div className="pt-6 border-t border-gray-800">
                         {userRegistration.status === "attended" ? (
-                          <div className="p-6 rounded-lg bg-matrix/10 border border-matrix/50 text-center">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-matrix/20 border border-matrix/50 flex items-center justify-center">
+                          <div className="p-6  bg-matrix/10 border border-matrix/50 text-center">
+                            <div className="w-16 h-16 mx-auto mb-4  bg-matrix/20 border border-matrix/50 flex items-center justify-center">
                               <CheckCircle className="w-8 h-8 text-matrix" />
                             </div>
                             <h3 className="text-xl font-bold text-matrix mb-2">
@@ -1652,8 +1652,8 @@ function MeetingDetails() {
                             </p>
                           </div>
                         ) : (
-                          <div className="p-6 rounded-lg bg-gray-800/50 border border-gray-700 text-center">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-700/50 border border-gray-600 flex items-center justify-center">
+                          <div className="p-6  bg-gray-800/50 border border-gray-700 text-center">
+                            <div className="w-16 h-16 mx-auto mb-4  bg-gray-700/50 border border-gray-600 flex items-center justify-center">
                               <CheckCircle className="w-8 h-8 text-gray-400" />
                             </div>
                             <h3 className="text-xl font-bold text-gray-300 mb-2">
@@ -1677,7 +1677,7 @@ function MeetingDetails() {
                   {isPast(meeting.date) && (
                     <div className="pt-6 border-t border-gray-800">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 rounded-lg bg-matrix/10">
+                        <div className="p-2  bg-matrix/10">
                           <Users className="w-5 h-5 text-matrix" />
                         </div>
                         <div>
@@ -1706,16 +1706,16 @@ function MeetingDetails() {
                           {pastEventAttendees.map((attendee) => (
                             <div
                               key={attendee.id}
-                              className="flex items-center gap-2 p-2 rounded-lg bg-terminal-alt border border-gray-800"
+                              className="flex items-center gap-2 p-2  bg-terminal-alt border border-gray-800"
                             >
                               {attendee.user?.photo_url ? (
                                 <img
                                   src={attendee.user.photo_url}
                                   alt={attendee.user.display_name}
-                                  className="w-8 h-8 rounded-full object-cover border border-gray-600"
+                                  className="w-8 h-8  object-cover border border-gray-600"
                                 />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600">
+                                <div className="w-8 h-8  bg-gray-700 flex items-center justify-center border border-gray-600">
                                   <span className="text-gray-400 text-xs font-bold">
                                     {attendee.user?.display_name
                                       ?.charAt(0)
@@ -1744,7 +1744,7 @@ function MeetingDetails() {
                     <div className="pt-6 border-t border-gray-800">
                       {registrationMessage && (
                         <div
-                          className={`p-3 rounded-lg mb-4 ${
+                          className={`p-3  mb-4 ${
                             registrationMessage.type === "success"
                               ? "bg-matrix/10 border border-matrix/50 text-matrix"
                               : "bg-hack-red/10 border border-hack-red/50 text-hack-red"
@@ -1778,7 +1778,7 @@ function MeetingDetails() {
                       {userRegistration &&
                       userRegistration.status === "invited" ? (
                         <div className="space-y-4">
-                          <div className="p-4 rounded-lg bg-hack-cyan/10 border border-hack-cyan/50">
+                          <div className="p-4  bg-hack-cyan/10 border border-hack-cyan/50">
                             <div className="flex items-center gap-2 mb-2">
                               <Star className="w-5 h-5 text-hack-cyan" />
                               <span className="font-semibold text-hack-cyan">
@@ -1793,14 +1793,14 @@ function MeetingDetails() {
                             <button
                               onClick={handleDeclineInvite}
                               disabled={registering}
-                              className="flex-1 px-4 py-2 text-sm font-terminal text-gray-400 hover:text-hack-red border border-gray-600 hover:border-hack-red rounded-lg transition-colors disabled:opacity-50"
+                              className="flex-1 px-4 py-2 text-sm font-terminal text-gray-400 hover:text-hack-red border border-gray-600 hover:border-hack-red  transition-colors disabled:opacity-50"
                             >
                               {registering ? "..." : "Decline"}
                             </button>
                             <button
                               onClick={handleAcceptInvite}
                               disabled={registering}
-                              className="flex-1 btn-hack-filled px-4 py-2 disabled:opacity-50"
+                              className="flex-1 cli-btn-filled px-4 py-2 disabled:opacity-50"
                             >
                               {registering ? "Accepting..." : "Accept Invite"}
                             </button>
@@ -1810,7 +1810,7 @@ function MeetingDetails() {
                       userRegistration.status !== "cancelled" ? (
                         /* User already registered */
                         <div className="space-y-4">
-                          <div className="p-4 rounded-lg bg-matrix/10 border border-matrix/50">
+                          <div className="p-4  bg-matrix/10 border border-matrix/50">
                             <div className="flex items-center gap-2 mb-2">
                               <CheckCircle className="w-5 h-5 text-matrix" />
                               <span className="font-semibold text-matrix">
@@ -1840,7 +1840,7 @@ function MeetingDetails() {
                         </div>
                       ) : meeting.registration_type === "closed" ? (
                         /* Closed registration */
-                        <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
+                        <div className="p-4  bg-gray-800/50 border border-gray-700">
                           <p className="text-gray-400 text-center">
                             Registration is closed for this event
                           </p>
@@ -1849,7 +1849,7 @@ function MeetingDetails() {
                         !showInviteCodeInput ? (
                         /* Invite-only event */
                         <div className="space-y-4">
-                          <div className="p-4 rounded-lg bg-hack-purple/10 border border-hack-purple/50">
+                          <div className="p-4  bg-hack-purple/10 border border-hack-purple/50">
                             <p className="text-hack-purple text-sm mb-2">
                               This is an invite-only event
                             </p>
@@ -1865,14 +1865,14 @@ function MeetingDetails() {
                                 href={meeting.invite_form_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="btn-hack px-6 py-3 text-center flex-1"
+                                className="cli-btn-dashedpx-6 py-3 text-center flex-1"
                               >
                                 Request Invite
                               </a>
                             )}
                             <button
                               onClick={() => setShowInviteCodeInput(true)}
-                              className="btn-hack-filled px-6 py-3 flex-1"
+                              className="cli-btn-filled px-6 py-3 flex-1"
                             >
                               I have an invite code
                             </button>
@@ -1895,7 +1895,7 @@ function MeetingDetails() {
                               onKeyDown={(e) =>
                                 e.key === "Enter" && handleRegister()
                               }
-                              className="input-hack w-full rounded-lg font-mono"
+                              className="input-hack w-full  font-mono"
                               placeholder="ENTER CODE"
                               disabled={registering}
                             />
@@ -1907,14 +1907,14 @@ function MeetingDetails() {
                                 setInviteCode("");
                               }}
                               disabled={registering}
-                              className="btn-hack px-6 py-3 flex-1"
+                              className="cli-btn-dashedpx-6 py-3 flex-1"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={handleRegister}
                               disabled={registering || !inviteCode}
-                              className="btn-hack-filled px-6 py-3 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="cli-btn-filled px-6 py-3 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {registering ? "Registering..." : "Register"}
                             </button>
@@ -1926,7 +1926,7 @@ function MeetingDetails() {
                           <button
                             onClick={handleRegister}
                             disabled={registering}
-                            className="btn-hack-filled px-6 py-3 text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="cli-btn-filled px-6 py-3 text-center disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {registering
                               ? "Processing..."
@@ -1939,13 +1939,13 @@ function MeetingDetails() {
                               href="https://discord.gg/v5JWDrZVNp"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="btn-hack px-6 py-2 text-center text-sm flex-1"
+                              className="cli-btn-dashedpx-6 py-2 text-center text-sm flex-1"
                             >
                               Join Discord
                             </a>
                             <Link
                               to="/meetings"
-                              className="btn-hack px-6 py-2 text-center text-sm flex-1"
+                              className="cli-btn-dashedpx-6 py-2 text-center text-sm flex-1"
                             >
                               View All Events
                             </Link>
@@ -1979,7 +1979,7 @@ function MeetingDetails() {
               <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
                 <button
                   onClick={() => setActiveTab("announcements")}
-                  className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
+                  className={`px-4 py-2  text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
                     activeTab === "announcements"
                       ? "bg-matrix/20 text-matrix border border-matrix"
                       : "bg-terminal-alt text-gray-400 border border-gray-700 hover:border-matrix/50"
@@ -1988,14 +1988,14 @@ function MeetingDetails() {
                   <Megaphone className="w-4 h-4" />
                   ANNOUNCEMENTS
                   {meeting.announcements?.length ? (
-                    <span className="px-1.5 py-0.5 rounded text-xs bg-matrix/30">
+                    <span className="px-1.5 py-0.5text-xs bg-matrix/30">
                       {meeting.announcements.length}
                     </span>
                   ) : null}
                 </button>
                 <button
                   onClick={() => setActiveTab("photos")}
-                  className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
+                  className={`px-4 py-2  text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
                     activeTab === "photos"
                       ? "bg-hack-cyan/20 text-hack-cyan border border-hack-cyan"
                       : "bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-cyan/50"
@@ -2004,14 +2004,14 @@ function MeetingDetails() {
                   <PhotoIcon className="w-4 h-4" />
                   PHOTOS
                   {meeting.photos?.length ? (
-                    <span className="px-1.5 py-0.5 rounded text-xs bg-hack-cyan/30">
+                    <span className="px-1.5 py-0.5text-xs bg-hack-cyan/30">
                       {meeting.photos.length}
                     </span>
                   ) : null}
                 </button>
                 <button
                   onClick={() => setActiveTab("resources")}
-                  className={`px-4 py-2 rounded-lg text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
+                  className={`px-4 py-2  text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
                     activeTab === "resources"
                       ? "bg-hack-yellow/20 text-hack-yellow border border-hack-yellow"
                       : "bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-yellow/50"
@@ -2020,7 +2020,7 @@ function MeetingDetails() {
                   <Download className="w-4 h-4" />
                   RESOURCES
                   {meeting.resources?.length ? (
-                    <span className="px-1.5 py-0.5 rounded text-xs bg-hack-yellow/30">
+                    <span className="px-1.5 py-0.5text-xs bg-hack-yellow/30">
                       {meeting.resources.length}
                     </span>
                   ) : null}
@@ -2032,7 +2032,7 @@ function MeetingDetails() {
                 {tabs.map((tab) => (
                   <div
                     key={tab}
-                    className={`w-2 h-2 rounded-full transition-all ${
+                    className={`w-2 h-2  transition-all ${
                       activeTab === tab ? "bg-matrix w-4" : "bg-gray-600"
                     }`}
                   />
@@ -2064,7 +2064,7 @@ function MeetingDetails() {
                         meeting.announcements.map((announcement) => (
                           <div
                             key={announcement.id}
-                            className="p-4 rounded-lg bg-terminal-alt border border-gray-800"
+                            className="p-4  bg-terminal-alt border border-gray-800"
                           >
                             <div className="flex items-start justify-between gap-4 mb-2">
                               <h4 className="font-semibold text-matrix">
@@ -2101,7 +2101,7 @@ function MeetingDetails() {
                           {meeting.photos.map((photo) => (
                             <div
                               key={photo.id}
-                              className="group relative aspect-square rounded-lg overflow-hidden bg-terminal-alt border border-gray-800"
+                              className="group relative aspect-square  overflow-hidden bg-terminal-alt border border-gray-800"
                             >
                               <img
                                 src={photo.url}
@@ -2141,9 +2141,9 @@ function MeetingDetails() {
                             href={resource.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-4 p-4 rounded-lg bg-terminal-alt border border-gray-800 hover:border-hack-yellow/50 transition-colors group"
+                            className="flex items-center gap-4 p-4  bg-terminal-alt border border-gray-800 hover:border-hack-yellow/50 transition-colors group"
                           >
-                            <div className="p-2 rounded-lg bg-hack-yellow/10 text-hack-yellow">
+                            <div className="p-2  bg-hack-yellow/10 text-hack-yellow">
                               {resource.type === "slides" && (
                                 <Slides className="w-5 h-5" />
                               )}
@@ -2208,18 +2208,18 @@ function MeetingDetails() {
                 <Link
                   key={related.id}
                   to={`/meetings/${related.slug}`}
-                  className={`card-hack p-4 rounded-lg group transition-all ${
+                  className={`card-hack p-4  group transition-all ${
                     isPast(related.date) ? "opacity-70" : ""
                   }`}
                 >
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded text-xs font-terminal border ${TYPE_COLORS[related.type]}`}
+                      className={`inline-block px-2 py-0.5text-xs font-terminal border ${TYPE_COLORS[related.type]}`}
                     >
                       {TYPE_LABELS[related.type]}
                     </span>
                     {isPast(related.date) && (
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-terminal border border-gray-600 text-gray-500">
+                      <span className="inline-block px-2 py-0.5text-xs font-terminal border border-gray-600 text-gray-500">
                         PAST
                       </span>
                     )}

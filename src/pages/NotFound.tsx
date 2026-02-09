@@ -10,27 +10,27 @@ function NotFound() {
   }, [])
 
   return (
-    <div className="bg-terminal-bg text-matrix min-h-screen flex items-center justify-center px-6">
+    <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen flex items-center justify-center px-6">
       <div className={`max-w-lg w-full transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <div className="terminal-window">
           <div className="terminal-header">
             <div className="terminal-dot red" />
             <div className="terminal-dot yellow" />
             <div className="terminal-dot green" />
-            <span className="ml-4 text-xs text-gray-500 font-terminal">error_404</span>
+            <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">error_404</span>
           </div>
           <div className="terminal-body text-center py-12">
             <div className="text-6xl font-bold text-hack-red neon-text mb-4 font-terminal">
               404
             </div>
             <div className="flex items-center justify-center gap-2 mb-6">
-              <span className="text-matrix">$</span>
-              <span className="text-gray-400 font-terminal">cat /var/www/page</span>
+              <span className="text-gray-900 dark:text-matrix">$</span>
+              <span className="text-gray-600 dark:text-gray-400 font-terminal">cat /var/www/page</span>
             </div>
             <p className="text-hack-red mb-2 font-terminal">
               [ERROR] File not found
             </p>
-            <p className="text-gray-500 text-sm mb-8">
+            <p className="text-gray-600 dark:text-gray-500 text-sm mb-8">
               The page you're looking for doesn't exist or has been moved.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">

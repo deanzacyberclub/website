@@ -153,12 +153,12 @@ function ChallengeEditor() {
   // Access control
   if (!user) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="w-16 h-16 text-hack-red mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Login Required</h1>
-          <p className="text-gray-400 mb-6">You must be logged in to access this page.</p>
-          <Link to="/auth" className="btn-hack-filled rounded-lg px-6 py-3">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Login Required</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">You must be logged in to access this page.</p>
+          <Link to="/auth" className="cli-btn-filled  px-6 py-3">
             Login
           </Link>
         </div>
@@ -168,12 +168,12 @@ function ChallengeEditor() {
 
   if (!isOfficer) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="w-16 h-16 text-hack-red mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
-          <p className="text-gray-400 mb-6">Only officers can create or edit challenges.</p>
-          <Link to="/ctf/challenges" className="btn-hack-filled rounded-lg px-6 py-3">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">Only officers can create or edit challenges.</p>
+          <Link to="/ctf/challenges" className="cli-btn-filled  px-6 py-3">
             Back to Challenges
           </Link>
         </div>
@@ -183,16 +183,16 @@ function ChallengeEditor() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
-          <div className="font-terminal text-lg neon-pulse">Loading...</div>
+          <div className="font-terminal text-lg text-blue-600 dark:neon-pulse dark:text-matrix">Loading...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
@@ -200,7 +200,7 @@ function ChallengeEditor() {
         <div className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <Link
             to={isEditing ? `/ctf/challenge/${id}` : '/ctf/challenges'}
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors mb-6"
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="font-terminal text-sm">
@@ -209,7 +209,7 @@ function ChallengeEditor() {
           </Link>
 
           <h1 className="text-3xl md:text-4xl font-bold">
-            <span className="text-white">{isEditing ? 'Edit' : 'Create'}</span>{' '}
+            <span className="text-gray-900 dark:text-white">{isEditing ? 'Edit' : 'Create'}</span>{' '}
             <span className="neon-text">Challenge</span>
           </h1>
         </div>
@@ -222,14 +222,14 @@ function ChallengeEditor() {
                 <div className="terminal-dot red" />
                 <div className="terminal-dot yellow" />
                 <div className="terminal-dot green" />
-                <span className="ml-4 text-xs text-gray-500 font-terminal">
+                <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
                   {isEditing ? 'edit_challenge.sh' : 'create_challenge.sh'}
                 </span>
               </div>
               <div className="terminal-body space-y-6">
                 {/* Title */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2 font-terminal">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-terminal">
                     TITLE *
                   </label>
                   <input
@@ -237,14 +237,14 @@ function ChallengeEditor() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Challenge title..."
-                    className="w-full input-hack rounded-lg"
+                    className="w-full input-hack "
                     required
                   />
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2 font-terminal">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-terminal">
                     DESCRIPTION *
                   </label>
                   <textarea
@@ -252,7 +252,7 @@ function ChallengeEditor() {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Challenge description... (supports **bold** and `code` formatting)"
                     rows={8}
-                    className="w-full input-hack rounded-lg resize-y"
+                    className="w-full input-hack  resize-y"
                     required
                   />
                 </div>
@@ -260,13 +260,13 @@ function ChallengeEditor() {
                 {/* Category & Difficulty */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2 font-terminal">
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-terminal">
                       CATEGORY *
                     </label>
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value as CTFCategory)}
-                      className="w-full input-hack rounded-lg"
+                      className="w-full input-hack "
                     >
                       {(Object.keys(categoryInfo) as CTFCategory[]).map((cat) => (
                         <option key={cat} value={cat}>
@@ -276,7 +276,7 @@ function ChallengeEditor() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2 font-terminal">
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-terminal">
                       DIFFICULTY *
                     </label>
                     <select
@@ -286,7 +286,7 @@ function ChallengeEditor() {
                         setDifficulty(diff)
                         setPoints(difficultyInfo[diff].basePoints)
                       }}
-                      className="w-full input-hack rounded-lg"
+                      className="w-full input-hack "
                     >
                       {(Object.keys(difficultyInfo) as CTFDifficulty[]).map((diff) => (
                         <option key={diff} value={diff}>
@@ -300,7 +300,7 @@ function ChallengeEditor() {
                 {/* Points & Author */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2 font-terminal">
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-terminal">
                       POINTS
                     </label>
                     <input
@@ -309,11 +309,11 @@ function ChallengeEditor() {
                       onChange={(e) => setPoints(parseInt(e.target.value) || 0)}
                       min={0}
                       step={50}
-                      className="w-full input-hack rounded-lg"
+                      className="w-full input-hack "
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2 font-terminal">
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-terminal">
                       AUTHOR
                     </label>
                     <input
@@ -321,53 +321,53 @@ function ChallengeEditor() {
                       value={author}
                       onChange={(e) => setAuthor(e.target.value)}
                       placeholder="Challenge author..."
-                      className="w-full input-hack rounded-lg"
+                      className="w-full input-hack "
                     />
                   </div>
                 </div>
 
                 {/* Flag */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2 font-terminal">
-                    FLAG * <span className="text-gray-600">(case-insensitive)</span>
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-terminal">
+                    FLAG * <span className="text-gray-500 dark:text-gray-600">(case-insensitive)</span>
                   </label>
                   <input
                     type="text"
                     value={flag}
                     onChange={(e) => setFlag(e.target.value)}
                     placeholder="DACC{your_flag_here}"
-                    className="w-full input-hack rounded-lg font-mono"
+                    className="w-full input-hack  font-mono"
                     required
                   />
                 </div>
 
                 {/* Hint */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2 font-terminal">
-                    HINT <span className="text-gray-600">(optional)</span>
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-terminal">
+                    HINT <span className="text-gray-500 dark:text-gray-600">(optional)</span>
                   </label>
                   <textarea
                     value={hint}
                     onChange={(e) => setHint(e.target.value)}
                     placeholder="Optional hint for players..."
                     rows={3}
-                    className="w-full input-hack rounded-lg resize-y"
+                    className="w-full input-hack  resize-y"
                   />
                 </div>
 
                 {/* Solution */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2 font-terminal">
-                    SOLUTION <span className="text-gray-600">(officers only - step-by-step walkthrough)</span>
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-terminal">
+                    SOLUTION <span className="text-gray-500 dark:text-gray-600">(officers only - step-by-step walkthrough)</span>
                   </label>
                   <textarea
                     value={solution}
                     onChange={(e) => setSolution(e.target.value)}
                     placeholder="Step-by-step solution walkthrough...&#10;&#10;1. First, examine the source code...&#10;2. Notice the vulnerability in...&#10;3. Exploit by..."
                     rows={10}
-                    className="w-full input-hack rounded-lg resize-y font-mono text-sm"
+                    className="w-full input-hack  resize-y font-mono text-sm"
                   />
-                  <p className="text-xs text-gray-600 mt-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-600 mt-2">
                     Use numbered steps (1. 2. 3.), `code blocks`, and **bold** for formatting.
                   </p>
                 </div>
@@ -375,13 +375,13 @@ function ChallengeEditor() {
                 {/* Files */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm text-gray-400 font-terminal">
-                      ATTACHMENTS <span className="text-gray-600">(optional)</span>
+                    <label className="text-sm text-gray-600 dark:text-gray-400 font-terminal">
+                      ATTACHMENTS <span className="text-gray-500 dark:text-gray-600">(optional)</span>
                     </label>
                     <button
                       type="button"
                       onClick={addFile}
-                      className="text-matrix hover:text-matrix/80 text-sm flex items-center gap-1"
+                      className="text-blue-600 dark:text-matrix hover:text-blue-700 dark:hover:text-matrix/80 text-sm flex items-center gap-1"
                     >
                       <Plus className="w-4 h-4" />
                       Add File
@@ -396,19 +396,19 @@ function ChallengeEditor() {
                             value={file.name}
                             onChange={(e) => updateFile(index, 'name', e.target.value)}
                             placeholder="File name..."
-                            className="flex-1 input-hack rounded-lg text-sm"
+                            className="flex-1 input-hack  text-sm"
                           />
                           <input
                             type="text"
                             value={file.url}
                             onChange={(e) => updateFile(index, 'url', e.target.value)}
                             placeholder="File URL..."
-                            className="flex-[2] input-hack rounded-lg text-sm"
+                            className="flex-[2] input-hack  text-sm"
                           />
                           <button
                             type="button"
                             onClick={() => removeFile(index)}
-                            className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10  transition-colors"
                           >
                             <Trash className="w-4 h-4" />
                           </button>
@@ -420,8 +420,8 @@ function ChallengeEditor() {
 
                 {/* Error */}
                 {error && (
-                  <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
-                    <p className="text-red-400 text-sm">{error}</p>
+                  <div className="p-4  bg-red-50 dark:bg-red-500/10 border border-red-300 dark:border-red-500/30">
+                    <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
                   </div>
                 )}
 
@@ -430,13 +430,13 @@ function ChallengeEditor() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="flex-1 btn-hack-filled rounded-lg py-3 disabled:opacity-50"
+                    className="flex-1 cli-btn-filled  py-3 disabled:opacity-50"
                   >
                     {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Challenge'}
                   </button>
                   <Link
                     to={isEditing ? `/ctf/challenge/${id}` : '/ctf/challenges'}
-                    className="btn-hack rounded-lg px-6 py-3"
+                    className="cli-btn-dashed px-6 py-3"
                   >
                     Cancel
                   </Link>

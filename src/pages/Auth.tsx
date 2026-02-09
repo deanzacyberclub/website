@@ -216,11 +216,11 @@ function Auth() {
   // Show loading while checking auth state
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="crt-overlay" />
         <div className="text-center relative z-10">
           <div className="flex items-center gap-3 justify-center">
-            <Spinner className="animate-spin h-6 w-6 text-matrix" />
+            <Spinner className="animate-spin h-6 w-6 text-gray-900 dark:text-matrix" />
             <span className="font-terminal text-lg neon-pulse">Loading...</span>
           </div>
         </div>
@@ -236,27 +236,27 @@ function Auth() {
         <div className="terminal-dot red" />
         <div className="terminal-dot yellow" />
         <div className="terminal-dot green" />
-        <span className="ml-4 text-xs text-gray-500 font-terminal">init_auth.sh</span>
+        <span className="ml-4 text-xs text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">init_auth.sh</span>
       </div>
       <div className="terminal-body">
         {redirectTo && (
           <div className="mb-4 px-3 py-2 bg-hack-cyan/10 border border-hack-cyan/30 rounded-lg">
             <p className="text-sm text-hack-cyan font-terminal">
               <span className="text-hack-yellow">[NOTICE]</span> Sign in to continue to{' '}
-              <span className="text-matrix">{redirectTo}</span>
+              <span className="text-gray-900 dark:text-matrix">{redirectTo}</span>
             </p>
           </div>
         )}
 
-        <p className="text-sm text-gray-500 font-terminal mb-6">
-          <span className="text-matrix">&gt;</span> Choose your authentication method
+        <p className="text-sm text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal mb-6">
+          <span className="text-gray-900 dark:text-matrix">&gt;</span> Choose your authentication method
         </p>
 
         <div className="space-y-3">
           <button
             onClick={handleGitHubSignIn}
             disabled={loading}
-            className="w-full flex items-center px-4 py-3 bg-[#24292e] hover:bg-[#2f363d] border border-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center px-4 py-3 bg-[#24292e] hover:bg-[#2f363d] border border-gray-200 dark:border-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <GitHubAlt className="w-5 h-5 shrink-0" />
             <span className="font-medium flex-1 text-center">Continue with GitHub</span>
@@ -286,7 +286,7 @@ function Auth() {
         )}
 
         {loading && (
-          <div className="flex items-center justify-center gap-2 mt-4 text-gray-500">
+          <div className="flex items-center justify-center gap-2 mt-4 text-gray-700 dark:text-gray-600 dark:text-gray-500">
             <Spinner className="animate-spin h-4 w-4" />
             <span className="text-sm font-terminal">Redirecting...</span>
           </div>
@@ -301,11 +301,11 @@ function Auth() {
         <div className="terminal-dot red" />
         <div className="terminal-dot yellow" />
         <div className="terminal-dot green" />
-        <span className="ml-4 text-xs text-gray-500 font-terminal">setup_profile.sh</span>
+        <span className="ml-4 text-xs text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">setup_profile.sh</span>
       </div>
       <div className="terminal-body">
-        <p className="text-sm text-gray-500 font-terminal mb-4">
-          <span className="text-matrix">&gt;</span> Tell us about yourself
+        <p className="text-sm text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal mb-4">
+          <span className="text-gray-900 dark:text-matrix">&gt;</span> Tell us about yourself
         </p>
 
         <form onSubmit={handleProfileSubmit} className="space-y-4">
@@ -313,17 +313,17 @@ function Auth() {
           <div className="flex items-center gap-4">
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="w-20 h-20 rounded-lg bg-matrix/10 border border-matrix/30 flex items-center justify-center cursor-pointer hover:neon-box transition-shadow overflow-hidden"
+              className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center cursor-pointer hover:border-blue-500 dark:hover:neon-box transition-shadow overflow-hidden"
             >
               {profilePreview ? (
                 <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <Plus className="w-8 h-8 text-matrix/50" />
+                <Plus className="w-8 h-8 text-gray-900 dark:text-matrix/50" />
               )}
             </div>
             <div className="flex-1">
-              <p className="text-sm text-matrix font-terminal">Profile Picture</p>
-              <p className="text-xs text-gray-600">
+              <p className="text-sm text-gray-900 dark:text-matrix font-terminal">Profile Picture</p>
+              <p className="text-xs text-gray-700 dark:text-gray-600">
                 {oauthAvatarUrl && !profilePicture ? 'From your account' : '(Optional) Max 5MB'}
               </p>
               <input
@@ -337,7 +337,7 @@ function Auth() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-xs text-matrix hover:underline"
+                  className="text-xs text-gray-900 dark:text-matrix hover:underline"
                 >
                   {profilePreview ? 'Change' : 'Upload'}
                 </button>
@@ -355,7 +355,7 @@ function Auth() {
           </div>
 
           <div>
-            <label className="block text-sm mb-2 text-gray-500 font-terminal">--display-name *</label>
+            <label className="block text-sm mb-2 text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">--display-name *</label>
             <input
               type="text"
               value={displayName}
@@ -368,7 +368,7 @@ function Auth() {
           </div>
 
           <div>
-            <label className="block text-sm mb-2 text-gray-500 font-terminal">--student-id *</label>
+            <label className="block text-sm mb-2 text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">--student-id *</label>
             {/* 8 separate boxes for larger screens */}
             <div className="hidden sm:flex gap-2 justify-between">
               {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
@@ -382,7 +382,7 @@ function Auth() {
                   onChange={(e) => handleStudentIdDigitChange(index, e.target.value)}
                   onKeyDown={(e) => handleStudentIdKeyDown(index, e)}
                   onPaste={handleStudentIdPaste}
-                  className="w-10 h-12 text-center text-lg font-terminal bg-terminal-bg border border-matrix/30 rounded-lg text-matrix focus:border-matrix focus:neon-box outline-none transition-all"
+                  className="w-10 h-12 text-center text-lg font-terminal bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 rounded-lg text-gray-900 dark:text-matrix focus:border-blue-500 dark:focus:border-matrix focus:neon-box outline-none transition-all"
                 />
               ))}
             </div>
@@ -396,8 +396,8 @@ function Auth() {
               placeholder="8-digit De Anza ID"
               className="sm:hidden input-hack w-full rounded-lg"
             />
-            <p className="text-xs text-gray-600 font-terminal mt-2">
-              <span className="text-matrix">&gt;</span> De Anza Student ID
+            <p className="text-xs text-gray-700 dark:text-gray-600 font-terminal mt-2">
+              <span className="text-gray-900 dark:text-matrix">&gt;</span> De Anza Student ID
               <span className="text-hack-yellow ml-2">(cannot be changed later)</span>
             </p>
           </div>
@@ -426,22 +426,22 @@ function Auth() {
   )
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6">
         {/* Header */}
         <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-400 font-terminal">./authenticate --secure</span>
+            <span className="text-gray-900 dark:text-matrix neon-text-subtle text-lg">$</span>
+            <span className="text-gray-700 dark:text-gray-600 dark:text-gray-400 font-terminal">./authenticate --secure</span>
           </div>
 
           <h1 className="text-3xl font-bold neon-text tracking-tight mb-2">
             {step === 'signin' && 'SIGN IN'}
             {step === 'profile' && 'SETUP PROFILE'}
           </h1>
-          <p className="text-gray-500">
+          <p className="text-gray-700 dark:text-gray-600 dark:text-gray-500">
             <span className="text-hack-cyan">[INFO]</span>{' '}
             {step === 'signin' && 'Securely sign in with a supported provider'}
             {step === 'profile' && 'Complete your profile to finish registration'}

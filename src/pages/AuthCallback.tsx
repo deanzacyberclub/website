@@ -114,11 +114,11 @@ function AuthCallback() {
   }, [navigate, searchParams])
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
       <div className="crt-overlay" />
       <div className="text-center relative z-10">
         <div className="flex items-center gap-3 justify-center">
-          <Spinner className="animate-spin h-6 w-6 text-matrix" />
+          <Spinner className="animate-spin h-6 w-6 text-gray-900 dark:text-matrix" />
           <span className="font-terminal text-lg neon-pulse">Verifying...</span>
         </div>
       </div>

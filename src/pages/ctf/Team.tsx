@@ -311,12 +311,12 @@ function Team() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
         <div className="text-center">
-          <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Login Required</h1>
-          <p className="text-gray-400 mb-6">You need to be logged in to manage your CTF team.</p>
-          <Link to="/auth" className="btn-hack-filled rounded-lg px-6 py-3">
+          <Users className="w-16 h-16 text-gray-500 dark:text-gray-600 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Login Required</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">You need to be logged in to manage your CTF team.</p>
+          <Link to="/auth" className="cli-btn-filled  px-6 py-3">
             Login
           </Link>
         </div>
@@ -325,7 +325,7 @@ function Team() {
   }
 
   return (
-    <div className="min-h-screen bg-terminal-bg text-matrix">
+    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
@@ -333,21 +333,21 @@ function Team() {
         <div className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <Link
             to="/ctf"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors mb-6"
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="font-terminal text-sm">Back to CTF</span>
           </Link>
 
           <h1 className="text-3xl md:text-4xl font-bold">
-            <span className="text-white">My</span>{' '}
+            <span className="text-gray-900 dark:text-white">My</span>{' '}
             <span className="neon-text">Team</span>
           </h1>
         </div>
 
         {loading ? (
           <div className="text-center py-20">
-            <div className="font-terminal text-lg neon-pulse">Loading...</div>
+            <div className="font-terminal text-lg text-blue-600 dark:text-matrix dark:neon-pulse">Loading...</div>
           </div>
         ) : !team ? (
           /* Create Team Form */
@@ -361,9 +361,9 @@ function Team() {
               </div>
               <div className="terminal-body">
                 <div className="text-center mb-6">
-                  <Users className="w-12 h-12 text-matrix mx-auto mb-4" />
-                  <h2 className="text-xl font-bold text-white mb-2">Create Your Team</h2>
-                  <p className="text-gray-400 text-sm">
+                  <Users className="w-12 h-12 text-blue-600 dark:text-matrix mx-auto mb-4" />
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Create Your Team</h2>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
                     You must be in a team to participate in the CTF.
                     Create a team or join one with an invite link.
                   </p>
@@ -380,7 +380,7 @@ function Team() {
                       onChange={(e) => setTeamName(e.target.value)}
                       placeholder="Enter team name..."
                       maxLength={50}
-                      className="w-full input-hack rounded-lg"
+                      className="w-full input-hack "
                       required
                     />
                   </div>
@@ -392,17 +392,17 @@ function Team() {
                   <button
                     type="submit"
                     disabled={creating || !teamName.trim()}
-                    className="w-full btn-hack-filled rounded-lg py-3 disabled:opacity-50"
+                    className="w-full cli-btn-filled  py-3 disabled:opacity-50"
                   >
                     {creating ? 'Creating...' : 'Create Team'}
                   </button>
                 </form>
 
-                <div className="mt-6 pt-6 border-t border-gray-700 text-center">
-                  <p className="text-gray-500 text-sm mb-3">Have an invite code?</p>
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+                  <p className="text-gray-600 dark:text-gray-500 text-sm mb-3">Have an invite code?</p>
                   <button
                     onClick={() => navigate('/ctf/join')}
-                    className="btn-hack rounded-lg px-6 py-2 text-sm"
+                    className="cli-btn-dashed px-6 py-2 text-sm"
                   >
                     Join Existing Team
                   </button>
@@ -425,10 +425,10 @@ function Team() {
                 <div className="terminal-body">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-matrix neon-text-subtle mb-2">
+                      <h2 className="text-2xl font-bold text-blue-600 dark:text-matrix dark:neon-text-subtle mb-2">
                         {team.name}
                       </h2>
-                      <div className="flex items-center gap-4 text-gray-400 text-sm">
+                      <div className="flex items-center gap-4 text-gray-600 dark:text-gray-400 text-sm">
                         <span className="flex items-center gap-2">
                           <Users className="w-4 h-4" />
                           {team.members.length}/4 members
@@ -443,14 +443,14 @@ function Team() {
                     <div className="flex items-center gap-3">
                       <Link
                         to="/ctf/leaderboard"
-                        className="btn-hack rounded-lg px-4 py-2 text-sm flex items-center gap-2"
+                        className="cli-btn-dashed px-4 py-2 text-sm flex items-center gap-2"
                       >
                         <Trophy className="w-4 h-4" />
                         Leaderboard
                       </Link>
                       <button
                         onClick={leaveTeam}
-                        className="px-4 py-2 rounded-lg text-sm text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors flex items-center gap-2"
+                        className="px-4 py-2  text-sm text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors flex items-center gap-2"
                       >
                         <Logout className="w-4 h-4" />
                         Leave
@@ -463,17 +463,17 @@ function Team() {
 
             {/* Stats Row */}
             <div className={`grid grid-cols-3 gap-4 mb-8 transition-all duration-700 delay-150 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <div className="card-hack rounded-lg p-4 text-center">
-                <div className="text-3xl font-bold text-matrix">{stats.totalPoints}</div>
-                <div className="text-xs text-gray-500 font-terminal">POINTS</div>
+              <div className="card-hack  p-4 text-center">
+                <div className="text-3xl font-bold text-blue-600 dark:text-matrix">{stats.totalPoints}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-500 font-terminal">POINTS</div>
               </div>
-              <div className="card-hack rounded-lg p-4 text-center">
+              <div className="card-hack  p-4 text-center">
                 <div className="text-3xl font-bold text-green-400">{stats.solved}</div>
-                <div className="text-xs text-gray-500 font-terminal">SOLVED</div>
+                <div className="text-xs text-gray-600 dark:text-gray-500 font-terminal">SOLVED</div>
               </div>
-              <div className="card-hack rounded-lg p-4 text-center">
+              <div className="card-hack  p-4 text-center">
                 <div className="text-3xl font-bold text-red-400">{stats.incorrect}</div>
-                <div className="text-xs text-gray-500 font-terminal">INCORRECT</div>
+                <div className="text-xs text-gray-600 dark:text-gray-500 font-terminal">INCORRECT</div>
               </div>
             </div>
 
@@ -496,26 +496,26 @@ function Team() {
                             <img
                               src={member.user.photo_url}
                               alt={member.user.display_name}
-                              className="w-10 h-10 rounded-full border border-matrix/30"
+                              className="w-10 h-10  border border-matrix/30"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600">
+                            <div className="w-10 h-10  bg-gray-200 dark:bg-gray-700 flex items-center justify-center border border-gray-300 dark:border-gray-600">
                               <span className="text-gray-400 font-bold">
                                 {member.user?.display_name?.charAt(0).toUpperCase()}
                               </span>
                             </div>
                           )}
                           <div className="flex-1">
-                            <div className="text-white font-medium flex items-center gap-2">
+                            <div className="text-gray-900 dark:text-white font-medium flex items-center gap-2">
                               {member.user?.display_name}
                               {member.user_id === team.captain_id && (
                                 <Star className="w-4 h-4 text-yellow-400" />
                               )}
                               {member.user_id === user?.id && (
-                                <span className="text-xs text-matrix">(You)</span>
+                                <span className="text-xs text-blue-600 dark:text-matrix">(You)</span>
                               )}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-600 dark:text-gray-500">
                               {member.user_id === team.captain_id ? 'Captain' : 'Member'}
                             </div>
                           </div>
@@ -525,7 +525,7 @@ function Team() {
                               <button
                                 onClick={() => transferCaptain(member.user_id)}
                                 disabled={transferring === member.user_id}
-                                className="px-3 py-1 text-xs rounded-lg border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-colors disabled:opacity-50"
+                                className="px-3 py-1 text-xs  border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-colors disabled:opacity-50"
                                 title="Make Captain"
                               >
                                 {transferring === member.user_id ? '...' : 'Captain'}
@@ -534,7 +534,7 @@ function Team() {
                                 <button
                                   onClick={() => removeMember(member.user_id)}
                                   disabled={removingMember === member.user_id}
-                                  className="p-1 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                                  className="p-1  border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                                   title="Remove from team"
                                 >
                                   {removingMember === member.user_id ? (
@@ -551,7 +551,7 @@ function Team() {
                     </div>
 
                     {CTF_HACKATHON_ACTIVE && user?.id === team.captain_id && team.members.length > 1 && (
-                      <p className="text-xs text-yellow-400/70 mt-3 italic">
+                      <p className="text-xs text-yellow-600 dark:text-yellow-400/70 mt-3 italic">
                         Team members cannot be removed during an active CTF hackathon.
                       </p>
                     )}
@@ -563,13 +563,13 @@ function Team() {
                       const isInviteInvalid = isExpired || isUsedUp
 
                       return (
-                        <div className="mt-6 pt-4 border-t border-gray-700">
+                        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                           <div className="flex items-center justify-between mb-3">
                             <p className="text-xs text-gray-500 font-terminal">INVITE LINK</p>
                             {user?.id === team.captain_id && !isInviteInvalid && (
                               <button
                                 onClick={() => setShowInviteSettings(!showInviteSettings)}
-                                className="text-xs text-gray-400 hover:text-matrix transition-colors flex items-center gap-1"
+                                className="text-xs text-gray-400 hover:text-gray-900 dark:text-matrix transition-colors flex items-center gap-1"
                               >
                                 <Settings className="w-3 h-3" />
                                 Settings
@@ -579,9 +579,9 @@ function Team() {
 
                           {/* Invalid Invite State - Expired or Used Up */}
                           {isInviteInvalid ? (
-                            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+                            <div className="p-4  bg-red-500/10 border border-red-500/30">
                               <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-lg bg-red-500/20">
+                                <div className="p-2  bg-red-500/20">
                                   <Settings className="w-5 h-5 text-red-400" />
                                 </div>
                                 <div className="flex-1">
@@ -604,7 +604,7 @@ function Team() {
                                         setShowInviteSettings(true)
                                         setShowRegenerateDialog(true)
                                       }}
-                                      className="btn-hack-filled rounded-lg px-4 py-2 text-sm"
+                                      className="cli-btn-filled  px-4 py-2 text-sm"
                                     >
                                       Generate New Invite Link
                                     </button>
@@ -616,13 +616,13 @@ function Team() {
                             <>
                               {/* Invite Settings Panel */}
                               {showInviteSettings && user?.id === team.captain_id && (
-                                <div className="mb-4 p-3 rounded-lg bg-gray-800/50 border border-gray-700 space-y-3">
+                                <div className="mb-4 p-3  bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 space-y-3">
                                   <div>
                                     <label className="text-xs text-gray-400 block mb-1">Expires in</label>
                                     <select
                                       value={inviteExpiration}
                                       onChange={(e) => setInviteExpiration(e.target.value)}
-                                      className="w-full input-hack rounded-lg text-sm py-2"
+                                      className="w-full input-hack  text-sm py-2"
                                     >
                                       <option value="1">1 day</option>
                                       <option value="2">2 days</option>
@@ -637,7 +637,7 @@ function Team() {
                                     <select
                                       value={inviteMaxUses}
                                       onChange={(e) => setInviteMaxUses(e.target.value)}
-                                      className="w-full input-hack rounded-lg text-sm py-2"
+                                      className="w-full input-hack  text-sm py-2"
                                     >
                                       <option value="unlimited">Unlimited (until full)</option>
                                       <option value="1">1 use</option>
@@ -649,7 +649,7 @@ function Team() {
                                   </div>
                                   <button
                                     onClick={() => setShowRegenerateDialog(true)}
-                                    className="w-full px-4 py-2 text-sm rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+                                    className="w-full px-4 py-2 text-sm  border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
                                   >
                                     Regenerate Link
                                   </button>
@@ -664,11 +664,11 @@ function Team() {
                                   type="text"
                                   value={`${window.location.origin}/ctf/join/${team.invite_code}`}
                                   readOnly
-                                  className="flex-1 input-hack rounded-lg text-sm py-2"
+                                  className="flex-1 input-hack  text-sm py-2"
                                 />
                                 <button
                                   onClick={copyInviteLink}
-                                  className="btn-hack rounded-lg px-4 flex items-center gap-2"
+                                  className="cli-btn-dashed px-4 flex items-center gap-2"
                                 >
                                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                                 </button>
@@ -705,13 +705,13 @@ function Team() {
                     <span className="ml-4 text-xs text-gray-500 font-terminal">submissions.log</span>
                   </div>
                   <div className="terminal-body">
-                    <h3 className="text-sm text-gray-500 font-terminal mb-4">RECENT SUBMISSIONS</h3>
+                    <h3 className="text-sm text-gray-600 dark:text-gray-500 font-terminal mb-4">RECENT SUBMISSIONS</h3>
                     {submissions.length === 0 ? (
                       <div className="text-center py-8">
-                        <p className="text-gray-500">No submissions yet</p>
+                        <p className="text-gray-600 dark:text-gray-500">No submissions yet</p>
                         <Link
                           to="/ctf/challenges"
-                          className="inline-flex items-center gap-2 text-matrix hover:text-matrix/80 mt-2 text-sm"
+                          className="inline-flex items-center gap-2 text-blue-600 dark:text-matrix hover:text-blue-700 dark:hover:text-matrix/80 mt-2 text-sm"
                         >
                           Start solving challenges
                           <ChevronRight className="w-4 h-4" />
@@ -724,7 +724,7 @@ function Team() {
                           return (
                             <div
                               key={sub.id}
-                              className={`p-3 rounded-lg border ${
+                              className={`p-3  border ${
                                 sub.is_correct
                                   ? 'border-green-500/30 bg-green-500/5'
                                   : 'border-red-500/30 bg-red-500/5'
@@ -757,7 +757,7 @@ function Team() {
             <div className={`mt-8 text-center transition-all duration-700 delay-300 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <Link
                 to="/ctf/challenges"
-                className="btn-hack-filled rounded-lg px-8 py-4 inline-flex items-center gap-3"
+                className="cli-btn-filled  px-8 py-4 inline-flex items-center gap-3"
               >
                 Start Hacking
                 <ChevronRight className="w-5 h-5" />
