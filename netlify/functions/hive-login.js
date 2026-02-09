@@ -1,5 +1,6 @@
 // The Hive - Login API
 // Returns user UUID in response headers (VULNERABILITY: leaks UUID before MFA verification)
+import { getStore } from "@netlify/blobs";
 
 // User credentials and UUIDs (must match Demo5.tsx)
 const users = {
@@ -7,15 +8,32 @@ const users = {
     password: "test!123",
     uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     displayName: "Bad Actor",
-    mfaEnabled: false,
+    defaultMfaEnabled: false,
   },
   StanleyYelnats: {
     password: "secure!123",
     uuid: "f9e8d7c6-b5a4-3210-fedc-ba0987654321",
     displayName: "Stanley Yelnats",
-    mfaEnabled: true,
+    defaultMfaEnabled: true,
   },
 };
+
+// Default MFA status
+const defaultMfaStatus = {
+  "a1b2c3d4-e5f6-7890-abcd-ef1234567890": false, // badActor123 - MFA disabled
+  "f9e8d7c6-b5a4-3210-fedc-ba0987654321": true,  // StanleyYelnats - MFA enabled
+};
+
+// Get MFA status from Netlify Blobs (persistent storage)
+async function getMfaStatus() {
+  try {
+    const store = getStore("hive-mfa");
+    const data = await store.get("mfa-status", { type: "json" });
+    return data || { ...defaultMfaStatus };
+  } catch {
+    return { ...defaultMfaStatus };
+  }
+}
 
 export default async (req, context) => {
   const headers = {
@@ -66,6 +84,10 @@ export default async (req, context) => {
       );
     }
 
+    // Get current MFA status from persistent storage
+    const mfaStatus = await getMfaStatus();
+    const isMfaEnabled = mfaStatus[user.uuid] ?? user.defaultMfaEnabled;
+
     // VULNERABILITY: We return the user's UUID in the response headers
     // This leaks the UUID BEFORE MFA verification, allowing an attacker to:
     // 1. Log in as badActor123 (no MFA)
@@ -77,17 +99,17 @@ export default async (req, context) => {
       ...headers,
       'X-Session-Token': Buffer.from(`${username}:session:${Date.now()}`).toString('base64'),
       'X-User-UUID': user.uuid, // LEAKED! Attacker can use this
-      'X-MFA-Required': user.mfaEnabled ? 'true' : 'false',
+      'X-MFA-Required': isMfaEnabled ? 'true' : 'false',
     };
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: user.mfaEnabled ? 'MFA verification required' : 'Login successful',
+        message: isMfaEnabled ? 'MFA verification required' : 'Login successful',
         user: {
           username: username,
           displayName: user.displayName,
-          mfaRequired: user.mfaEnabled,
+          mfaRequired: isMfaEnabled,
         },
       }),
       { status: 200, headers: responseHeaders }

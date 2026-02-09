@@ -103,11 +103,29 @@ function Demo5() {
   const [showFlag, setShowFlag] = useState(false);
   const [mfaToggleLoading, setMfaToggleLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [mfaStatus, setMfaStatus] = useState<Record<string, boolean>>(getMfaStatus);
 
-  // Reset MFA status to defaults on page load
+  // Reset MFA status to defaults on page load (both localStorage and server)
   useEffect(() => {
-    resetMfaStatus();
+    const initializeDemo = async () => {
+      // Reset localStorage
+      const defaults = resetMfaStatus();
+      setMfaStatus(defaults);
+
+      // Also reset server-side state
+      try {
+        await fetch("/api/hive/mfa/reset", { method: "POST" });
+      } catch {
+        // Ignore errors - localStorage is the fallback
+      }
+    };
+    initializeDemo();
   }, []);
+
+  // Refresh MFA status from localStorage (for when API modifies it)
+  const refreshMfaStatus = () => {
+    setMfaStatus(getMfaStatus());
+  };
 
   // Login makes an API call that returns the user's UUID in response headers
   // This is the vulnerability - the UUID is leaked BEFORE MFA verification
@@ -147,8 +165,17 @@ function Demo5() {
 
       setLoggedInUser(user);
 
-      // Check if MFA is enabled for this user (by UUID)
-      if (mfaStatusByUUID[user.uuid]) {
+      // Use MFA status from the API response (server is source of truth)
+      // The API reads from Netlify Blobs which persists across requests
+      const isMfaRequired = data.user?.mfaRequired ?? true;
+
+      // Also update localStorage to match server state
+      const currentMfaStatus = getMfaStatus();
+      currentMfaStatus[user.uuid] = isMfaRequired;
+      saveMfaStatus(currentMfaStatus);
+      setMfaStatus(currentMfaStatus);
+
+      if (isMfaRequired) {
         setCurrentView("mfa");
         setGeneratedCode(null);
         setMfaCode("");
@@ -172,7 +199,9 @@ function Demo5() {
 
       setLoggedInUser(user);
 
-      if (mfaStatusByUUID[user.uuid]) {
+      const currentMfaStatus = getMfaStatus();
+      setMfaStatus(currentMfaStatus);
+      if (currentMfaStatus[user.uuid]) {
         setCurrentView("mfa");
         setGeneratedCode(null);
         setMfaCode("");
@@ -228,14 +257,15 @@ function Demo5() {
 
     setMfaToggleLoading(true);
 
-    // The action to perform
-    const newMfaState = !mfaStatusByUUID[loggedInUser.uuid];
+    // The action to perform - read current state from localStorage
+    const currentMfaStatus = getMfaStatus();
+    const newMfaState = !currentMfaStatus[loggedInUser.uuid];
 
     try {
       // Make a real fetch request that Burp Suite can intercept
       // The vulnerability: X-User-UUID header controls whose MFA gets toggled
       // An attacker can change this to StanleyYelnats' UUID to disable their MFA
-      await fetch("/api/hive/mfa/toggle", {
+      const response = await fetch("/api/hive/mfa/toggle", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -247,34 +277,31 @@ function Demo5() {
         }),
       });
 
-      // Simulate server processing - use the UUID from the header to update MFA
-      // In a real app, this would be server-side and would use the header value
-      mfaStatusByUUID[loggedInUser.uuid] = newMfaState;
+      // Get the UUID that was actually modified from the response
+      const data = await response.json();
+      if (data.success && data.uuid) {
+        // Update localStorage with the UUID from the response (simulates server state)
+        const updatedStatus = getMfaStatus();
+        updatedStatus[data.uuid] = data.mfaEnabled;
+        saveMfaStatus(updatedStatus);
+      } else {
+        // Fallback - update for the logged in user
+        const updatedStatus = getMfaStatus();
+        updatedStatus[loggedInUser.uuid] = newMfaState;
+        saveMfaStatus(updatedStatus);
+      }
 
     } catch {
-      // Expected to fail (no real backend), but the request was sent for Burp Suite to see
-      // Still update state as if it succeeded (demo purposes)
-      mfaStatusByUUID[loggedInUser.uuid] = newMfaState;
+      // If API fails, still update localStorage for demo purposes
+      const updatedStatus = getMfaStatus();
+      updatedStatus[loggedInUser.uuid] = newMfaState;
+      saveMfaStatus(updatedStatus);
     }
 
+    // Refresh the React state from localStorage
+    refreshMfaStatus();
     setMfaToggleLoading(false);
-    // Force re-render
-    setCurrentView("settings");
   };
-
-  // This function simulates what happens when Burp Suite replays a modified request
-  // It's called automatically when the page detects a state change
-  // In reality, this would be server-side logic
-  if (typeof window !== 'undefined') {
-    // @ts-expect-error - Expose function for demo purposes (simulating server-side processing)
-    window.__processHiveMfaToggle = (uuid: string, action: string) => {
-      if (uuidToUsername[uuid]) {
-        mfaStatusByUUID[uuid] = action === "enable";
-        return { success: true, message: `MFA ${action}d for UUID: ${uuid}` };
-      }
-      return { success: false, message: "Invalid UUID" };
-    };
-  }
 
   // Decoy settings that don't work
   const decoySettings = [
@@ -637,12 +664,12 @@ function Demo5() {
                     onClick={handleToggleMfa}
                     disabled={mfaToggleLoading}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      mfaStatusByUUID[loggedInUser!.uuid]
+                      mfaStatus[loggedInUser!.uuid]
                         ? "bg-red-100 text-red-700 hover:bg-red-200"
                         : "bg-green-100 text-green-700 hover:bg-green-200"
                     } ${mfaToggleLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    {mfaToggleLoading ? "..." : mfaStatusByUUID[loggedInUser!.uuid] ? "Disable MFA" : "Enable MFA"}
+                    {mfaToggleLoading ? "..." : mfaStatus[loggedInUser!.uuid] ? "Disable MFA" : "Enable MFA"}
                   </button>
                 </div>
               </div>

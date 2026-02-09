@@ -1,5 +1,6 @@
 // The Hive - MFA Toggle API
 // Vulnerable to IDOR via X-User-UUID header manipulation
+import { getStore } from "@netlify/blobs";
 
 // Known user UUIDs (must match Demo5.tsx)
 const validUUIDs = {
@@ -7,12 +8,32 @@ const validUUIDs = {
   "f9e8d7c6-b5a4-3210-fedc-ba0987654321": "StanleyYelnats",
 };
 
-// In-memory MFA status (resets on function cold start, which is fine for demo)
-// This won't persist across requests, but the demo handles state on the frontend
-const mfaStatus = {
+// Default MFA status
+const defaultMfaStatus = {
   "a1b2c3d4-e5f6-7890-abcd-ef1234567890": false, // badActor123 - MFA disabled
   "f9e8d7c6-b5a4-3210-fedc-ba0987654321": true,  // StanleyYelnats - MFA enabled
 };
+
+// Get MFA status from Netlify Blobs (persistent storage)
+async function getMfaStatus() {
+  try {
+    const store = getStore("hive-mfa");
+    const data = await store.get("mfa-status", { type: "json" });
+    return data || { ...defaultMfaStatus };
+  } catch {
+    return { ...defaultMfaStatus };
+  }
+}
+
+// Save MFA status to Netlify Blobs
+async function saveMfaStatus(status) {
+  try {
+    const store = getStore("hive-mfa");
+    await store.setJSON("mfa-status", status);
+  } catch (e) {
+    console.error("Failed to save MFA status:", e);
+  }
+}
 
 export default async (req, context) => {
   const headers = {
@@ -87,8 +108,12 @@ export default async (req, context) => {
     const newMfaState = action === 'enable';
     const username = validUUIDs[targetUUID];
 
+    // Persist the MFA status change to Netlify Blobs
+    const currentStatus = await getMfaStatus();
+    currentStatus[targetUUID] = newMfaState;
+    await saveMfaStatus(currentStatus);
+
     // Return success with info about what was changed
-    // In a real app, this would persist to a database
     return new Response(
       JSON.stringify({
         success: true,
