@@ -1,7 +1,8 @@
 // The Hive - MFA Toggle API
-// Vulnerable to IDOR via X-User-UUID header manipulation
+// Vulnerable to IDOR via base64 encoded X-Auth-Token manipulation
+// User must decode the token with Burp Decoder to find the UUID
 
-// Known user UUIDs (must match Demo5.tsx)
+// Known user UUIDs (must match Demo4.tsx)
 const validUUIDs = {
   "a1b2c3d4-e5f6-7890-abcd-ef1234567890": "badActor123",
   "f9e8d7c6-b5a4-3210-fedc-ba0987654321": "StanleyYelnats",
@@ -10,7 +11,7 @@ const validUUIDs = {
 export default async (req, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token, X-User-UUID',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Expose-Headers': 'X-MFA-Status, X-Target-UUID, X-Target-User, X-Bypass-Token',
     'Content-Type': 'application/json',
@@ -29,8 +30,9 @@ export default async (req, context) => {
   }
 
   try {
-    // Get the UUID from the header - THIS IS THE VULNERABILITY
-    const targetUUID = req.headers.get('X-User-UUID');
+    // Get the auth token from header - THIS IS THE VULNERABILITY
+    // Token format (base64): username:uuid:timestamp
+    // Attacker needs to decode it, change the UUID, and re-encode
     const authToken = req.headers.get('X-Auth-Token');
 
     if (!authToken) {
@@ -40,17 +42,28 @@ export default async (req, context) => {
       );
     }
 
-    if (!targetUUID) {
+    // Decode the auth token to extract the UUID
+    let targetUUID;
+    let tokenUsername;
+    try {
+      const decoded = Buffer.from(authToken, 'base64').toString();
+      const parts = decoded.split(':');
+      if (parts.length < 2) {
+        throw new Error('Invalid token format');
+      }
+      tokenUsername = parts[0];
+      targetUUID = parts[1]; // UUID is the second part
+    } catch (e) {
       return new Response(
-        JSON.stringify({ success: false, message: 'Missing X-User-UUID header' }),
-        { status: 400, headers }
+        JSON.stringify({ success: false, message: 'Invalid authentication token' }),
+        { status: 401, headers }
       );
     }
 
     // Check if UUID is valid
     if (!validUUIDs[targetUUID]) {
       return new Response(
-        JSON.stringify({ success: false, message: 'Invalid UUID' }),
+        JSON.stringify({ success: false, message: 'Invalid UUID in token' }),
         { status: 404, headers }
       );
     }
@@ -75,7 +88,8 @@ export default async (req, context) => {
       );
     }
 
-    // VULNERABILITY: We don't verify that the authenticated user owns this UUID
+    // VULNERABILITY: We use the UUID from the token without verifying ownership
+    // The authenticated user (tokenUsername) might not own this UUID
     const newMfaState = action === 'enable';
     const username = validUUIDs[targetUUID];
 
