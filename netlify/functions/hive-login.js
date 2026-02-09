@@ -1,6 +1,5 @@
 // The Hive - Login API
 // Returns user UUID in response headers (VULNERABILITY: leaks UUID before MFA verification)
-import { getStore } from "@netlify/blobs";
 
 // User credentials and UUIDs (must match Demo5.tsx)
 const users = {
@@ -18,21 +17,20 @@ const users = {
   },
 };
 
-// Default MFA status
-const defaultMfaStatus = {
+// In-memory MFA status (resets on function cold start)
+// This gets modified by the toggle endpoint
+let mfaStatus = {
   "a1b2c3d4-e5f6-7890-abcd-ef1234567890": false, // badActor123 - MFA disabled
   "f9e8d7c6-b5a4-3210-fedc-ba0987654321": true,  // StanleyYelnats - MFA enabled
 };
 
-// Get MFA status from Netlify Blobs (persistent storage)
-async function getMfaStatus() {
-  try {
-    const store = getStore("hive-mfa");
-    const data = await store.get("mfa-status", { type: "json" });
-    return data || { ...defaultMfaStatus };
-  } catch {
-    return { ...defaultMfaStatus };
-  }
+// Export for use by other functions
+export { mfaStatus };
+
+// Reset MFA to defaults
+export function resetMfaStatus() {
+  mfaStatus["a1b2c3d4-e5f6-7890-abcd-ef1234567890"] = false;
+  mfaStatus["f9e8d7c6-b5a4-3210-fedc-ba0987654321"] = true;
 }
 
 export default async (req, context) => {
@@ -84,8 +82,7 @@ export default async (req, context) => {
       );
     }
 
-    // Get current MFA status from persistent storage
-    const mfaStatus = await getMfaStatus();
+    // Get current MFA status (from in-memory state, modified by toggle endpoint)
     const isMfaEnabled = mfaStatus[user.uuid] ?? user.defaultMfaEnabled;
 
     // VULNERABILITY: We return the user's UUID in the response headers

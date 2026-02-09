@@ -165,15 +165,11 @@ function Demo5() {
 
       setLoggedInUser(user);
 
-      // Use MFA status from the API response (server is source of truth)
-      // The API reads from Netlify Blobs which persists across requests
-      const isMfaRequired = data.user?.mfaRequired ?? true;
-
-      // Also update localStorage to match server state
+      // Use localStorage as source of truth for MFA status
+      // This is where the toggle API response updates the state
+      // (serverless functions don't share memory, so we track state client-side)
       const currentMfaStatus = getMfaStatus();
-      currentMfaStatus[user.uuid] = isMfaRequired;
-      saveMfaStatus(currentMfaStatus);
-      setMfaStatus(currentMfaStatus);
+      const isMfaRequired = currentMfaStatus[user.uuid] ?? user.mfaEnabled;
 
       if (isMfaRequired) {
         setCurrentView("mfa");
