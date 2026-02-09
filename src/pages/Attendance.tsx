@@ -201,44 +201,46 @@ function Attendance() {
           </div>
 
           {/* User Profile */}
-          <div className="border border-gray-200 dark:border-matrix/20 p-6 mb-6 text-left">
-            <div className="flex items-center gap-4 mb-6">
-              {userProfile.photo_url ? (
-                <img
-                  src={userProfile.photo_url}
-                  alt="Profile"
-                  className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
-                />
-              ) : (
-                <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
-                  <User className="w-8 h-8 text-green-700 dark:text-matrix" />
+          {user && userProfile && (
+            <div className="border border-gray-200 dark:border-matrix/20 p-6 mb-6 text-left">
+              <div className="flex items-center gap-4 mb-6">
+                {userProfile.photo_url ? (
+                  <img
+                    src={userProfile.photo_url}
+                    alt="Profile"
+                    className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
+                    <User className="w-8 h-8 text-green-700 dark:text-matrix" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg">
+                    {userProfile.display_name}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-500 text-sm font-mono">
+                    {user.email}
+                  </p>
+                  <p className="text-gray-500 dark:text-gray-600 text-xs font-mono mt-1">
+                    ID: {userProfile?.student_id || form.studentId}
+                  </p>
                 </div>
-              )}
-              <div className="flex-1">
-                <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg">
-                  {userProfile.display_name}
-                </p>
-                <p className="text-gray-600 dark:text-gray-500 text-sm font-mono">
-                  {user.email}
-                </p>
-                <p className="text-gray-500 dark:text-gray-600 text-xs font-mono mt-1">
-                  ID: {userProfile?.student_id || form.studentId}
-                </p>
               </div>
-            </div>
 
-            {/* Stats */}
-            <div className="border-t border-gray-200 dark:border-matrix/20 pt-6">
-              <div className="text-center">
-                <p className="text-xs text-gray-500 dark:text-gray-600 font-mono uppercase tracking-widest mb-2">
-                  Total Meetings Attended
-                </p>
-                <div className="text-5xl font-bold font-mono text-green-700 dark:text-matrix">
-                  {attendanceCount}
+              {/* Stats */}
+              <div className="border-t border-gray-200 dark:border-matrix/20 pt-6">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500 dark:text-gray-600 font-mono uppercase tracking-widest mb-2">
+                    Total Meetings Attended
+                  </p>
+                  <div className="text-5xl font-bold font-mono text-green-700 dark:text-matrix">
+                    {attendanceCount}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -315,43 +317,66 @@ function Attendance() {
             style={{ transitionDelay: "200ms" }}
           >
           {/* User Identity Section */}
-          <div className="border border-gray-200 dark:border-matrix/20 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest">
-                User Session
-              </p>
-              <span className="text-xs text-green-600 dark:text-matrix font-mono">
-                AUTHENTICATED
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {userProfile.photo_url ? (
-                <img
-                  src={userProfile.photo_url}
-                  alt="Profile"
-                  className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
-                />
-              ) : (
-                <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
-                  <User className="w-8 h-8 text-green-700 dark:text-matrix" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg truncate">
-                  {userProfile.display_name}
+          {user && userProfile ? (
+            <div className="border border-gray-200 dark:border-matrix/20 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest">
+                  User Session
                 </p>
-                <div className="flex items-center gap-4 text-sm mt-1">
-                  <span className="text-gray-600 dark:text-gray-500 font-mono">
-                    ID: {userProfile.student_id}
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-600 truncate font-mono text-xs">
-                    {user.email}
-                  </span>
+                <span className="text-xs text-green-600 dark:text-matrix font-mono">
+                  AUTHENTICATED
+                </span>
+              </div>
+
+              <div className="flex items-center gap-4">
+                {userProfile.photo_url ? (
+                  <img
+                    src={userProfile.photo_url}
+                    alt="Profile"
+                    className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
+                    <User className="w-8 h-8 text-green-700 dark:text-matrix" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg truncate">
+                    {userProfile.display_name}
+                  </p>
+                  <div className="flex items-center gap-4 text-sm mt-1">
+                    <span className="text-gray-600 dark:text-gray-500 font-mono">
+                      ID: {userProfile.student_id}
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-600 truncate font-mono text-xs">
+                      {user.email}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="border border-gray-200 dark:border-matrix/20 p-6">
+              <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-4">
+                Student ID
+              </label>
+              <input
+                type="text"
+                name="studentId"
+                value={form.studentId}
+                onChange={handleChange}
+                required
+                maxLength={8}
+                className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
+                placeholder="12345678"
+                autoComplete="off"
+              />
+              <p className="text-xs mt-3 text-gray-500 dark:text-gray-600 font-mono">
+                <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
+                Enter your 8-digit student ID
+              </p>
+            </div>
+          )}
 
           {/* Secret Code */}
           <div className="border border-gray-200 dark:border-matrix/20 p-6">
