@@ -17,26 +17,12 @@ const users = {
   },
 };
 
-// Parse cookies from request
-function parseCookies(cookieHeader) {
-  const cookies = {};
-  if (!cookieHeader) return cookies;
-
-  cookieHeader.split(';').forEach(cookie => {
-    const [name, value] = cookie.trim().split('=');
-    if (name && value) {
-      cookies[name] = value;
-    }
-  });
-  return cookies;
-}
-
 export default async (req, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Bypass-Token',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Expose-Headers': 'X-User-UUID, X-Session-Token, X-MFA-Required',
     'Content-Type': 'application/json',
   };
 
@@ -81,12 +67,24 @@ export default async (req, context) => {
       );
     }
 
-    // Check if MFA was disabled via cookie (set by toggle endpoint)
-    const cookies = parseCookies(req.headers.get('Cookie'));
-    const cookieName = `mfa_disabled_${user.uuid.replace(/-/g, '')}`;
-    const mfaDisabledByCookie = cookies[cookieName] === '1';
+    // Check for bypass token in header
+    const bypassToken = req.headers.get('X-Bypass-Token');
+    let mfaBypassed = false;
 
-    const isMfaEnabled = mfaDisabledByCookie ? false : user.defaultMfaEnabled;
+    if (bypassToken) {
+      try {
+        const decoded = Buffer.from(bypassToken, 'base64').toString();
+        const [prefix, uuid, timestamp] = decoded.split(':');
+        // Check if token is valid and for this user
+        if (prefix === 'bypass' && uuid === user.uuid) {
+          mfaBypassed = true;
+        }
+      } catch {
+        // Invalid token, ignore
+      }
+    }
+
+    const isMfaEnabled = mfaBypassed ? false : user.defaultMfaEnabled;
 
     // VULNERABILITY: We return the user's UUID in the response headers
     // This leaks the UUID BEFORE MFA verification

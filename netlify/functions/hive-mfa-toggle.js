@@ -12,7 +12,7 @@ export default async (req, context) => {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token, X-User-UUID',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Expose-Headers': 'X-MFA-Status, X-Target-UUID, X-Target-User, X-Bypass-Token',
     'Content-Type': 'application/json',
   };
 
@@ -79,13 +79,10 @@ export default async (req, context) => {
     const newMfaState = action === 'enable';
     const username = validUUIDs[targetUUID];
 
-    // Set a cookie to persist the MFA state change
-    // This cookie will be read by the login endpoint
-    const cookieName = `mfa_disabled_${targetUUID.replace(/-/g, '')}`;
-    const cookieValue = newMfaState ? '0' : '1'; // 1 = disabled, 0 = enabled
-    const cookieHeader = `${cookieName}=${cookieValue}; Path=/; Max-Age=3600; SameSite=Lax`;
-
     // Return success with info about what was changed
+    // The bypass token can be used on the login page to skip MFA
+    const bypassToken = !newMfaState ? Buffer.from(`bypass:${targetUUID}:${Date.now()}`).toString('base64') : null;
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -93,15 +90,16 @@ export default async (req, context) => {
         uuid: targetUUID,
         username: username,
         mfaEnabled: newMfaState,
+        bypassToken: bypassToken,
       }),
       {
         status: 200,
         headers: {
           ...headers,
-          'Set-Cookie': cookieHeader,
           'X-MFA-Status': newMfaState ? 'enabled' : 'disabled',
           'X-Target-UUID': targetUUID,
           'X-Target-User': username,
+          'X-Bypass-Token': bypassToken || '',
         }
       }
     );

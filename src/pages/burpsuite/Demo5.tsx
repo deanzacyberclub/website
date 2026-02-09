@@ -55,6 +55,27 @@ function Demo5() {
     [userUUIDs.StanleyYelnats]: true,
   });
 
+  // Store bypass tokens received from toggle responses
+  // Initialize from localStorage to persist across page navigations
+  const [bypassTokens, setBypassTokens] = useState<Record<string, string>>(() => {
+    try {
+      const stored = localStorage.getItem('hive_bypass_tokens');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Save bypass tokens to localStorage whenever they change
+  const updateBypassTokens = (newTokens: Record<string, string>) => {
+    setBypassTokens(newTokens);
+    try {
+      localStorage.setItem('hive_bypass_tokens', JSON.stringify(newTokens));
+    } catch {
+      // localStorage not available
+    }
+  };
+
   // Login makes an API call that returns the user's UUID in response headers
   // This is the vulnerability - the UUID is leaked BEFORE MFA verification
   const handleLogin = async () => {
@@ -62,13 +83,23 @@ function Demo5() {
     setLoginError("");
 
     try {
+      // Check if we have a bypass token for this user
+      const targetUser = users[loginForm.username];
+      const bypassToken = targetUser ? bypassTokens[targetUser.uuid] : undefined;
+
+      // Build headers - include bypass token if available
+      const requestHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (bypassToken) {
+        requestHeaders["X-Bypass-Token"] = bypassToken;
+      }
+
       // Make a real API call - the response headers will contain X-User-UUID
       // Visible in Burp Suite even before MFA is completed
       const response = await fetch("/api/hive/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: requestHeaders,
         credentials: "include", // Include cookies
         body: JSON.stringify({
           username: loginForm.username,
@@ -85,7 +116,7 @@ function Demo5() {
       }
 
       // Get user from local data for UI state
-      const user = users[loginForm.username];
+      const user = targetUser;
       if (!user) {
         setLoginError("User not found");
         setLoginLoading(false);
@@ -176,6 +207,9 @@ function Demo5() {
     // Clear the MFA cookies by setting them to expire
     document.cookie = `mfa_disabled_${userUUIDs.StanleyYelnats.replace(/-/g, '')}=; Path=/; Max-Age=0`;
     document.cookie = `mfa_disabled_${userUUIDs.badActor123.replace(/-/g, '')}=; Path=/; Max-Age=0`;
+    // Clear stored bypass tokens
+    localStorage.removeItem('hive_bypass_tokens');
+    setBypassTokens({});
     setMfaStatus({
       [userUUIDs.badActor123]: false,
       [userUUIDs.StanleyYelnats]: true,
@@ -210,10 +244,25 @@ function Demo5() {
 
       const data = await response.json();
       if (data.success && data.uuid) {
+        // Update MFA status
         setMfaStatus(prev => ({
           ...prev,
           [data.uuid]: data.mfaEnabled
         }));
+
+        // If MFA was disabled and we got a bypass token, store it
+        // This token can be used to bypass MFA on login
+        if (data.bypassToken && !data.mfaEnabled) {
+          updateBypassTokens({
+            ...bypassTokens,
+            [data.uuid]: data.bypassToken
+          });
+        } else if (data.mfaEnabled) {
+          // If MFA was re-enabled, remove any stored bypass token
+          const newTokens = { ...bypassTokens };
+          delete newTokens[data.uuid];
+          updateBypassTokens(newTokens);
+        }
       } else {
         setMfaStatus(prev => ({
           ...prev,
