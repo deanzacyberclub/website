@@ -470,6 +470,13 @@ class App {
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onCheckDebounce = debounce(this.onCheck.bind(this), 200);
     this.createRenderer();
+
+    // If renderer creation failed, skip initialization
+    if (!this.renderer || !this.gl) {
+      console.warn('CircularGallery: Failed to initialize, WebGL not available');
+      return;
+    }
+
     this.createCamera();
     this.createScene();
     this.onResize();
@@ -480,14 +487,23 @@ class App {
   }
 
   createRenderer() {
-    this.renderer = new Renderer({
-      alpha: true,
-      antialias: true,
-      dpr: Math.min(window.devicePixelRatio || 1, 2),
-    });
-    this.gl = this.renderer.gl;
-    this.gl.clearColor(0, 0, 0, 0);
-    this.container.appendChild(this.renderer.gl.canvas as HTMLCanvasElement);
+    try {
+      this.renderer = new Renderer({
+        alpha: true,
+        antialias: true,
+        dpr: Math.min(window.devicePixelRatio || 1, 2),
+      });
+      this.gl = this.renderer.gl;
+      if (!this.gl) {
+        throw new Error('WebGL context not available');
+      }
+      this.gl.clearColor(0, 0, 0, 0);
+      this.container.appendChild(this.renderer.gl.canvas as HTMLCanvasElement);
+    } catch (error) {
+      console.warn('CircularGallery: WebGL not supported, skipping renderer initialization');
+      // Gracefully fail - don't throw error that would crash the app
+      return;
+    }
   }
 
   createCamera() {
@@ -608,6 +624,8 @@ class App {
   }
 
   onResize() {
+    if (!this.renderer || !this.camera) return;
+
     this.screen = {
       width: this.container.clientWidth,
       height: this.container.clientHeight,
@@ -628,6 +646,8 @@ class App {
   }
 
   update() {
+    if (!this.renderer || !this.gl) return;
+
     this.scroll.current = lerp(
       this.scroll.current,
       this.scroll.target,
@@ -660,19 +680,32 @@ class App {
   }
 
   destroy() {
-    window.cancelAnimationFrame(this.raf);
-    window.removeEventListener("resize", this.boundOnResize);
-    window.removeEventListener("mousewheel", this.boundOnWheel);
-    window.removeEventListener("wheel", this.boundOnWheel);
-    window.removeEventListener("mousedown", this.boundOnTouchDown);
-    window.removeEventListener("mousemove", this.boundOnTouchMove);
-    window.removeEventListener("mouseup", this.boundOnTouchUp);
-    window.removeEventListener("touchstart", this.boundOnTouchDown);
-    window.removeEventListener("touchmove", this.boundOnTouchMove);
-    window.removeEventListener("touchend", this.boundOnTouchUp);
+    if (this.raf) {
+      window.cancelAnimationFrame(this.raf);
+    }
+    if (this.boundOnResize) {
+      window.removeEventListener("resize", this.boundOnResize);
+    }
+    if (this.boundOnWheel) {
+      window.removeEventListener("mousewheel", this.boundOnWheel);
+      window.removeEventListener("wheel", this.boundOnWheel);
+    }
+    if (this.boundOnTouchDown) {
+      window.removeEventListener("mousedown", this.boundOnTouchDown);
+      window.removeEventListener("touchstart", this.boundOnTouchDown);
+    }
+    if (this.boundOnTouchMove) {
+      window.removeEventListener("mousemove", this.boundOnTouchMove);
+      window.removeEventListener("touchmove", this.boundOnTouchMove);
+    }
+    if (this.boundOnTouchUp) {
+      window.removeEventListener("mouseup", this.boundOnTouchUp);
+      window.removeEventListener("touchend", this.boundOnTouchUp);
+    }
     if (
       this.renderer &&
       this.renderer.gl &&
+      this.renderer.gl.canvas &&
       this.renderer.gl.canvas.parentNode
     ) {
       this.renderer.gl.canvas.parentNode.removeChild(

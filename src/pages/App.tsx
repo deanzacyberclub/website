@@ -320,29 +320,27 @@ function OfficerCard({
 // ═══════════════════════════════════════════════════════
 // MAIN APP COMPONENT
 // ═══════════════════════════════════════════════════════
+// Check WebGL support synchronously before component renders
+const checkWebGLSupport = () => {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    return !!gl;
+  } catch (e) {
+    return false;
+  }
+};
+
 function App() {
   const [loaded, setLoaded] = useState(false);
   const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([]);
-  const [supportsGallery, setSupportsGallery] = useState(true);
+  const [supportsGallery] = useState(() => checkWebGLSupport());
   const { userProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoaded(true);
     fetchRecentMeetings();
-
-    // Check if device supports WebGL
-    const checkGallerySupport = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        setSupportsGallery(!!gl);
-      } catch (e) {
-        setSupportsGallery(false);
-      }
-    };
-
-    checkGallerySupport();
   }, []);
 
   const fetchRecentMeetings = async () => {
