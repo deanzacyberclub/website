@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Shield, Lock, Key, Users, Fingerprint } from "@/lib/cyberIcon";
+import { Shield, Lock, Key, Users, Fingerprint, Clock } from "@/lib/cyberIcon";
 
 const demos = [
   {
@@ -25,17 +25,27 @@ const demos = [
   },
   {
     id: 4,
-    title: "The Hive - IDOR via UUID Manipulation",
-    description: "Exploit a social media platform's access control by manipulating Base64-encoded requests to view private profiles.",
+    title: "The Hive",
+    description: "Decoder introduction",
     path: "/burpsuite/demo4",
     icon: Users,
   },
   {
     id: 5,
-    title: "The Hive - MFA Bypass",
-    description: "Bypass Multi-Factor Authentication by exploiting broken access control on the MFA toggle endpoint.",
+    title: "MFA Bypass",
+    description: "Bypass Multi-Factor Authentication by exploiting broken access control.",
     path: "/burpsuite/demo5",
     icon: Fingerprint,
+  },
+];
+
+const previousPuzzles = [
+  {
+    id: 1,
+    title: "Week 1 - Nexus Systems Employee Portal",
+    description: "A multi-step challenge involving username enumeration, IDOR vulnerability exploitation, and request tampering to access the admin portal.",
+    path: "/puzzle/week1",
+    icon: Clock,
   },
 ];
 
@@ -84,6 +94,46 @@ function BurpSuite() {
               </Link>
             );
           })}
+        </div>
+
+        {/* Previous Puzzles Section */}
+        <div className="mt-12">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-gray-900 dark:text-matrix neon-text-subtle text-lg">$</span>
+            <span className="text-gray-600 dark:text-gray-400 font-terminal">ls ./previous_puzzles/</span>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6">
+            Previous <span className="text-gray-900 dark:text-matrix neon-text">Puzzles</span>
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {previousPuzzles.map((puzzle) => {
+              const Icon = puzzle.icon;
+              return (
+                <Link
+                  key={puzzle.id}
+                  to={puzzle.path}
+                  className="card-hack rounded-lg hover:border-matrix/60 transition-all block"
+                >
+                  <div className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-lg bg-matrix/20 border border-matrix/40 flex items-center justify-center shrink-0">
+                        <Icon className="w-6 h-6 text-gray-900 dark:text-matrix" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-matrix mb-2">
+                          {puzzle.title}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                          {puzzle.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
         {/* Instructions */}

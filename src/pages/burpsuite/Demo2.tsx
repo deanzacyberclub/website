@@ -1,39 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, Document } from "@/lib/cyberIcon";
 
-interface Document {
+interface DocumentType {
   title: string;
   content: string;
   classification: string;
 }
 
-const documents: { [key: string]: Document } = {
-  "1001": {
-    title: "Your Performance Review",
-    content: "Employee: John Smith\nRating: Meets Expectations\nSalary: $75,000\nReview Period: Q4 2025\nManager Comments: Solid performer, shows up on time.",
-    classification: "personal",
-  },
-  "1002": {
-    title: "CEO Salary Information",
-    content: "Employee: Jane Doe\nPosition: Chief Executive Officer\nBase Salary: $2,400,000\nAnnual Bonus: $500,000\nStock Options: 100,000 shares\nPerks: Company car, executive housing",
-    classification: "executive-confidential",
-  },
-  "1003": {
-    title: "Upcoming Layoffs Plan",
-    content: "Q3 2026 Restructuring Plan\n\nAction: Terminate 15% of engineering staff\nDepartments affected: Backend, DevOps, QA\nTimeline: August 2026\n\n⚠️ DO NOT DISCLOSE until official announcement\nSeverance packages prepared\nPR strategy in development",
-    classification: "board-confidential",
-  },
-  "1004": {
-    title: "Merger & Acquisition Plans",
-    content: "CONFIDENTIAL - ATTORNEY-CLIENT PRIVILEGED\n\nAcquisition Target: TechStartup Inc.\nProposed Price: $50,000,000\nDue Diligence Status: In Progress\nExpected Close: Q2 2026\n\n⚠️ Keep confidential until SEC filing\nLegal team: Wilson & Associates\nInvestment bank: Goldman Sachs",
-    classification: "legal-confidential",
-  },
-};
-
 function Demo2() {
   const [documentId, setDocumentId] = useState("");
-  const [document, setDocument] = useState<Document | null>(null);
+  const [document, setDocument] = useState<DocumentType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -75,94 +51,121 @@ function Demo2() {
   const getClassificationColor = (classification: string) => {
     switch (classification) {
       case "personal":
-        return "text-blue-400 border-blue-400/30 bg-blue-400/10";
+        return "text-blue-600 border-blue-300 bg-blue-50";
       case "executive-confidential":
-        return "text-orange-400 border-orange-400/30 bg-orange-400/10";
+        return "text-orange-600 border-orange-300 bg-orange-50";
       case "board-confidential":
-        return "text-red-400 border-red-400/30 bg-red-400/10";
+        return "text-red-600 border-red-300 bg-red-50";
       case "legal-confidential":
-        return "text-purple-400 border-purple-400/30 bg-purple-400/10";
+        return "text-purple-600 border-purple-300 bg-purple-50";
       default:
-        return "text-gray-600 dark:text-gray-400 border-gray-400/30 bg-gray-400/10";
+        return "text-gray-600 border-gray-300 bg-gray-50";
     }
   };
 
   return (
-    <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
-      <div className="crt-overlay" />
+    <div className="min-h-screen bg-gray-100">
+      {/* Top Nav */}
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-2">
+              <img src="/hive.png" alt="The Hive" className="w-8 h-8 rounded-lg" />
+              <span className="text-xl font-bold text-gray-900">The Hive</span>
+            </div>
+            <span className="text-sm text-gray-500">Document Portal</span>
+          </div>
+        </div>
+      </nav>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-20">
-        <Link
-          to="/burpsuite"
-          className="inline-flex items-center gap-2 text-gray-900 dark:text-matrix hover:text-blue-600 dark:hover:neon-text-subtle transition-all mb-8"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to Demos
-        </Link>
-
-        <div className="max-w-4xl mx-auto">
-          {/* Document Viewer */}
-          <div>
-            <div className="card-hack p-8 rounded-lg">
-              <div className="flex items-center gap-3 mb-6">
-                <Document className="w-8 h-8 text-gray-900 dark:text-matrix" />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Acme Corp</h1>
-                  <p className="text-gray-600 dark:text-gray-500 text-sm">Document Portal</p>
-                </div>
-              </div>
-
-              {!documentId && !loading ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">Click below to retrieve your performance review</p>
-                  <button
-                    onClick={handleGetMyReport}
-                    className="btn-hack-filled rounded-lg px-6 py-3 font-semibold"
-                  >
-                    Get My Performance Review
-                  </button>
-                </div>
-              ) : loading ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-600 dark:text-gray-400">Loading document...</p>
-                </div>
-              ) : error ? (
-                <div className="text-center py-12">
-                  <p className="text-red-400">{error}</p>
-                </div>
-              ) : document ? (
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-matrix">{document.title}</h2>
-                    <span
-                      className={`text-xs px-2 py-1 rounded border font-terminal uppercase ${getClassificationColor(document.classification)}`}
-                    >
-                      {document.classification}
-                    </span>
-                  </div>
-
-                  <div className="bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
-                    <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono">
-                      {document.content}
-                    </pre>
-                  </div>
-
-                  <div className="text-xs text-gray-600 dark:text-gray-500 font-mono">
-                    Document ID: {documentId}
-                  </div>
-                </div>
-              ) : null}
-
-              {documentId && (
-                <div className="mt-6 p-4 rounded-lg bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-                  <p className="text-xs text-gray-600 dark:text-gray-400 font-mono mb-2">API Endpoint:</p>
-                  <code className="text-xs text-gray-900 dark:text-matrix font-mono">
-                    GET /api/documents?id={documentId}
-                  </code>
-                </div>
-              )}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Document Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">The Hive Docs</h1>
+              <p className="text-gray-500 text-sm">Secure document portal</p>
             </div>
           </div>
+
+          {!documentId && !loading ? (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p className="text-gray-600 mb-6">Click below to retrieve your performance review</p>
+              <button
+                onClick={handleGetMyReport}
+                className="bg-amber-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-amber-600 transition-colors"
+              >
+                Get My Performance Review
+              </button>
+            </div>
+          ) : loading ? (
+            <div className="text-center py-12">
+              <svg className="animate-spin h-8 w-8 text-amber-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <p className="text-gray-500">Loading document...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <p className="text-red-500 font-medium">{error}</p>
+            </div>
+          ) : document ? (
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">{document.title}</h2>
+                <span
+                  className={`text-xs px-3 py-1 rounded-full border font-medium uppercase ${getClassificationColor(document.classification)}`}
+                >
+                  {document.classification}
+                </span>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-4">
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono">
+                  {document.content}
+                </pre>
+              </div>
+
+              <div className="text-xs text-gray-500 font-mono">
+                Document ID: {documentId}
+              </div>
+            </div>
+          ) : null}
+
+          {documentId && (
+            <div className="mt-6 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <p className="text-xs text-gray-500 font-mono mb-2">API Endpoint:</p>
+              <code className="text-xs text-amber-600 font-mono font-medium">
+                GET /api/documents?id={documentId}
+              </code>
+            </div>
+          )}
+        </div>
+
+        {/* Back link */}
+        <div className="text-center mt-8">
+          <Link
+            to="/burpsuite"
+            className="text-amber-600 hover:text-amber-700 text-sm font-medium"
+          >
+            ← Back to Burp Suite Demos
+          </Link>
         </div>
       </div>
     </div>

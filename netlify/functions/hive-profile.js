@@ -113,11 +113,11 @@ const users = {
     bio: "Pentester by day | CTF player by night | OSCP certified",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
     isPrivate: true,  // PRIVATE ACCOUNT - target for IDOR
-    followers: [1042, 1043, 1046],  // Only these users can see private content
+    followers: [1043, 1046, 1048],  // Users who follow this account (NOT alex)
     following: [1042, 1044, 1047, 1048],
     posts: 56,
     joinedDate: "2023-01-10",
-    allowedViewers: [1042, 1043, 1046],  // Users allowed to view private content
+    allowedViewers: [1043, 1046, 1048],  // Users allowed to view private content (NOT alex - he must exploit IDOR)
     publicData: {
       location: "Private",
       website: "Private",
@@ -128,7 +128,7 @@ const users = {
       phone: "+1-555-0145",
       ssn: "XXX-XX-1045",
       savedPayments: ["Amex ending in 0045"],
-      privateNotes: "FLAG: HIVE{1d0r_c4n_b33_sw33t_4s_h0n3y}",
+      privateNotes: "Red team credentials stored in secure vault - access restricted",
       secretPhotos: [
         { id: 1, url: "https://picsum.photos/seed/sarahsecret1/400/400", caption: "Red team engagement planning" },
         { id: 2, url: "https://picsum.photos/seed/sarahsecret2/400/400", caption: "Zero-day research notes" },
@@ -424,7 +424,7 @@ export default async (req, context) => {
         );
       }
 
-      // Authorized viewer - return full private data including flag
+      // Authorized viewer - return full private data (this is the "win" state)
       return new Response(
         JSON.stringify({
           success: true,
@@ -445,9 +445,7 @@ export default async (req, context) => {
               website: "https://sarah-sec.com",
               recentPhotos: user.privateData.secretPhotos
             },
-            privateData: user.privateData,
-            flag: "HIVE{1d0r_c4n_b33_sw33t_4s_h0n3y}",
-            methodology: "You exploited an IDOR vulnerability by modifying the requester_uuid in the Base64-encoded request to impersonate a user who has access to this private profile. The server trusted the UUID without validating session ownership."
+            privateData: user.privateData
           }
         }),
         { status: 200, headers: responseHeaders }

@@ -57,8 +57,6 @@ interface ProfileData {
     secretPhotos?: Photo[];
   };
   message?: string;
-  flag?: string;
-  methodology?: string;
 }
 
 interface ApiResponse {
@@ -183,8 +181,8 @@ function Demo4() {
 
           {/* Content */}
           <div className="p-6">
-            {/* Private account notice */}
-            {selectedProfile.isPrivate && selectedProfile.message && !selectedProfile.flag && (
+            {/* Private account notice - only show if no private data access */}
+            {selectedProfile.isPrivate && selectedProfile.message && !selectedProfile.privateData && (
               <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 mb-4">
                 <div className="flex items-center gap-2 text-gray-700">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -197,7 +195,7 @@ function Demo4() {
             )}
 
             {/* Followers list for private accounts - HINT for attackers */}
-            {selectedProfile.isPrivate && selectedProfile.followedBy && selectedProfile.followedBy.length > 0 && !selectedProfile.flag && (
+            {selectedProfile.isPrivate && selectedProfile.followedBy && selectedProfile.followedBy.length > 0 && !selectedProfile.privateData && (
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Followed by</h3>
                 <div className="flex flex-wrap gap-3">
@@ -214,49 +212,29 @@ function Demo4() {
               </div>
             )}
 
-            {/* Success - Flag found! */}
-            {selectedProfile.flag && (
-              <div className="bg-green-50 border-2 border-green-500 rounded-lg p-6 mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Success - Private data exposed (exploitation successful) */}
+            {selectedProfile.privateData && (
+              <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4 mb-4">
+                <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <h3 className="text-xl font-bold text-green-800">Access Granted!</h3>
-                </div>
-                <div className="bg-white border border-green-300 rounded p-4 mb-4">
-                  <p className="text-sm font-medium text-gray-600 mb-1">FLAG:</p>
-                  <code className="text-lg text-green-700 font-mono font-bold">{selectedProfile.flag}</code>
-                </div>
-                {selectedProfile.methodology && (
-                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                    <p className="text-sm font-medium text-blue-900 mb-1">Solution:</p>
-                    <p className="text-xs text-blue-800">{selectedProfile.methodology}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Private data if access granted */}
-            {selectedProfile.privateData && selectedProfile.flag && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <h3 className="font-semibold text-red-900 mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  Private Data Exposed
+                  Access Granted - Private Data Exposed!
                 </h3>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-gray-500">Email</p>
-                    <p className="font-medium text-gray-900">{selectedProfile.privateData.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Phone</p>
-                    <p className="font-medium text-gray-900">{selectedProfile.privateData.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Notes</p>
-                    <p className="font-medium text-gray-900">{selectedProfile.privateData.privateNotes}</p>
+                <div className="bg-white border border-green-300 rounded p-3 mb-3">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-gray-500">Email</p>
+                      <p className="font-medium text-gray-900">{selectedProfile.privateData.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Phone</p>
+                      <p className="font-medium text-gray-900">{selectedProfile.privateData.phone}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-gray-500">Private Notes</p>
+                      <p className="font-medium text-gray-900">{selectedProfile.privateData.privateNotes}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -312,7 +290,7 @@ function Demo4() {
             )}
 
             {/* Empty state for private accounts */}
-            {selectedProfile.isPrivate && (!selectedProfile.publicData?.recentPhotos || selectedProfile.publicData.recentPhotos.length === 0) && !selectedProfile.flag && (
+            {selectedProfile.isPrivate && (!selectedProfile.publicData?.recentPhotos || selectedProfile.publicData.recentPhotos.length === 0) && !selectedProfile.privateData && (
               <div className="text-center py-8">
                 <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />

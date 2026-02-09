@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 function Weekly() {
   const [timeLeft, setTimeLeft] = useState({
@@ -8,22 +9,22 @@ function Weekly() {
     seconds: 0,
   });
 
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
   useEffect(() => {
     const calculateTimeLeft = () => {
       // Get current time in PST
       const now = new Date();
       const pstTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
 
-      // Set target to 6 PM PST today
-      const target = new Date(pstTime);
-      target.setHours(18, 0, 0, 0);
+      // Set target to 4 PM PST on February 10, 2026
+      const target = new Date("2026-02-10T16:00:00");
+      // Adjust for PST timezone
+      const targetPST = new Date(target.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+      targetPST.setFullYear(2026, 1, 10); // February is month 1 (0-indexed)
+      targetPST.setHours(16, 0, 0, 0);
 
-      // If we've passed 6 PM today, set target to 6 PM tomorrow
-      if (pstTime >= target) {
-        target.setDate(target.getDate() + 1);
-      }
-
-      const difference = target.getTime() - pstTime.getTime();
+      const difference = targetPST.getTime() - pstTime.getTime();
 
       if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
@@ -32,8 +33,10 @@ function Weekly() {
         const seconds = Math.floor((difference / 1000) % 60);
 
         setTimeLeft({ days, hours, minutes, seconds });
+        setIsUnlocked(false);
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setIsUnlocked(true);
       }
     };
 
@@ -58,39 +61,53 @@ function Weekly() {
           </h1>
         </div>
 
-        {/* Countdown */}
+        {/* Countdown or Unlocked State */}
         <div className="card-hack p-12 rounded-lg text-center">
-          <h2 className="text-2xl font-bold text-matrix mb-8">Next Challenge Releases In</h2>
+          {isUnlocked ? (
+            <>
+              <h2 className="text-2xl font-bold text-matrix mb-8">Challenge Unlocked!</h2>
+              <Link
+                to="/puzzle/week1"
+                className="inline-block px-8 py-4 bg-matrix/20 border border-matrix text-matrix font-terminal text-lg hover:bg-matrix/30 transition-all neon-text"
+              >
+                Start Week 1 Challenge
+              </Link>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-matrix mb-8">Next Challenge Releases In</h2>
 
-          <div className="grid grid-cols-4 gap-4 max-w-3xl mx-auto mb-8">
-            <div className="card-hack p-6 rounded-lg bg-matrix/5">
-              <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
-                {String(timeLeft.days).padStart(2, '0')}
-              </div>
-              <div className="text-sm text-gray-400 uppercase tracking-wider">Days</div>
-            </div>
+              <div className="grid grid-cols-4 gap-4 max-w-3xl mx-auto mb-8">
+                <div className="card-hack p-6 rounded-lg bg-matrix/5">
+                  <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
+                    {String(timeLeft.days).padStart(2, '0')}
+                  </div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Days</div>
+                </div>
 
-            <div className="card-hack p-6 rounded-lg bg-matrix/5">
-              <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
-                {String(timeLeft.hours).padStart(2, '0')}
-              </div>
-              <div className="text-sm text-gray-400 uppercase tracking-wider">Hours</div>
-            </div>
+                <div className="card-hack p-6 rounded-lg bg-matrix/5">
+                  <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
+                    {String(timeLeft.hours).padStart(2, '0')}
+                  </div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Hours</div>
+                </div>
 
-            <div className="card-hack p-6 rounded-lg bg-matrix/5">
-              <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
-                {String(timeLeft.minutes).padStart(2, '0')}
-              </div>
-              <div className="text-sm text-gray-400 uppercase tracking-wider">Minutes</div>
-            </div>
+                <div className="card-hack p-6 rounded-lg bg-matrix/5">
+                  <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
+                    {String(timeLeft.minutes).padStart(2, '0')}
+                  </div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Minutes</div>
+                </div>
 
-            <div className="card-hack p-6 rounded-lg bg-matrix/5">
-              <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
-                {String(timeLeft.seconds).padStart(2, '0')}
+                <div className="card-hack p-6 rounded-lg bg-matrix/5">
+                  <div className="text-5xl md:text-6xl font-bold text-matrix neon-text mb-2">
+                    {String(timeLeft.seconds).padStart(2, '0')}
+                  </div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">Seconds</div>
+                </div>
               </div>
-              <div className="text-sm text-gray-400 uppercase tracking-wider">Seconds</div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
