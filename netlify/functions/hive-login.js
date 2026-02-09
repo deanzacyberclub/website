@@ -17,20 +17,18 @@ const users = {
   },
 };
 
-// In-memory MFA status (resets on function cold start)
-// This gets modified by the toggle endpoint
-let mfaStatus = {
-  "a1b2c3d4-e5f6-7890-abcd-ef1234567890": false, // badActor123 - MFA disabled
-  "f9e8d7c6-b5a4-3210-fedc-ba0987654321": true,  // StanleyYelnats - MFA enabled
-};
+// Parse cookies from request
+function parseCookies(cookieHeader) {
+  const cookies = {};
+  if (!cookieHeader) return cookies;
 
-// Export for use by other functions
-export { mfaStatus };
-
-// Reset MFA to defaults
-export function resetMfaStatus() {
-  mfaStatus["a1b2c3d4-e5f6-7890-abcd-ef1234567890"] = false;
-  mfaStatus["f9e8d7c6-b5a4-3210-fedc-ba0987654321"] = true;
+  cookieHeader.split(';').forEach(cookie => {
+    const [name, value] = cookie.trim().split('=');
+    if (name && value) {
+      cookies[name] = value;
+    }
+  });
+  return cookies;
 }
 
 export default async (req, context) => {
@@ -38,6 +36,7 @@ export default async (req, context) => {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
     'Content-Type': 'application/json',
   };
 
@@ -82,16 +81,15 @@ export default async (req, context) => {
       );
     }
 
-    // Get current MFA status (from in-memory state, modified by toggle endpoint)
-    const isMfaEnabled = mfaStatus[user.uuid] ?? user.defaultMfaEnabled;
+    // Check if MFA was disabled via cookie (set by toggle endpoint)
+    const cookies = parseCookies(req.headers.get('Cookie'));
+    const cookieName = `mfa_disabled_${user.uuid.replace(/-/g, '')}`;
+    const mfaDisabledByCookie = cookies[cookieName] === '1';
+
+    const isMfaEnabled = mfaDisabledByCookie ? false : user.defaultMfaEnabled;
 
     // VULNERABILITY: We return the user's UUID in the response headers
-    // This leaks the UUID BEFORE MFA verification, allowing an attacker to:
-    // 1. Log in as badActor123 (no MFA)
-    // 2. Try to log in as StanleyYelnats, see UUID in response headers
-    // 3. Use that UUID with the MFA toggle endpoint to disable MFA
-    // 4. Log in as StanleyYelnats successfully
-
+    // This leaks the UUID BEFORE MFA verification
     const responseHeaders = {
       ...headers,
       'X-Session-Token': Buffer.from(`${username}:session:${Date.now()}`).toString('base64'),

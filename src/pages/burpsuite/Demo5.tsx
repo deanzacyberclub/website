@@ -1,16 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 // User UUIDs - the vulnerability is that these can be discovered and swapped
 const userUUIDs: Record<string, string> = {
   badActor123: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   StanleyYelnats: "f9e8d7c6-b5a4-3210-fedc-ba0987654321",
-};
-
-// Reverse lookup - UUID to username
-const uuidToUsername: Record<string, string> = {
-  "a1b2c3d4-e5f6-7890-abcd-ef1234567890": "badActor123",
-  "f9e8d7c6-b5a4-3210-fedc-ba0987654321": "StanleyYelnats",
 };
 
 // User accounts for the demo
@@ -45,53 +39,6 @@ const users: Record<string, User> = {
   },
 };
 
-// Storage key for MFA status persistence
-const MFA_STORAGE_KEY = "hive_mfa_status";
-
-// Get MFA status from localStorage (simulates server-side persistence)
-const getMfaStatus = (): Record<string, boolean> => {
-  try {
-    const stored = localStorage.getItem(MFA_STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  // Default values
-  return {
-    [userUUIDs.badActor123]: false,
-    [userUUIDs.StanleyYelnats]: true,
-  };
-};
-
-// Save MFA status to localStorage
-const saveMfaStatus = (status: Record<string, boolean>) => {
-  localStorage.setItem(MFA_STORAGE_KEY, JSON.stringify(status));
-};
-
-// Reset MFA status to defaults
-const resetMfaStatus = () => {
-  const defaults = {
-    [userUUIDs.badActor123]: false,
-    [userUUIDs.StanleyYelnats]: true,
-  };
-  saveMfaStatus(defaults);
-  return defaults;
-};
-
-// Expose function globally so the API response handler can update MFA status
-// This simulates what would happen on a real server when the MFA toggle request is processed
-if (typeof window !== "undefined") {
-  // @ts-expect-error - Expose for API simulation
-  window.__updateHiveMfaStatus = (uuid: string, enabled: boolean) => {
-    const current = getMfaStatus();
-    current[uuid] = enabled;
-    saveMfaStatus(current);
-    return { success: true, uuid, mfaEnabled: enabled };
-  };
-}
-
 function Demo5() {
   const [currentView, setCurrentView] = useState<"login" | "mfa" | "feed" | "settings" | "success">("login");
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
@@ -103,29 +50,10 @@ function Demo5() {
   const [showFlag, setShowFlag] = useState(false);
   const [mfaToggleLoading, setMfaToggleLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
-  const [mfaStatus, setMfaStatus] = useState<Record<string, boolean>>(getMfaStatus);
-
-  // Reset MFA status to defaults on page load (both localStorage and server)
-  useEffect(() => {
-    const initializeDemo = async () => {
-      // Reset localStorage
-      const defaults = resetMfaStatus();
-      setMfaStatus(defaults);
-
-      // Also reset server-side state
-      try {
-        await fetch("/api/hive/mfa/reset", { method: "POST" });
-      } catch {
-        // Ignore errors - localStorage is the fallback
-      }
-    };
-    initializeDemo();
-  }, []);
-
-  // Refresh MFA status from localStorage (for when API modifies it)
-  const refreshMfaStatus = () => {
-    setMfaStatus(getMfaStatus());
-  };
+  const [mfaStatus, setMfaStatus] = useState<Record<string, boolean>>({
+    [userUUIDs.badActor123]: false,
+    [userUUIDs.StanleyYelnats]: true,
+  });
 
   // Login makes an API call that returns the user's UUID in response headers
   // This is the vulnerability - the UUID is leaked BEFORE MFA verification
@@ -141,6 +69,7 @@ function Demo5() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // Include cookies
         body: JSON.stringify({
           username: loginForm.username,
           password: loginForm.password,
@@ -165,11 +94,15 @@ function Demo5() {
 
       setLoggedInUser(user);
 
-      // Use localStorage as source of truth for MFA status
-      // This is where the toggle API response updates the state
-      // (serverless functions don't share memory, so we track state client-side)
-      const currentMfaStatus = getMfaStatus();
-      const isMfaRequired = currentMfaStatus[user.uuid] ?? user.mfaEnabled;
+      // Use the mfaRequired from the API response
+      // The server reads the cookie to determine if MFA was disabled
+      const isMfaRequired = data.user?.mfaRequired ?? user.mfaEnabled;
+
+      // Update local state to match
+      setMfaStatus(prev => ({
+        ...prev,
+        [user.uuid]: isMfaRequired
+      }));
 
       if (isMfaRequired) {
         setCurrentView("mfa");
@@ -185,7 +118,7 @@ function Demo5() {
         }
       }
     } catch {
-      // If API fails, fall back to client-side validation for demo purposes
+      // If API fails, fall back to client-side validation
       const user = users[loginForm.username];
       if (!user || user.password !== loginForm.password) {
         setLoginError("Invalid username or password");
@@ -195,9 +128,7 @@ function Demo5() {
 
       setLoggedInUser(user);
 
-      const currentMfaStatus = getMfaStatus();
-      setMfaStatus(currentMfaStatus);
-      if (currentMfaStatus[user.uuid]) {
+      if (mfaStatus[user.uuid]) {
         setCurrentView("mfa");
         setGeneratedCode(null);
         setMfaCode("");
@@ -242,25 +173,28 @@ function Demo5() {
   };
 
   const handleReset = () => {
-    resetMfaStatus();
+    // Clear the MFA cookies by setting them to expire
+    document.cookie = `mfa_disabled_${userUUIDs.StanleyYelnats.replace(/-/g, '')}=; Path=/; Max-Age=0`;
+    document.cookie = `mfa_disabled_${userUUIDs.badActor123.replace(/-/g, '')}=; Path=/; Max-Age=0`;
+    setMfaStatus({
+      [userUUIDs.badActor123]: false,
+      [userUUIDs.StanleyYelnats]: true,
+    });
     handleLogout();
   };
 
-  // Simulated API call for toggling MFA - makes a real fetch request for Burp Suite visibility
+  // API call for toggling MFA - makes a real fetch request for Burp Suite visibility
   // The vulnerability: X-User-UUID header can be changed to any user's UUID
   const handleToggleMfa = async () => {
     if (!loggedInUser) return;
 
     setMfaToggleLoading(true);
 
-    // The action to perform - read current state from localStorage
-    const currentMfaStatus = getMfaStatus();
-    const newMfaState = !currentMfaStatus[loggedInUser.uuid];
+    const newMfaState = !mfaStatus[loggedInUser.uuid];
 
     try {
       // Make a real fetch request that Burp Suite can intercept
       // The vulnerability: X-User-UUID header controls whose MFA gets toggled
-      // An attacker can change this to StanleyYelnats' UUID to disable their MFA
       const response = await fetch("/api/hive/mfa/toggle", {
         method: "POST",
         headers: {
@@ -268,34 +202,32 @@ function Demo5() {
           "X-Auth-Token": btoa(loggedInUser.username + ":session:" + Date.now()),
           "X-User-UUID": loggedInUser.uuid, // VULNERABLE: This determines whose MFA is toggled
         },
+        credentials: "include", // Include cookies so Set-Cookie works
         body: JSON.stringify({
           action: newMfaState ? "enable" : "disable"
         }),
       });
 
-      // Get the UUID that was actually modified from the response
       const data = await response.json();
       if (data.success && data.uuid) {
-        // Update localStorage with the UUID from the response (simulates server state)
-        const updatedStatus = getMfaStatus();
-        updatedStatus[data.uuid] = data.mfaEnabled;
-        saveMfaStatus(updatedStatus);
+        setMfaStatus(prev => ({
+          ...prev,
+          [data.uuid]: data.mfaEnabled
+        }));
       } else {
-        // Fallback - update for the logged in user
-        const updatedStatus = getMfaStatus();
-        updatedStatus[loggedInUser.uuid] = newMfaState;
-        saveMfaStatus(updatedStatus);
+        setMfaStatus(prev => ({
+          ...prev,
+          [loggedInUser.uuid]: newMfaState
+        }));
       }
 
     } catch {
-      // If API fails, still update localStorage for demo purposes
-      const updatedStatus = getMfaStatus();
-      updatedStatus[loggedInUser.uuid] = newMfaState;
-      saveMfaStatus(updatedStatus);
+      setMfaStatus(prev => ({
+        ...prev,
+        [loggedInUser.uuid]: newMfaState
+      }));
     }
 
-    // Refresh the React state from localStorage
-    refreshMfaStatus();
     setMfaToggleLoading(false);
   };
 

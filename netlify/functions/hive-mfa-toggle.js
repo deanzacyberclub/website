@@ -7,19 +7,12 @@ const validUUIDs = {
   "f9e8d7c6-b5a4-3210-fedc-ba0987654321": "StanleyYelnats",
 };
 
-// In-memory MFA status (shared state - resets on cold start)
-// Note: In serverless, this may not persist between requests, but for the demo
-// we'll also return the new state so the frontend can track it
-let mfaStatus = {
-  "a1b2c3d4-e5f6-7890-abcd-ef1234567890": false, // badActor123 - MFA disabled
-  "f9e8d7c6-b5a4-3210-fedc-ba0987654321": true,  // StanleyYelnats - MFA enabled
-};
-
 export default async (req, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token, X-User-UUID',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
     'Content-Type': 'application/json',
   };
 
@@ -37,7 +30,6 @@ export default async (req, context) => {
 
   try {
     // Get the UUID from the header - THIS IS THE VULNERABILITY
-    // The server trusts the X-User-UUID header without validating ownership
     const targetUUID = req.headers.get('X-User-UUID');
     const authToken = req.headers.get('X-Auth-Token');
 
@@ -84,12 +76,14 @@ export default async (req, context) => {
     }
 
     // VULNERABILITY: We don't verify that the authenticated user owns this UUID
-    // Any authenticated user can toggle MFA for any UUID
     const newMfaState = action === 'enable';
     const username = validUUIDs[targetUUID];
 
-    // Update in-memory state
-    mfaStatus[targetUUID] = newMfaState;
+    // Set a cookie to persist the MFA state change
+    // This cookie will be read by the login endpoint
+    const cookieName = `mfa_disabled_${targetUUID.replace(/-/g, '')}`;
+    const cookieValue = newMfaState ? '0' : '1'; // 1 = disabled, 0 = enabled
+    const cookieHeader = `${cookieName}=${cookieValue}; Path=/; Max-Age=3600; SameSite=Lax`;
 
     // Return success with info about what was changed
     return new Response(
@@ -104,6 +98,7 @@ export default async (req, context) => {
         status: 200,
         headers: {
           ...headers,
+          'Set-Cookie': cookieHeader,
           'X-MFA-Status': newMfaState ? 'enabled' : 'disabled',
           'X-Target-UUID': targetUUID,
           'X-Target-User': username,

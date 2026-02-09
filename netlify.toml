@@ -64,11 +64,6 @@
   to = "/.netlify/functions/hive-mfa-toggle"
   status = 200
 
-[[redirects]]
-  from = "/api/hive/mfa/reset"
-  to = "/.netlify/functions/hive-mfa-reset"
-  status = 200
-
 # SPA fallback for React Router (must be last)
 [[redirects]]
   from = "/*"
