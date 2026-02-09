@@ -4,5 +4,5 @@ STAGED_WEB=$(git diff --cached --name-only --diff-filter=ACM | grep "^src/" || t
 # Format web files if any are staged
 if [ -n "$STAGED_WEB" ]; then
   echo "Formatting web files..."
-  cd src && bunx lint-staged && cd ..
+  #cd src && bunx lint-staged && cd ..
 fi

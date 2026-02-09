@@ -215,32 +215,32 @@ function Meetings() {
         .filter(t => t.length > 0)
 
       const { data, error } = await supabase
-        .from('meetings')
-        .insert({
-          slug,
-          title: createForm.title.trim(),
-          description: createForm.description.trim() || 'No description provided.',
-          date: createForm.date,
-          time: createForm.time.trim(),
-          location: createForm.location.trim() || 'TBD',
-          type: createForm.type,
-          featured: createForm.featured,
-          topics: topicsArray,
-          secret_code: createForm.secret_code.trim() || null,
-          announcements: [],
-          photos: [],
-          resources: []
+        .rpc('create_meeting_for_officers', {
+          p_slug: slug,
+          p_title: createForm.title.trim(),
+          p_description: createForm.description.trim() || 'No description provided.',
+          p_date: createForm.date,
+          p_time: createForm.time.trim(),
+          p_location: createForm.location.trim() || 'TBD',
+          p_type: createForm.type,
+          p_featured: createForm.featured,
+          p_topics: topicsArray,
+          p_secret_code: createForm.secret_code.trim() || null,
+          p_announcements: [],
+          p_photos: [],
+          p_resources: []
         })
-        .select()
-        .single()
 
       if (error) throw error
 
+      // The RPC returns an array with one item
+      const newMeeting = Array.isArray(data) ? data[0] : data
+
       // Add to local state and navigate to the new meeting
-      setMeetings([data, ...meetings])
+      setMeetings([newMeeting, ...meetings])
       setShowCreateModal(false)
       setCreateForm(defaultCreateForm)
-      navigate(`/meetings/${data.slug}`)
+      navigate(`/meetings/${newMeeting.slug}`)
     } catch (err) {
       console.error('Error creating meeting:', err)
       if (err instanceof Error && err.message.includes('duplicate')) {
@@ -271,8 +271,8 @@ function Meetings() {
       {/* Create Meeting Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80">
-          <div className="terminal-window w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="terminal-header sticky top-0 z-10 bg-terminal-header">
+          <div className="terminal-window w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="terminal-header flex-shrink-0">
               <div className="terminal-dot red" />
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
@@ -288,7 +288,7 @@ function Meetings() {
                 <Close className="w-5 h-5" />
               </button>
             </div>
-            <div className="terminal-body space-y-6">
+            <div className="terminal-body space-y-6 overflow-y-auto flex-1">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-matrix">Create New Meeting</h2>
               </div>
