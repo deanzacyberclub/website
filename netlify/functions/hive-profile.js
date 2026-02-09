@@ -453,11 +453,13 @@ export default async (req, context) => {
     }
 
     // Public profile - return standard public data
+    // VULNERABILITY: UUID is leaked in the response - attacker can use this to impersonate the user
     return new Response(
       JSON.stringify({
         success: true,
         profile: {
           uid: user.uid,
+          uuid: user.uuid,  // Leaked! Attacker can steal this and use it to access private profiles
           username: user.username,
           displayName: user.displayName,
           bio: user.bio,

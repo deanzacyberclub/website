@@ -53,6 +53,12 @@
   to = "/.netlify/functions/hive-profile"
   status = 200
 
+# MFA Bypass (Demo 5) API Endpoints
+[[redirects]]
+  from = "/api/hive/mfa/toggle"
+  to = "/.netlify/functions/hive-mfa-toggle"
+  status = 200
+
 # SPA fallback for React Router (must be last)
 [[redirects]]
   from = "/*"

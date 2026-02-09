@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 // User UUIDs - the vulnerability is that these can be discovered and swapped
@@ -69,6 +69,11 @@ function Demo5() {
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [showFlag, setShowFlag] = useState(false);
   const [mfaToggleLoading, setMfaToggleLoading] = useState(false);
+
+  // Reset MFA status to defaults on page load
+  useEffect(() => {
+    resetMfaStatus();
+  }, []);
 
   const handleLogin = () => {
     const user = users[loginForm.username];
@@ -317,17 +322,29 @@ function Demo5() {
                 maxLength={6}
               />
 
-              <button
-                onClick={handleGenerateMfaCode}
-                className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
-              >
-                Generate Auth Code (Simulated)
-              </button>
-
-              {generatedCode && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                  <p className="text-sm text-green-700">Your code: <span className="font-mono font-bold text-lg">{generatedCode}</span></p>
+              {loggedInUser?.username === "StanleyYelnats" ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                  <p className="text-sm text-red-700">
+                    <span className="font-semibold">Authentication device not available.</span>
+                    <br />
+                    Contact support if you've lost access to your authenticator.
+                  </p>
                 </div>
+              ) : (
+                <>
+                  <button
+                    onClick={handleGenerateMfaCode}
+                    className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
+                  >
+                    Generate Auth Code (Simulated)
+                  </button>
+
+                  {generatedCode && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                      <p className="text-sm text-green-700">Your code: <span className="font-mono font-bold text-lg">{generatedCode}</span></p>
+                    </div>
+                  )}
+                </>
               )}
 
               {mfaError && (
