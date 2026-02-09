@@ -19,6 +19,7 @@ import {
   Flag,
 } from "@/lib/cyberIcon";
 import { supabase } from "@/lib/supabase";
+import CircularGallery from "@/components/CircularGallery";
 import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -83,7 +84,9 @@ function StatsBar({ loaded }: { loaded: boolean }) {
             <p className="font-mono text-3xl md:text-4xl font-bold text-green-700 dark:text-matrix dark:neon-text-subtle">
               {stat.value}
             </p>
-            <p className="font-mono text-xs text-gray-500 dark:text-gray-600 mt-1">{stat.sub}</p>
+            <p className="font-mono text-xs text-gray-500 dark:text-gray-600 mt-1">
+              {stat.sub}
+            </p>
           </div>
         ))}
       </div>
@@ -205,11 +208,17 @@ function FAQSection({ loaded }: { loaded: boolean }) {
             </p>
             <p className="pl-4">
               <span className="text-green-600 dark:text-matrix/70">--all</span>{" "}
-              <span className="text-gray-500 dark:text-gray-600">Display all questions</span>
+              <span className="text-gray-500 dark:text-gray-600">
+                Display all questions
+              </span>
             </p>
             <p className="pl-4">
-              <span className="text-green-600 dark:text-matrix/70">--verbose</span>{" "}
-              <span className="text-gray-500 dark:text-gray-600">Show detailed answers</span>
+              <span className="text-green-600 dark:text-matrix/70">
+                --verbose
+              </span>{" "}
+              <span className="text-gray-500 dark:text-gray-600">
+                Show detailed answers
+              </span>
             </p>
           </div>
         </div>
@@ -283,7 +292,9 @@ function OfficerCard({
           <p className="text-xs text-gray-500 dark:text-matrix/50 font-mono uppercase tracking-widest">
             {role}
           </p>
-          <p className="text-green-700 dark:text-matrix font-mono font-semibold text-sm">{name}</p>
+          <p className="text-green-700 dark:text-matrix font-mono font-semibold text-sm">
+            {name}
+          </p>
         </div>
       </div>
       {links && links.length > 0 && (
@@ -362,15 +373,16 @@ function App() {
             {/* Status text */}
             {authLoading ? (
               <p className="font-mono text-sm text-gray-600 dark:text-matrix/60 mb-8">
-                <span className="text-green-700 dark:text-matrix">&gt;</span> INITIALIZING SECURITY
-                PROTOCOLS...
+                <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
+                INITIALIZING SECURITY PROTOCOLS...
               </p>
             ) : userProfile ? (
               <button
                 onClick={() => navigate("/dashboard")}
                 className="font-mono text-sm text-gray-600 dark:text-matrix/60 hover:text-green-700 dark:hover:text-matrix transition-colors mb-8 group"
               >
-                <span className="text-green-700 dark:text-matrix">&gt;</span> WELCOME,{" "}
+                <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
+                WELCOME,{" "}
                 <span className="text-green-700 dark:text-matrix uppercase group-hover:underline">
                   {userProfile.display_name}
                 </span>
@@ -561,7 +573,8 @@ function App() {
                         De Anza College
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-green-700 dark:text-matrix" />6 Hours
+                        <Clock className="w-3 h-3 text-green-700 dark:text-matrix" />
+                        6 Hours
                       </span>
                     </div>
                   </div>
@@ -658,6 +671,32 @@ function App() {
 
           {/* ── FAQ ── */}
           <FAQSection loaded={loaded} />
+
+          <section
+            className={`transition-all duration-700 delay-250 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          >
+            <div className="border-t border-b border-dashed border-gray-300 dark:border-matrix/30 py-8 mb-8">
+              <h2 className="font-mono text-4xl md:text-5xl font-bold text-green-700 dark:text-matrix uppercase text-center mb-3 tracking-wide">
+                THE EXPERIENCE
+              </h2>
+              <p className="font-mono text-sm text-gray-600 dark:text-matrix/60 text-center">
+                See our meetings for yourself
+              </p>
+            </div>
+
+            <div style={{ height: "600px", position: "relative" }}>
+              <CircularGallery
+                bend={3}
+                textColor="#ffffff"
+                borderRadius={0.05}
+                scrollEase={0.02}
+                bend={1}
+                borderRadius={0.05}
+                scrollSpeed={2}
+                scrollEase={0.05}
+              />
+            </div>
+          </section>
         </div>
       </div>
     </div>
