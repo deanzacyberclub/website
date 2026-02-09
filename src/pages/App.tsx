@@ -323,12 +323,26 @@ function OfficerCard({
 function App() {
   const [loaded, setLoaded] = useState(false);
   const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([]);
+  const [supportsGallery, setSupportsGallery] = useState(true);
   const { userProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoaded(true);
     fetchRecentMeetings();
+
+    // Check if device supports WebGL
+    const checkGallerySupport = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        setSupportsGallery(!!gl);
+      } catch (e) {
+        setSupportsGallery(false);
+      }
+    };
+
+    checkGallerySupport();
   }, []);
 
   const fetchRecentMeetings = async () => {
@@ -672,31 +686,34 @@ function App() {
           {/* ── FAQ ── */}
           <FAQSection loaded={loaded} />
 
-          <section
-            className={`transition-all duration-700 delay-250 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-          >
-            <div className="border-t border-b border-dashed border-gray-300 dark:border-matrix/30 py-8 mb-8">
-              <h2 className="font-mono text-4xl md:text-5xl font-bold text-green-700 dark:text-matrix uppercase text-center mb-3 tracking-wide">
-                THE EXPERIENCE
-              </h2>
-              <p className="font-mono text-sm text-gray-600 dark:text-matrix/60 text-center">
-                See our meetings for yourself
-              </p>
-            </div>
+          {/* ── GALLERY ── Only show on supported devices */}
+          {supportsGallery && (
+            <section
+              className={`transition-all duration-700 delay-250 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            >
+              <div className="border-t border-b border-dashed border-gray-300 dark:border-matrix/30 py-8 mb-8">
+                <h2 className="font-mono text-4xl md:text-5xl font-bold text-green-700 dark:text-matrix uppercase text-center mb-3 tracking-wide">
+                  THE EXPERIENCE
+                </h2>
+                <p className="font-mono text-sm text-gray-600 dark:text-matrix/60 text-center">
+                  See our meetings for yourself
+                </p>
+              </div>
 
-            <div style={{ height: "600px", position: "relative" }}>
-              <CircularGallery
-                bend={3}
-                textColor="#ffffff"
-                borderRadius={0.05}
-                scrollEase={0.02}
-                bend={1}
-                borderRadius={0.05}
-                scrollSpeed={2}
-                scrollEase={0.05}
-              />
-            </div>
-          </section>
+              <div style={{ height: "600px", position: "relative" }}>
+                <CircularGallery
+                  bend={3}
+                  textColor="#ffffff"
+                  borderRadius={0.05}
+                  scrollEase={0.02}
+                  bend={1}
+                  borderRadius={0.05}
+                  scrollSpeed={2}
+                  scrollEase={0.05}
+                />
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </div>
