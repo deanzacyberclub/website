@@ -1,0 +1,8 @@
+# Get staged files
+STAGED_WEB=$(git diff --cached --name-only --diff-filter=ACM | grep "^src/" || true)
+
+# Format web files if any are staged
+if [ -n "$STAGED_WEB" ]; then
+  echo "Formatting web files..."
+  cd src && bunx lint-staged && cd ..
+fi
