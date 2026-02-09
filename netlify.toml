@@ -55,6 +55,11 @@
 
 # MFA Bypass (Demo 5) API Endpoints
 [[redirects]]
+  from = "/api/hive/login"
+  to = "/.netlify/functions/hive-login"
+  status = 200
+
+[[redirects]]
   from = "/api/hive/mfa/toggle"
   to = "/.netlify/functions/hive-mfa-toggle"
   status = 200

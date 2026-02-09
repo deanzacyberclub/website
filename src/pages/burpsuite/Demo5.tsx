@@ -69,36 +69,91 @@ function Demo5() {
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [showFlag, setShowFlag] = useState(false);
   const [mfaToggleLoading, setMfaToggleLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   // Reset MFA status to defaults on page load
   useEffect(() => {
     resetMfaStatus();
   }, []);
 
-  const handleLogin = () => {
-    const user = users[loginForm.username];
-    if (!user || user.password !== loginForm.password) {
-      setLoginError("Invalid username or password");
-      return;
-    }
-
-    setLoggedInUser(user);
+  // Login makes an API call that returns the user's UUID in response headers
+  // This is the vulnerability - the UUID is leaked BEFORE MFA verification
+  const handleLogin = async () => {
+    setLoginLoading(true);
     setLoginError("");
 
-    // Check if MFA is enabled for this user (by UUID)
-    if (mfaStatusByUUID[user.uuid]) {
-      setCurrentView("mfa");
-      setGeneratedCode(null);
-      setMfaCode("");
-    } else {
-      // If logging in as Stanley after disabling MFA, show success
-      if (loginForm.username === "StanleyYelnats") {
-        setShowFlag(true);
-        setCurrentView("success");
+    try {
+      // Make a real API call - the response headers will contain X-User-UUID
+      // Visible in Burp Suite even before MFA is completed
+      const response = await fetch("/api/hive/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: loginForm.username,
+          password: loginForm.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setLoginError(data.message || "Invalid username or password");
+        setLoginLoading(false);
+        return;
+      }
+
+      // Get user from local data for UI state
+      const user = users[loginForm.username];
+      if (!user) {
+        setLoginError("User not found");
+        setLoginLoading(false);
+        return;
+      }
+
+      setLoggedInUser(user);
+
+      // Check if MFA is enabled for this user (by UUID)
+      if (mfaStatusByUUID[user.uuid]) {
+        setCurrentView("mfa");
+        setGeneratedCode(null);
+        setMfaCode("");
       } else {
-        setCurrentView("feed");
+        // If logging in as Stanley after disabling MFA, show success
+        if (loginForm.username === "StanleyYelnats") {
+          setShowFlag(true);
+          setCurrentView("success");
+        } else {
+          setCurrentView("feed");
+        }
+      }
+    } catch {
+      // If API fails, fall back to client-side validation for demo purposes
+      const user = users[loginForm.username];
+      if (!user || user.password !== loginForm.password) {
+        setLoginError("Invalid username or password");
+        setLoginLoading(false);
+        return;
+      }
+
+      setLoggedInUser(user);
+
+      if (mfaStatusByUUID[user.uuid]) {
+        setCurrentView("mfa");
+        setGeneratedCode(null);
+        setMfaCode("");
+      } else {
+        if (loginForm.username === "StanleyYelnats") {
+          setShowFlag(true);
+          setCurrentView("success");
+        } else {
+          setCurrentView("feed");
+        }
       }
     }
+
+    setLoginLoading(false);
   };
 
   const handleGenerateMfaCode = () => {
@@ -263,9 +318,10 @@ function Demo5() {
 
             <button
               onClick={handleLogin}
-              className="w-full bg-amber-500 text-white py-3 rounded-lg font-semibold hover:bg-amber-600 transition-colors"
+              disabled={loginLoading}
+              className={`w-full bg-amber-500 text-white py-3 rounded-lg font-semibold hover:bg-amber-600 transition-colors ${loginLoading ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              Sign In
+              {loginLoading ? "Signing In..." : "Sign In"}
             </button>
           </div>
 
