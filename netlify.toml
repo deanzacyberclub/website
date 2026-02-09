@@ -47,6 +47,12 @@
   to = "/.netlify/functions/puzzle-week1-employees"
   status = 200
 
+# The Hive (Demo 4) API Endpoints
+[[redirects]]
+  from = "/api/burpsuite/hive/profile"
+  to = "/.netlify/functions/hive-profile"
+  status = 200
+
 # SPA fallback for React Router (must be last)
 [[redirects]]
   from = "/*"

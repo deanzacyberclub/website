@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Shield, Lock, Key } from "@/lib/cyberIcon";
+import { Shield, Lock, Key, Users, Fingerprint } from "@/lib/cyberIcon";
 
 const demos = [
   {
@@ -22,6 +22,20 @@ const demos = [
     description: "Automate attacks to enumerate valid usernames by analyzing different error message responses.",
     path: "/burpsuite/demo3",
     icon: Shield,
+  },
+  {
+    id: 4,
+    title: "The Hive - IDOR via UUID Manipulation",
+    description: "Exploit a social media platform's access control by manipulating Base64-encoded requests to view private profiles.",
+    path: "/burpsuite/demo4",
+    icon: Users,
+  },
+  {
+    id: 5,
+    title: "The Hive - MFA Bypass",
+    description: "Bypass Multi-Factor Authentication by exploiting broken access control on the MFA toggle endpoint.",
+    path: "/burpsuite/demo5",
+    icon: Fingerprint,
   },
 ];
 
