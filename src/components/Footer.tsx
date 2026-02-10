@@ -9,7 +9,9 @@ function Footer({ className = "" }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className={`border-t border-gray-200 dark:border-matrix/20 ${className}`}>
+    <footer
+      className={`border-t border-gray-200 dark:border-matrix/20 ${className}`}
+    >
       {/* Top status bar */}
       <div className="border-b border-gray-200 dark:border-matrix/20 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between font-mono text-[10px] text-gray-500 dark:text-gray-600 uppercase tracking-wider flex-wrap gap-2">
@@ -115,10 +117,12 @@ function Footer({ className = "" }: FooterProps) {
 
         {/* Bottom copyright */}
         <div className="border-t border-gray-200 dark:border-matrix/20 pt-6">
-          <p className="font-mono text-xs text-gray-500 dark:text-gray-600 text-center uppercase tracking-wider">
-            © {currentYear} DE ANZA CYBERSECURITY CLUB. MADE WITH 💖 FROM
-            CUPERTINO.
-          </p>
+          <div className="flex flex-col items-center gap-3">
+            <p className="font-mono text-xs text-gray-500 dark:text-gray-600 text-center uppercase tracking-wider">
+              © {currentYear} DE ANZA CYBERSECURITY CLUB. MADE WITH 💖 FROM
+              CUPERTINO.
+            </p>
+          </div>
         </div>
       </div>
     </footer>

@@ -142,14 +142,11 @@ function Meetings() {
       )
     }
 
-    // Sort by date (upcoming first for 'all' and 'upcoming', past first for 'past')
+    // Sort by date (most recent first for all filters)
     filtered.sort((a, b) => {
       const dateA = parseLocalDate(a.date).getTime()
       const dateB = parseLocalDate(b.date).getTime()
-      if (filter === 'past') {
-        return dateB - dateA // Most recent past first
-      }
-      return dateA - dateB // Soonest upcoming first
+      return dateB - dateA // Most recent first
     })
 
     return filtered
