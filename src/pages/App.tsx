@@ -323,8 +323,9 @@ function OfficerCard({
 // Check WebGL support synchronously before component renders
 const checkWebGLSupport = () => {
   try {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    const canvas = document.createElement("canvas");
+    const gl =
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
     return !!gl;
   } catch (e) {
     return false;
@@ -677,7 +678,8 @@ function App() {
                   },
                 ]}
               />
-              <OfficerCard name="Mobin Norouzi" role="Curriculum Lead" />
+              <OfficerCard name="Mobin Norouzi" role="Treasurer" />
+              <OfficerCard name="Ollin Ruiz" role="Curriculum Lead" />
             </div>
           </section>
 
