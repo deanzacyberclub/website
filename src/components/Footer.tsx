@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import ThemeSelector from "./ThemeSelector";
 
 interface FooterProps {
   className?: string;
@@ -113,6 +114,11 @@ function Footer({ className = "" }: FooterProps) {
               </li>
             </ul>
           </div>
+        </div>
+
+        {/* Theme Selector */}
+        <div className="border-t border-gray-200 dark:border-matrix/20 pt-6 pb-6 flex justify-center">
+          <ThemeSelector />
         </div>
 
         {/* Bottom copyright */}

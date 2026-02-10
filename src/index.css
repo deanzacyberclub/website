@@ -2,6 +2,9 @@
 
 @import "tailwindcss";
 
+/* Enable class-based dark mode */
+@variant dark (.dark &);
+
 @theme {
     /* Fonts */
     --font-mono: "Fira Code", "Share Tech Mono", monospace;

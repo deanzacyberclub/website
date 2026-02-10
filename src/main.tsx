@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Layout from "@/components/Layout";
 import ScrollToTop from "@/components/ScrollToTop";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -47,11 +48,12 @@ const LoadingFallback = () => (
 
 ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
   <React.StrictMode>
-    <AuthProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
             <Route element={<Layout />}>
               {/* Public routes */}
               <Route path="/" element={<App />} />
@@ -95,9 +97,10 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
 
               <Route path="*" element={<NotFound />} />
             </Route>
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </AuthProvider>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   </React.StrictMode>,
 );
