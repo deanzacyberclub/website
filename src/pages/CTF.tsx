@@ -85,7 +85,7 @@ function CTF() {
             <div className="flex flex-wrap items-center justify-center gap-6 text-gray-600 dark:text-gray-400 mb-10">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600 dark:text-matrix" />
-                <span className="font-terminal">TBA 2026</span>
+                <span className="font-terminal">March 6, 2026</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-blue-600 dark:text-matrix" />
@@ -99,26 +99,19 @@ function CTF() {
 
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
-                to="/ctf/challenges"
+                to="/ctf/team"
                 className="cli-btn-filled px-8 py-4 text-lg flex items-center gap-3"
               >
-                <Code className="w-5 h-5" />
-                Start Hacking
+                <Users className="w-5 h-5" />
+                Create Team
                 <ChevronRight className="w-5 h-5" />
               </Link>
               <Link
-                to="/ctf/team"
+                to="/ctf/join"
                 className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
               >
                 <Users className="w-5 h-5" />
-                My Team
-              </Link>
-              <Link
-                to="/ctf/leaderboard"
-                className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
-              >
-                <Trophy className="w-5 h-5" />
-                Leaderboard
+                Join Team
               </Link>
             </div>
           </div>
@@ -354,16 +347,23 @@ function CTF() {
                   Ready to Compete?
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-                  Test your skills with two tracks: Web Exploitation and OSINT.
-                  Challenges for all skill levels!
+                  Form your team now! Compete in Web Exploitation and OSINT
+                  tracks on March 6, 2026.
                 </p>
                 <div className="flex flex-wrap gap-4 justify-center">
                   <Link
-                    to="/ctf/challenges"
+                    to="/ctf/team"
                     className="cli-btn-filled px-8 py-4 flex items-center gap-3"
                   >
-                    <Code className="w-5 h-5" />
-                    View All Challenges
+                    <Users className="w-5 h-5" />
+                    Create Team
+                  </Link>
+                  <Link
+                    to="/ctf/join"
+                    className="cli-btn-dashed px-8 py-4 flex items-center gap-3"
+                  >
+                    <Users className="w-5 h-5" />
+                    Join Team
                   </Link>
                   <a
                     href="https://discord.gg/v5JWDrZVNp"
