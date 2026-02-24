@@ -11,26 +11,46 @@ import {
   Discord,
   ChevronRight,
   Shield,
+  Star,
 } from "@/lib/cyberIcon";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 function CTF() {
   const [loaded, setLoaded] = useState(false);
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
+  const { user } = useAuth();
+  const [hasTeam, setHasTeam] = useState(false);
 
   useEffect(() => {
     setLoaded(true);
   }, []);
 
+  useEffect(() => {
+    if (!user) {
+      setHasTeam(false);
+      return;
+    }
+    supabase
+      .from("ctf_team_members")
+      .select("team_id")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        setHasTeam(!!data);
+      });
+  }, [user]);
+
   const faqs = [
     {
       question: "What is a CTF?",
       answer:
-        'Capture The Flag (CTF) is a cybersecurity competition where participants solve security challenges to find "flags" - secret strings hidden in vulnerable systems. Our CTF features two tracks: Web Exploitation and OSINT.',
+        'Capture The Flag (CTF) is a cybersecurity competition where participants solve security challenges to find "flags" - secret strings hidden in vulnerable systems. Our CTF features three tracks: Web Exploitation, OSINT, and Reverse Engineering.',
     },
     {
       question: "Do I need experience?",
       answer:
-        "No! We welcome all skill levels. Both tracks include challenges designed for beginners, plus mentors will be on-site to help you learn. This is a great entry point into cybersecurity competitions.",
+        "No! We welcome all skill levels. All three tracks include challenges designed for beginners, plus mentors will be on-site to help you learn. This is a great entry point into cybersecurity competitions.",
     },
     {
       question: "What should I bring?",
@@ -43,14 +63,14 @@ function CTF() {
         "Yes! You can compete solo or in teams of up to 4 people. Teamwork is encouraged, especially for beginners. Find teammates on our Discord!",
     },
     {
-      question: "What are the two tracks?",
+      question: "What are the three tracks?",
       answer:
-        "Web Exploitation focuses on finding vulnerabilities in web applications, while OSINT (Open Source Intelligence) challenges you to gather information using publicly available data and resources.",
+        "Web Exploitation focuses on finding vulnerabilities in web applications. OSINT (Open Source Intelligence) challenges you to gather information using publicly available data and resources. Reverse Engineering involves analyzing compiled programs and binaries to understand how they work and uncover hidden flags.",
     },
     {
       question: "What are the prizes?",
       answer:
-        "Over $500 in prizes! 1st place wins the grand prize, with awards for 2nd and 3rd place teams. There may also be special category awards. Full details announced closer to the event.",
+        "Over $500 in prizes! 1st place wins the grand prize, with awards for 2nd and 3rd place teams. There may also be special category awards.",
     },
   ];
 
@@ -66,7 +86,7 @@ function CTF() {
           <div className="max-w-5xl mx-auto px-6 text-center">
             <div className="mb-6">
               <span className="inline-block px-4 py-2 bg-blue-100 dark:bg-matrix/20 border border-blue-300 dark:border-matrix/50 text-blue-700 dark:text-matrix text-sm font-terminal mb-4">
-                TWO TRACKS: WEB EXPLOITATION & OSINT
+                THREE TRACKS: WEB EXPLOITATION, OSINT & REVERSE ENGINEERING
               </span>
             </div>
 
@@ -98,21 +118,50 @@ function CTF() {
             </div>
 
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link
-                to="/ctf/team"
-                className="cli-btn-filled px-8 py-4 text-lg flex items-center gap-3"
-              >
-                <Users className="w-5 h-5" />
-                Create Team
-                <ChevronRight className="w-5 h-5" />
-              </Link>
-              <Link
-                to="/ctf/join"
-                className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
-              >
-                <Users className="w-5 h-5" />
-                Join Team
-              </Link>
+              {hasTeam ? (
+                <>
+                  <Link
+                    to="/ctf/leaderboard"
+                    className="cli-btn-filled px-8 py-4 text-lg flex items-center gap-3"
+                  >
+                    <Star className="w-5 h-5" />
+                    Leaderboard
+                    <ChevronRight className="w-5 h-5" />
+                  </Link>
+                  <Link
+                    to="/ctf/challenges"
+                    className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
+                  >
+                    <Code className="w-5 h-5" />
+                    Challenges
+                  </Link>
+                  <Link
+                    to="/ctf/team"
+                    className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
+                  >
+                    <Users className="w-5 h-5" />
+                    My Team
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/ctf/team"
+                    className="cli-btn-filled px-8 py-4 text-lg flex items-center gap-3"
+                  >
+                    <Users className="w-5 h-5" />
+                    Create Team
+                    <ChevronRight className="w-5 h-5" />
+                  </Link>
+                  <Link
+                    to="/ctf/join"
+                    className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
+                  >
+                    <Users className="w-5 h-5" />
+                    Join Team
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -139,7 +188,7 @@ function CTF() {
               </div>
               <div className="card-hack p-6 text-center group hover:border-blue-400 dark:hover:border-matrix/50 transition-all">
                 <Code className="w-10 h-10 text-purple-600 dark:text-matrix mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                <div className="text-3xl font-bold text-purple-600 dark:text-matrix mb-2">2</div>
+                <div className="text-3xl font-bold text-purple-600 dark:text-matrix mb-2">3</div>
                 <div className="text-sm text-gray-600 dark:text-gray-500 font-terminal">
                   TRACKS
                 </div>
@@ -182,9 +231,8 @@ function CTF() {
                   <h3 className="text-blue-600 dark:text-matrix font-bold mb-2">Format</h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
                     This is a jeopardy-style CTF competition held in-person at De Anza College.
-                    Participants will solve challenges to earn points, with the team accumulating
-                    the most points by the end of the competition winning. More details about
-                    the exact format and rules will be announced closer to the event date.
+                    Participants will solve challenges across three tracks to earn points, with the
+                    team accumulating the most points by the end of the competition winning.
                   </p>
                 </div>
 
@@ -231,11 +279,11 @@ function CTF() {
               </span>
             </div>
             <p className="text-gray-600 dark:text-gray-400 text-center mb-10 max-w-2xl mx-auto">
-              Our CTF features two tracks designed for different skill sets and
+              Our CTF features three tracks designed for different skill sets and
               interests.
             </p>
 
-            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <div className="terminal-window group hover:scale-[1.02] transition-transform">
                 <div className="terminal-header">
                   <div className="terminal-dot red" />
@@ -261,7 +309,7 @@ function CTF() {
                   <div className="terminal-dot red" />
                   <div className="terminal-dot yellow" />
                   <div className="terminal-dot green" />
-                  <span className="ml-4 text-xs text-gray-500 dark:text-gray-500 font-terminal">
+                  <span className="ml-4 text-xs text-gray-500 font-terminal">
                     osint
                   </span>
                 </div>
@@ -272,6 +320,26 @@ function CTF() {
                   <p className="text-gray-600 dark:text-gray-500 text-sm">
                     Open Source Intelligence gathering - find hidden information
                     using publicly available data and resources.
+                  </p>
+                </div>
+              </div>
+
+              <div className="terminal-window group hover:scale-[1.02] transition-transform">
+                <div className="terminal-header">
+                  <div className="terminal-dot red" />
+                  <div className="terminal-dot yellow" />
+                  <div className="terminal-dot green" />
+                  <span className="ml-4 text-xs text-gray-500 font-terminal">
+                    reverse_engineering
+                  </span>
+                </div>
+                <div className="terminal-body">
+                  <h3 className="text-blue-600 dark:text-matrix font-bold mb-2 group-hover:text-blue-700 dark:group-hover:neon-text-subtle transition-all">
+                    Reverse Engineering
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-500 text-sm">
+                    Analyze compiled programs and binaries to understand their
+                    inner workings and uncover hidden flags.
                   </p>
                 </div>
               </div>
@@ -344,27 +412,49 @@ function CTF() {
               <div className="terminal-body text-center py-12">
                 <Trophy className="w-16 h-16 text-yellow-500 dark:text-matrix mx-auto mb-6 opacity-80" />
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-matrix mb-4 neon-text-subtle">
-                  Ready to Compete?
+                  {hasTeam ? "Let's Go!" : "Ready to Compete?"}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-                  Form your team now! Compete in Web Exploitation and OSINT
-                  tracks on March 6, 2026.
+                  {hasTeam
+                    ? "You're all set! Check out the leaderboard and start solving challenges."
+                    : "Form your team now! Compete in Web Exploitation, OSINT, and Reverse Engineering tracks on March 6, 2026."}
                 </p>
                 <div className="flex flex-wrap gap-4 justify-center">
-                  <Link
-                    to="/ctf/team"
-                    className="cli-btn-filled px-8 py-4 flex items-center gap-3"
-                  >
-                    <Users className="w-5 h-5" />
-                    Create Team
-                  </Link>
-                  <Link
-                    to="/ctf/join"
-                    className="cli-btn-dashed px-8 py-4 flex items-center gap-3"
-                  >
-                    <Users className="w-5 h-5" />
-                    Join Team
-                  </Link>
+                  {hasTeam ? (
+                    <>
+                      <Link
+                        to="/ctf/leaderboard"
+                        className="cli-btn-filled px-8 py-4 flex items-center gap-3"
+                      >
+                        <Star className="w-5 h-5" />
+                        Leaderboard
+                      </Link>
+                      <Link
+                        to="/ctf/challenges"
+                        className="cli-btn-dashed px-8 py-4 flex items-center gap-3"
+                      >
+                        <Code className="w-5 h-5" />
+                        Challenges
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/ctf/team"
+                        className="cli-btn-filled px-8 py-4 flex items-center gap-3"
+                      >
+                        <Users className="w-5 h-5" />
+                        Create Team
+                      </Link>
+                      <Link
+                        to="/ctf/join"
+                        className="cli-btn-dashed px-8 py-4 flex items-center gap-3"
+                      >
+                        <Users className="w-5 h-5" />
+                        Join Team
+                      </Link>
+                    </>
+                  )}
                   <a
                     href="https://discord.gg/v5JWDrZVNp"
                     target="_blank"
