@@ -566,7 +566,7 @@ function App() {
                   <div className="flex-1 text-center md:text-left">
                     <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
                       <span className="px-2 py-0.5 text-[10px] font-mono uppercase border border-dashed border-green-500 dark:border-matrix/50 text-green-700 dark:text-matrix animate-pulse">
-                        COMING SOON
+                        TEAM FORMATION OPEN
                       </span>
                     </div>
                     <h3 className="text-xl md:text-2xl font-mono font-bold text-gray-900 dark:text-white mb-2 group-hover:text-green-700 dark:group-hover:text-matrix transition-colors uppercase">
@@ -579,15 +579,15 @@ function App() {
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs text-gray-500 dark:text-gray-600 font-mono">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3 text-green-700 dark:text-matrix" />
-                        TBA 2026
+                        March 6, 2026
                       </span>
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-green-700 dark:text-matrix" />
-                        De Anza College
+                        Online
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-green-700 dark:text-matrix" />
-                        6 Hours
+                        10 AM - 4 PM
                       </span>
                     </div>
                   </div>

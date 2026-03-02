@@ -78,93 +78,112 @@ function CTF() {
     <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
-      <div className="relative z-10">
-        {/* Hero Section */}
-        <section
-          className={`min-h-[80vh] flex items-center justify-center transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
-          <div className="max-w-5xl mx-auto px-6 text-center">
-            <div className="mb-6">
-              <span className="inline-block px-4 py-2 bg-blue-100 dark:bg-matrix/20 border border-blue-300 dark:border-matrix/50 text-blue-700 dark:text-matrix text-sm font-terminal mb-4">
-                THREE TRACKS: WEB EXPLOITATION, OSINT & REVERSE ENGINEERING
-              </span>
-            </div>
+      {/* Header with ASCII Background */}
+      <header
+        className={`min-h-[40vh] flex flex-col justify-center relative overflow-hidden mb-12 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+      >
+        {/* Background ASCII Art */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+          <pre className="font-mono text-[clamp(60px,15vw,200px)] leading-[0.85] text-blue-200/20 dark:text-matrix/[0.03] whitespace-pre">
+            {`██████╗  █████╗  ██████╗ ██████╗
+██╔══██╗██╔══██╗██╔════╝██╔════╝
+██║  ██║███████║██║     ██║
+██║  ██║██╔══██║██║     ██║
+██████╔╝██║  ██║╚██████╗╚██████╗
+╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═════╝`}
+          </pre>
+        </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
-              <span className="text-gray-900 dark:text-white">DACC</span>
-              <br />
-              <span className="glitch text-blue-600 dark:text-matrix neon-text" data-text="CAPTURE THE FLAG">
-                CAPTURE THE FLAG
-              </span>
-            </h1>
+        <div className="relative z-10 max-w-5xl mx-auto px-6 w-full">
+          <p className="font-mono text-sm text-gray-600 dark:text-matrix/60 mb-6">
+            <span className="text-blue-700 dark:text-matrix">&gt;</span>{" "}
+            ./ctf --compete --tracks=3
+          </p>
 
-            <p className="text-gray-600 dark:text-gray-400 text-xl md:text-2xl mb-4 max-w-3xl mx-auto">
-              A cybersecurity competition for hackers of all skill levels
+          <span className="inline-block px-4 py-2 bg-blue-100 dark:bg-matrix/20 border border-blue-300 dark:border-matrix/50 text-blue-700 dark:text-matrix text-sm font-terminal mb-6">
+            THREE TRACKS: WEB EXPLOITATION, OSINT & REVERSE ENGINEERING
+          </span>
+
+          <h1 className="font-mono font-bold text-blue-700 dark:text-matrix leading-tight mb-6">
+            <span className="block text-5xl md:text-6xl lg:text-7xl">
+              CAPTURE
+            </span>
+            <span className="block text-5xl md:text-6xl lg:text-7xl">
+              THE FLAG
+            </span>
+          </h1>
+
+          <div className="border-l-2 border-blue-300 dark:border-matrix/30 pl-5 max-w-2xl mb-8">
+            <p className="font-mono text-gray-600 dark:text-gray-400 text-sm md:text-base">
+              A cybersecurity competition for hackers of all skill levels.
             </p>
+          </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-6 text-gray-600 dark:text-gray-400 mb-10">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600 dark:text-matrix" />
-                <span className="font-terminal">March 6, 2026</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-600 dark:text-matrix" />
-                <span className="font-terminal">9:00 AM - 5:00 PM</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-blue-600 dark:text-matrix" />
-                <span className="font-terminal">De Anza College</span>
-              </div>
+          <div className="flex flex-wrap items-center gap-6 text-gray-600 dark:text-gray-400 mb-8">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-600 dark:text-matrix" />
+              <span className="font-terminal">March 6, 2026</span>
             </div>
-
-            <div className="flex flex-wrap gap-4 justify-center">
-              {hasTeam ? (
-                <>
-                  <Link
-                    to="/ctf/leaderboard"
-                    className="cli-btn-filled px-8 py-4 text-lg flex items-center gap-3"
-                  >
-                    <Star className="w-5 h-5" />
-                    Leaderboard
-                    <ChevronRight className="w-5 h-5" />
-                  </Link>
-                  <Link
-                    to="/ctf/challenges"
-                    className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
-                  >
-                    <Code className="w-5 h-5" />
-                    Challenges
-                  </Link>
-                  <Link
-                    to="/ctf/team"
-                    className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
-                  >
-                    <Users className="w-5 h-5" />
-                    My Team
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/ctf/team"
-                    className="cli-btn-filled px-8 py-4 text-lg flex items-center gap-3"
-                  >
-                    <Users className="w-5 h-5" />
-                    Create Team
-                    <ChevronRight className="w-5 h-5" />
-                  </Link>
-                  <Link
-                    to="/ctf/join"
-                    className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
-                  >
-                    <Users className="w-5 h-5" />
-                    Join Team
-                  </Link>
-                </>
-              )}
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-600 dark:text-matrix" />
+              <span className="font-terminal">10:00 AM - 4:00 PM</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-blue-600 dark:text-matrix" />
+              <span className="font-terminal">Online</span>
             </div>
           </div>
-        </section>
+
+          <div className="flex flex-wrap gap-4">
+            {hasTeam ? (
+              <>
+                <Link
+                  to="/ctf/leaderboard"
+                  className="cli-btn-filled px-8 py-4 text-lg flex items-center gap-3"
+                >
+                  <Star className="w-5 h-5" />
+                  Leaderboard
+                  <ChevronRight className="w-5 h-5" />
+                </Link>
+                <Link
+                  to="/ctf/challenges"
+                  className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
+                >
+                  <Code className="w-5 h-5" />
+                  Challenges
+                </Link>
+                <Link
+                  to="/ctf/team"
+                  className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
+                >
+                  <Users className="w-5 h-5" />
+                  My Team
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/ctf/team"
+                  className="cli-btn-filled px-8 py-4 text-lg flex items-center gap-3"
+                >
+                  <Users className="w-5 h-5" />
+                  Create Team
+                  <ChevronRight className="w-5 h-5" />
+                </Link>
+                <Link
+                  to="/ctf/join"
+                  className="cli-btn-dashed px-8 py-4 text-lg flex items-center gap-3"
+                >
+                  <Users className="w-5 h-5" />
+                  Join Team
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="relative z-10">
 
         {/* Stats Section */}
         <section
@@ -417,7 +436,7 @@ function CTF() {
                 <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
                   {hasTeam
                     ? "You're all set! Check out the leaderboard and start solving challenges."
-                    : "Form your team now! Compete in Web Exploitation, OSINT, and Reverse Engineering tracks on March 6, 2026."}
+                    : "Team formation is open! Compete in Web Exploitation, OSINT, and Reverse Engineering tracks on March 6, 2026."}
                 </p>
                 <div className="flex flex-wrap gap-4 justify-center">
                   {hasTeam ? (

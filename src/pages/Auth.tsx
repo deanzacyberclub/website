@@ -429,25 +429,56 @@ function Auth() {
     <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6">
-        {/* Header */}
-        <header className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-gray-900 dark:text-matrix neon-text-subtle text-lg">$</span>
-            <span className="text-gray-700 dark:text-gray-600 dark:text-gray-400 font-terminal">./authenticate --secure</span>
-          </div>
+      {/* Header with ASCII Background */}
+      <header
+        className={`min-h-[40vh] flex flex-col justify-center relative overflow-hidden mb-12 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      >
+        {/* Background ASCII Art */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+          <pre className="font-mono text-[clamp(60px,15vw,200px)] leading-[0.85] text-blue-200/20 dark:text-matrix/[0.03] whitespace-pre">
+            {`██████╗  █████╗  ██████╗ ██████╗
+██╔══██╗██╔══██╗██╔════╝██╔════╝
+██║  ██║███████║██║     ██║
+██║  ██║██╔══██║██║     ██║
+██████╔╝██║  ██║╚██████╗╚██████╗
+╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═════╝`}
+          </pre>
+        </div>
 
-          <h1 className="text-3xl font-bold neon-text tracking-tight mb-2">
-            {step === 'signin' && 'SIGN IN'}
-            {step === 'profile' && 'SETUP PROFILE'}
-          </h1>
-          <p className="text-gray-700 dark:text-gray-600 dark:text-gray-500">
-            <span className="text-hack-cyan">[INFO]</span>{' '}
-            {step === 'signin' && 'Securely sign in with a supported provider'}
-            {step === 'profile' && 'Complete your profile to finish registration'}
+        <div className="relative z-10 max-w-5xl mx-auto px-6 w-full">
+          <p className="font-mono text-sm text-gray-600 dark:text-matrix/60 mb-6">
+            <span className="text-blue-700 dark:text-matrix">&gt;</span>{' '}
+            ./authenticate --secure
           </p>
-        </header>
 
+          <h1 className="font-mono font-bold text-blue-700 dark:text-matrix leading-tight mb-6">
+            {step === 'signin' && (
+              <span className="block text-5xl md:text-6xl lg:text-7xl">
+                SIGN IN
+              </span>
+            )}
+            {step === 'profile' && (
+              <>
+                <span className="block text-5xl md:text-6xl lg:text-7xl">
+                  SETUP
+                </span>
+                <span className="block text-5xl md:text-6xl lg:text-7xl">
+                  PROFILE
+                </span>
+              </>
+            )}
+          </h1>
+
+          <div className="border-l-2 border-blue-300 dark:border-matrix/30 pl-5 max-w-2xl">
+            <p className="font-mono text-gray-600 dark:text-gray-400 text-sm md:text-base">
+              {step === 'signin' && 'Securely sign in with a supported provider.'}
+              {step === 'profile' && 'Complete your profile to finish registration.'}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6">
         {/* Content */}
         <div
           className={`transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}

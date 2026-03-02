@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/contexts/AuthContext'
 import { useOfficerVerification } from '@/hooks/useOfficerVerification'
 import type { Meeting, MeetingType } from '@/types/database.types'
 import { Spinner, Close, Plus, Calendar, Clock, MapPin, Star } from '@/lib/cyberIcon'
@@ -59,8 +58,7 @@ const parseLocalDate = (dateStr: string) => {
 
 function Meetings() {
   const navigate = useNavigate()
-  const { userProfile } = useAuth()
-  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification()
+  const { isVerifiedOfficer } = useOfficerVerification()
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<FilterType>('all')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
@@ -72,34 +70,21 @@ function Meetings() {
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
-  // Use server-verified officer status instead of client-side state
-  const isOfficer = isVerifiedOfficer ?? false
+  const isOfficer = isVerifiedOfficer === true
 
+  // Always fetch from the public view immediately so all users see meetings
   useEffect(() => {
     async function fetchMeetings() {
       try {
-        let data, error;
-
-        if (isOfficer) {
-          // Officers use secure function to get meetings with secret codes
-          const result = await supabase.rpc('get_all_meetings_for_officers')
-          data = result.data
-          error = result.error
-        } else {
-          // Regular users use public view
-          const result = await supabase
-            .from('meetings_public')
-            .select('*')
-            .order('date', { ascending: false })
-          data = result.data
-          error = result.error
-        }
+        const { data, error } = await supabase
+          .from('meetings_public')
+          .select('*')
+          .order('date', { ascending: false })
 
         if (error) throw error
-        setMeetings(data || [])
+        setMeetings((data as Meeting[]) || [])
       } catch (err) {
         console.error('Error fetching meetings:', err)
-        // TODO: SHOW ERROR TO USER
       } finally {
         setLoading(false)
         setLoaded(true)
@@ -107,6 +92,23 @@ function Meetings() {
     }
 
     fetchMeetings()
+  }, [])
+
+  // If the user is a verified officer, refetch with secret codes included
+  useEffect(() => {
+    if (!isOfficer) return
+
+    async function fetchOfficerMeetings() {
+      try {
+        const { data, error } = await supabase.rpc('get_all_meetings_for_officers')
+        if (error) throw error
+        setMeetings(data || [])
+      } catch (err) {
+        console.error('Error fetching officer meetings:', err)
+      }
+    }
+
+    fetchOfficerMeetings()
   }, [isOfficer])
 
   const today = new Date()
@@ -448,22 +450,44 @@ function Meetings() {
         </div>
       )}
 
-      <div className="relative max-w-5xl mx-auto px-6">
-        {/* Header */}
-        <header className={`mb-12 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-blue-600 dark:text-matrix neon-text-subtle">$</span>
-            <span className="text-gray-600 dark:text-gray-400 font-terminal">cat /var/log/meetings.log</span>
-          </div>
+      {/* Header with ASCII Background */}
+      <header
+        className={`min-h-[40vh] flex flex-col justify-center relative overflow-hidden mb-12 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      >
+        {/* Background ASCII Art */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+          <pre className="font-mono text-[clamp(60px,15vw,200px)] leading-[0.85] text-blue-200/20 dark:text-matrix/[0.03] whitespace-pre">
+            {`██████╗  █████╗  ██████╗ ██████╗
+██╔══██╗██╔══██╗██╔════╝██╔════╝
+██║  ██║███████║██║     ██║
+██║  ██║██╔══██║██║     ██║
+██████╔╝██║  ██║╚██████╗╚██████╗
+╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═════╝`}
+          </pre>
+        </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="relative z-10 max-w-5xl mx-auto px-6 w-full">
+          <p className="font-mono text-sm text-gray-600 dark:text-matrix/60 mb-6">
+            <span className="text-blue-700 dark:text-matrix">&gt;</span>{' '}
+            cat /var/log/meetings.log
+          </p>
+
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-matrix neon-text mb-2">
-                Club Meetings
+              <h1 className="font-mono font-bold text-blue-700 dark:text-matrix leading-tight mb-6">
+                <span className="block text-5xl md:text-6xl lg:text-7xl">
+                  CLUB
+                </span>
+                <span className="block text-5xl md:text-6xl lg:text-7xl">
+                  MEETINGS
+                </span>
               </h1>
-              <p className="text-gray-600 dark:text-gray-500">
-                Explore our upcoming events and past sessions
-              </p>
+
+              <div className="border-l-2 border-blue-300 dark:border-matrix/30 pl-5 max-w-2xl">
+                <p className="font-mono text-gray-600 dark:text-gray-400 text-sm md:text-base">
+                  Explore our upcoming events and past sessions.
+                </p>
+              </div>
             </div>
             {isOfficer && (
               <button
@@ -475,7 +499,10 @@ function Meetings() {
               </button>
             )}
           </div>
-        </header>
+        </div>
+      </header>
+
+      <div className="relative max-w-5xl mx-auto px-6">
 
         {/* Featured Section */}
         {featuredMeetings.length > 0 && (
