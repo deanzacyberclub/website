@@ -50,7 +50,7 @@ function CTF() {
     {
       question: "Do I need experience?",
       answer:
-        "No! We welcome all skill levels. All three tracks include challenges designed for beginners, plus mentors will be on-site to help you learn. This is a great entry point into cybersecurity competitions.",
+        "No! We welcome all skill levels. All three tracks include challenges designed for beginners, plus mentors will be available online to help you learn. This is a great entry point into cybersecurity competitions.",
     },
     {
       question: "What should I bring?",
@@ -249,7 +249,7 @@ function CTF() {
                 <div>
                   <h3 className="text-blue-600 dark:text-matrix font-bold mb-2">Format</h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                    This is a jeopardy-style CTF competition held in-person at De Anza College.
+                    This is a jeopardy-style CTF competition held online.
                     Participants will solve challenges across three tracks to earn points, with the
                     team accumulating the most points by the end of the competition winning.
                   </p>
@@ -269,7 +269,7 @@ function CTF() {
                   <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
                     Expect a full day of hacking, learning, and collaboration. Mentors will be
                     available to provide guidance, and there will be opportunities to network
-                    with fellow cybersecurity enthusiasts. Food and refreshments will be provided.
+                    with fellow cybersecurity enthusiasts.
                   </p>
                 </div>
 

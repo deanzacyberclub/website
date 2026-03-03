@@ -678,6 +678,7 @@ function App() {
                   },
                 ]}
               />
+              <OfficerCard name="Arin Thakkar" role="Secretary" />
               <OfficerCard name="Mobin Norouzi" role="Treasurer" />
               <OfficerCard name="Ollin Ruiz" role="Curriculum Lead" />
             </div>
