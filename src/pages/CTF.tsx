@@ -115,7 +115,7 @@ function CTF() {
 
           <div className="border-l-2 border-blue-300 dark:border-matrix/30 pl-5 max-w-2xl mb-8">
             <p className="font-mono text-gray-600 dark:text-gray-400 text-sm md:text-base">
-              A cybersecurity competition for hackers of all skill levels.
+              A cybersecurity competition open to all students — not just De Anza!
             </p>
           </div>
 
@@ -258,9 +258,10 @@ function CTF() {
                 <div>
                   <h3 className="text-blue-600 dark:text-matrix font-bold mb-2">Who Can Participate</h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                    The hackathon is open to students of all skill levels. Whether you're completely
-                    new to cybersecurity or have prior CTF experience, there will be challenges
-                    suited for you. Teams can have up to 4 members.
+                    The hackathon is open to all students, not just De Anza students! Whether you're from
+                    any college or university, and regardless of skill level — from complete beginners
+                    to experienced CTF competitors — there will be challenges suited for you.
+                    No student ID is required to sign up. Teams can have up to 4 members.
                   </p>
                 </div>
 
