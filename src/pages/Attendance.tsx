@@ -61,16 +61,17 @@ function Attendance() {
       return;
     }
 
-    // Get student ID from profile or form input
-    const studentIdToUse = userProfile?.student_id || form.studentId.trim();
+    // Get student ID from profile or form input (optional for non-De Anza students)
+    const studentIdToUse = userProfile?.student_id || form.studentId.trim() || null;
 
-    if (!studentIdToUse) {
-      setError("[ERROR] Student ID is required");
+    if (studentIdToUse && (studentIdToUse.length !== 8 || !/^\d+$/.test(studentIdToUse))) {
+      setError("[ERROR] Student ID must be 8 digits if provided");
       return;
     }
 
-    if (studentIdToUse.length !== 8 || !/^\d+$/.test(studentIdToUse)) {
-      setError("[ERROR] Student ID must be 8 digits");
+    // Must be logged in if no student ID provided
+    if (!studentIdToUse && !user) {
+      setError("[ERROR] Please sign in or enter a student ID");
       return;
     }
 
@@ -123,11 +124,11 @@ function Attendance() {
         return;
       }
 
-      // Record attendance
+      // Record attendance (use "N/A" for non-De Anza students without a student ID)
       const { error: insertError } = await supabase.from("attendance").insert({
         meeting_id: meeting.id,
         user_id: user?.id || null,
-        student_id: studentIdToUse,
+        student_id: studentIdToUse || "N/A",
       });
 
       if (insertError) throw insertError;
@@ -365,7 +366,6 @@ function Attendance() {
                 name="studentId"
                 value={form.studentId}
                 onChange={handleChange}
-                required
                 maxLength={8}
                 className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
                 placeholder="12345678"
@@ -373,7 +373,7 @@ function Attendance() {
               />
               <p className="text-xs mt-3 text-gray-500 dark:text-gray-600 font-mono">
                 <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
-                Enter your 8-digit student ID
+                Enter your 8-digit student ID (optional if signed in)
               </p>
             </div>
           )}

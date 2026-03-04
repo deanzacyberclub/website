@@ -111,8 +111,8 @@ function Auth() {
       setError('[ERROR] Display name required')
       return
     }
-    if (!studentId || studentId.length !== 8) {
-      setError('[ERROR] Student ID is required (8 digits)')
+    if (studentId && studentId.length !== 8) {
+      setError('[ERROR] Student ID must be 8 digits if provided')
       return
     }
     setLoading(true)
@@ -368,7 +368,7 @@ function Auth() {
           </div>
 
           <div>
-            <label className="block text-sm mb-2 text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">--student-id *</label>
+            <label className="block text-sm mb-2 text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">--student-id (optional)</label>
             {/* 8 separate boxes for larger screens */}
             <div className="hidden sm:flex gap-2 justify-between">
               {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
@@ -393,12 +393,12 @@ function Auth() {
               maxLength={8}
               value={studentId}
               onChange={(e) => setStudentId(e.target.value.replace(/\D/g, '').slice(0, 8))}
-              placeholder="8-digit De Anza ID"
+              placeholder="8-digit Student ID (optional)"
               className="sm:hidden input-hack w-full rounded-lg"
             />
             <p className="text-xs text-gray-700 dark:text-gray-600 font-terminal mt-2">
-              <span className="text-gray-900 dark:text-matrix">&gt;</span> De Anza Student ID
-              <span className="text-hack-yellow ml-2">(cannot be changed later)</span>
+              <span className="text-gray-900 dark:text-matrix">&gt;</span> Student ID
+              <span className="text-hack-yellow ml-2">(optional, cannot be changed later)</span>
             </p>
           </div>
 
@@ -408,7 +408,7 @@ function Auth() {
 
           <button
             type="submit"
-            disabled={loading || !displayName.trim() || studentId.length !== 8}
+            disabled={loading || !displayName.trim()}
             className="btn-hack-filled rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
