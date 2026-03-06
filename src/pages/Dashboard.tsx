@@ -5,8 +5,9 @@ import { useOfficerVerification } from '@/hooks/useOfficerVerification'
 import { supabase } from '@/lib/supabase'
 import { TYPE_COLORS, TYPE_LABELS } from './Meetings'
 import type { Meeting, Registration } from '@/types/database.types'
-import { CheckCircle, ChevronRight, MapPin, Calendar, Shield } from '@/lib/cyberIcon'
+import { CheckCircle, ChevronRight, MapPin, Calendar, Shield, ExternalLink, Copy, Check, Spinner } from '@/lib/cyberIcon'
 import { Tabs } from '@/components/Tabs'
+import { getCtfdCredentials, syncUserToCtfd } from '@/lib/ctfd'
 
 interface MeetingWithRegistration extends Meeting {
   userRegistration?: Registration
@@ -25,10 +26,18 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
   const { user, userProfile } = useAuth()
   const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification()
+  const [ctfdCreds, setCtfdCreds] = useState<{ ctfd_username: string | null; ctfd_password: string | null } | null>(null)
+  const [ctfdCopied, setCtfdCopied] = useState<string | null>(null)
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      getCtfdCredentials().then(setCtfdCreds).catch(() => {})
+    }
+  }, [user])
 
   useEffect(() => {
     async function fetchData() {
@@ -214,6 +223,68 @@ function Dashboard() {
                 </div>
               </div>
             </Link>
+          </div>
+        )}
+
+        {/* CTFd Account */}
+        {ctfdCreds?.ctfd_username && (
+          <div
+            className={`mb-8 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+            style={{ transitionDelay: '200ms' }}
+          >
+            <div className="terminal-window">
+              <div className="terminal-header">
+                <div className="terminal-dot red" />
+                <div className="terminal-dot yellow" />
+                <div className="terminal-dot green" />
+                <span className="ml-4 text-xs text-gray-500 font-terminal">ctfd_account.sh</span>
+                <span className="ml-auto text-xs text-hack-cyan font-terminal">CTF</span>
+              </div>
+              <div className="terminal-body">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex-1 space-y-2">
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-matrix mb-3">Your CTFd Account</h2>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-600 font-terminal w-20">USERNAME</span>
+                      <span className="font-mono text-sm text-blue-700 dark:text-matrix">{ctfdCreds.ctfd_username}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(ctfdCreds.ctfd_username!)
+                          setCtfdCopied('user')
+                          setTimeout(() => setCtfdCopied(null), 2000)
+                        }}
+                        className="p-0.5 hover:bg-gray-100 dark:hover:bg-terminal-alt transition-colors"
+                      >
+                        {ctfdCopied === 'user' ? <Check className="w-3.5 h-3.5 text-green-600 dark:text-matrix" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-600 font-terminal w-20">PASSWORD</span>
+                      <span className="font-mono text-sm text-blue-700 dark:text-matrix">{ctfdCreds.ctfd_password}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(ctfdCreds.ctfd_password!)
+                          setCtfdCopied('pass')
+                          setTimeout(() => setCtfdCopied(null), 2000)
+                        }}
+                        className="p-0.5 hover:bg-gray-100 dark:hover:bg-terminal-alt transition-colors"
+                      >
+                        {ctfdCopied === 'pass' ? <Check className="w-3.5 h-3.5 text-green-600 dark:text-matrix" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+                      </button>
+                    </div>
+                  </div>
+                  <a
+                    href="http://143.110.135.234/login"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cli-btn-filled px-6 py-3 flex items-center justify-center gap-2 shrink-0"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Go to CTFd
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

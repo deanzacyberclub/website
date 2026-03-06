@@ -64,6 +64,12 @@
   to = "/.netlify/functions/hive-mfa-toggle"
   status = 200
 
+# CTFd Sync API
+[[redirects]]
+  from = "/api/ctfd/sync"
+  to = "/.netlify/functions/ctfd-sync"
+  status = 200
+
 # SPA fallback for React Router (must be last)
 [[redirects]]
   from = "/*"

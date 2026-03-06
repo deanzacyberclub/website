@@ -61,9 +61,9 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               <Route path="/meetings" element={<Meetings />} />
               <Route path="/meetings/:slug" element={<MeetingDetails />} />
               <Route path="/ctf" element={<CTF />} />
-              <Route path="/ctf/challenges" element={<CTFChallenges />} />
-              <Route path="/ctf/challenge/:id" element={<CTFChallengeDetail />} />
-              <Route path="/ctf/leaderboard" element={<CTFLeaderboard />} />
+              <Route path="/ctf/challenges" element={<CTF />} />
+              <Route path="/ctf/challenge/:id" element={<CTF />} />
+              <Route path="/ctf/leaderboard" element={<CTF />} />
               <Route path="/study" element={<Study />} />
               <Route path="/legal" element={<Legal />} />
               <Route path="/auth" element={<Auth />} />

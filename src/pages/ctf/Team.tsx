@@ -6,6 +6,7 @@ import { ChevronLeft, Users, Trophy, Copy, Check, Logout, Star, ChevronRight, Tr
 import type { CTFTeamWithMembers, CTFSubmission } from '@/types/database.types'
 import { challenges } from './challengeData'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import { syncTeamToCtfd } from '@/lib/ctfd'
 
 // Set to true when CTF hackathon is active - members cannot be removed during this time
 const CTF_HACKATHON_ACTIVE = false
@@ -132,6 +133,13 @@ function Team() {
         })
 
       if (memberError) throw memberError
+
+      // Sync team to CTFd
+      try {
+        await syncTeamToCtfd(newTeam.id)
+      } catch (syncErr) {
+        console.warn('CTFd sync failed (will retry later):', syncErr)
+      }
 
       // Refresh team data
       await fetchTeam()

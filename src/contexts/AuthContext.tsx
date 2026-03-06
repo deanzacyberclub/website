@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { autoSyncToCtfd } from '@/lib/ctfd'
 
 export interface LinkedAccount {
   provider: string
@@ -144,6 +145,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUserProfile(profile)
+
+      // Auto-sync user and their team to CTFd on every login
+      autoSyncToCtfd()
+
       return profile
     } catch {
       setUserProfile(null)
@@ -362,6 +367,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...data,
       linked_accounts: data.linked_accounts || []
     })
+
+    // Auto-sync to CTFd after profile creation
+    autoSyncToCtfd()
   }
 
   const signOut = async () => {

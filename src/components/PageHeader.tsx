@@ -53,16 +53,14 @@ function PageHeader() {
           >
             events
           </Link>
-          <Link
-            to="/ctf"
-            className={`${
-              isCTFActive
-                ? "text-blue-600 dark:text-matrix neon-text-subtle"
-                : "text-gray-600 dark:text-gray-500 hover:text-blue-600 dark:hover:text-matrix"
-            } transition-colors font-terminal text-sm`}
+          <a
+            href="http://143.110.135.234/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-600 dark:text-gray-500 hover:text-blue-600 dark:hover:text-matrix transition-colors font-terminal text-sm"
           >
             ctf
-          </Link>
+          </a>
           {user && (
             <Link
               to="/live"
@@ -137,17 +135,15 @@ function PageHeader() {
             >
               &gt; events
             </Link>
-            <Link
-              to="/ctf"
+            <a
+              href="http://143.110.135.234/"
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={closeMobileMenu}
-              className={`px-4 py-3 border-b border-gray-200 dark:border-gray-700 ${
-                isCTFActive
-                  ? "text-blue-600 dark:text-matrix bg-blue-50 dark:bg-matrix/10"
-                  : "text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-terminal-alt"
-              } transition-colors font-terminal text-sm`}
+              className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-terminal-alt transition-colors font-terminal text-sm"
             >
               &gt; ctf
-            </Link>
+            </a>
             {user && (
               <>
                 <Link

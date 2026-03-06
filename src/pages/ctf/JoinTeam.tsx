@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, Users, Check, AlertTriangle } from '@/lib/cyberIcon'
 import type { CTFTeam } from '@/types/database.types'
+import { syncTeamToCtfd } from '@/lib/ctfd'
 
 function JoinTeam() {
   const { code } = useParams<{ code?: string }>()
@@ -168,6 +169,13 @@ function JoinTeam() {
         .from('ctf_teams')
         .update({ invite_uses_count: (team.invite_uses_count || 0) + 1 })
         .eq('id', team.id)
+
+      // Sync team to CTFd (adds new member)
+      try {
+        await syncTeamToCtfd(team.id)
+      } catch (syncErr) {
+        console.warn('CTFd sync failed (will retry later):', syncErr)
+      }
 
       setSuccess(true)
       setTimeout(() => {
