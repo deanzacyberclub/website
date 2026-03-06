@@ -37,6 +37,7 @@ const BurpSuiteDemo4 = lazy(() => import("@/pages/burpsuite/Demo4"));
 const BurpSuiteDemo5 = lazy(() => import("@/pages/burpsuite/Demo5"));
 const Weekly = lazy(() => import("@/pages/Weekly"));
 const PuzzleWeek1 = lazy(() => import("@/pages/puzzle/Week1"));
+const DeletedBlog = lazy(() => import("@/pages/DeletedBlog"));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -83,6 +84,9 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
 
               {/* Weekly Puzzle Routes */}
               <Route path="/puzzle/week1" element={<PuzzleWeek1 />} />
+
+              {/* Hidden CTF Route */}
+              <Route path="/deleted-blog" element={<DeletedBlog />} />
 
               {/* Protected routes - require authentication */}
               <Route path="/live" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
