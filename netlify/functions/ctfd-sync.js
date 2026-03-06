@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-const CTFD_URL = process.env.CTFD_URL || 'http://143.110.135.234'
+const CTFD_URL = process.env.CTFD_URL || 'https://dactf.com'
 const CTFD_API_TOKEN = process.env.CTFD_API_TOKEN
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY

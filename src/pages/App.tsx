@@ -551,7 +551,7 @@ function App() {
           <section
             className={`transition-all duration-700 delay-200 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
           >
-            <a href="http://143.110.135.234/" target="_blank" rel="noopener noreferrer" className="block group">
+            <a href="https://dactf.com/" target="_blank" rel="noopener noreferrer" className="block group">
               <div className="border border-gray-200 dark:border-matrix/20 p-8 hover:border-green-500 dark:hover:border-matrix/50 transition-all relative overflow-hidden">
                 {/* Scan line effect on hover */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-100/50 dark:via-matrix/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -587,7 +587,7 @@ function App() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-green-700 dark:text-matrix" />
-                        10 AM - 4 PM
+                        12 PM - 6 PM
                       </span>
                     </div>
                   </div>

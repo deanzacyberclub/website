@@ -12,6 +12,7 @@ function CtfdCredentialsPopup() {
   } | null>(null)
   const [loading, setLoading] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     if (!user || !userProfile) {
@@ -19,14 +20,15 @@ function CtfdCredentialsPopup() {
       return
     }
 
-    // Check for CTFd credentials when user logs in
+    let cancelled = false
+
     const checkCredentials = async () => {
       setLoading(true)
       try {
         const creds = await getCtfdCredentials()
+        if (cancelled) return
         setCredentials(creds)
 
-        // Show popup if user has credentials (they've been synced)
         if (creds?.ctfd_username && creds?.ctfd_password) {
           const dismissed = sessionStorage.getItem('ctfd_popup_dismissed')
           if (!dismissed) {
@@ -36,21 +38,27 @@ function CtfdCredentialsPopup() {
       } catch {
         // Credentials not available yet
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     checkCredentials()
+    return () => { cancelled = true }
   }, [user, userProfile])
 
-  const handleCopy = (text: string, field: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedField(field)
-    setTimeout(() => setCopiedField(null), 2000)
+  const handleCopy = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch {
+      // Clipboard API not available
+    }
   }
 
   const handleClose = () => {
     setIsOpen(false)
+    setShowPassword(false)
     sessionStorage.setItem('ctfd_popup_dismissed', 'true')
   }
 
@@ -121,19 +129,28 @@ function CtfdCredentialsPopup() {
                 </label>
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-blue-700 dark:text-matrix text-sm">
-                    {credentials.ctfd_password}
+                    {showPassword ? credentials.ctfd_password : '••••••••••'}
                   </span>
-                  <button
-                    onClick={() => handleCopy(credentials.ctfd_password!, 'password')}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-terminal-alt transition-colors"
-                    title="Copy password"
-                  >
-                    {copiedField === 'password' ? (
-                      <Check className="w-4 h-4 text-green-600 dark:text-matrix" />
-                    ) : (
-                      <Copy className="w-4 h-4 text-gray-400" />
-                    )}
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-terminal-alt transition-colors"
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      <span className="text-xs text-gray-400">{showPassword ? 'HIDE' : 'SHOW'}</span>
+                    </button>
+                    <button
+                      onClick={() => handleCopy(credentials.ctfd_password!, 'password')}
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-terminal-alt transition-colors"
+                      title="Copy password"
+                    >
+                      {copiedField === 'password' ? (
+                        <Check className="w-4 h-4 text-green-600 dark:text-matrix" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -147,7 +164,7 @@ function CtfdCredentialsPopup() {
               CLOSE
             </button>
             <a
-              href="http://143.110.135.234/login"
+              href="https://dactf.com/login"
               target="_blank"
               rel="noopener noreferrer"
               className="cli-btn-filled flex-1 flex items-center justify-center gap-2"

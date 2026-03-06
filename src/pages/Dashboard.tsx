@@ -274,7 +274,7 @@ function Dashboard() {
                     </div>
                   </div>
                   <a
-                    href="http://143.110.135.234/login"
+                    href="https://dactf.com/login"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="cli-btn-filled px-6 py-3 flex items-center justify-center gap-2 shrink-0"

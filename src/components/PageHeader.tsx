@@ -54,7 +54,7 @@ function PageHeader() {
             events
           </Link>
           <a
-            href="http://143.110.135.234/"
+            href="https://dactf.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-600 dark:text-gray-500 hover:text-blue-600 dark:hover:text-matrix transition-colors font-terminal text-sm"
@@ -136,7 +136,7 @@ function PageHeader() {
               &gt; events
             </Link>
             <a
-              href="http://143.110.135.234/"
+              href="https://dactf.com/"
               target="_blank"
               rel="noopener noreferrer"
               onClick={closeMobileMenu}

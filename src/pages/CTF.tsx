@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const CTFD_URL = "http://143.110.135.234/";
+const CTFD_URL = "https://dactf.com/";
 
 function CTF() {
   useEffect(() => {
