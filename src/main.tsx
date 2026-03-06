@@ -37,7 +37,6 @@ const BurpSuiteDemo4 = lazy(() => import("@/pages/burpsuite/Demo4"));
 const BurpSuiteDemo5 = lazy(() => import("@/pages/burpsuite/Demo5"));
 const Weekly = lazy(() => import("@/pages/Weekly"));
 const PuzzleWeek1 = lazy(() => import("@/pages/puzzle/Week1"));
-const DeletedBlog = lazy(() => import("@/pages/DeletedBlog"));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -55,52 +54,122 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
           <ScrollToTop />
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
-            <Route element={<Layout />}>
-              {/* Public routes */}
-              <Route path="/" element={<App />} />
-              <Route path="/meetings" element={<Meetings />} />
-              <Route path="/meetings/:slug" element={<MeetingDetails />} />
-              <Route path="/ctf" element={<CTF />} />
-              <Route path="/ctf/challenges" element={<CTF />} />
-              <Route path="/ctf/challenge/:id" element={<CTF />} />
-              <Route path="/ctf/leaderboard" element={<CTF />} />
-              <Route path="/study" element={<Study />} />
-              <Route path="/legal" element={<Legal />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/@/:id" element={<ProtectedRoute requireOfficer><UserProfile /></ProtectedRoute>} />
+              <Route element={<Layout />}>
+                {/* Public routes */}
+                <Route path="/" element={<App />} />
+                <Route path="/meetings" element={<Meetings />} />
+                <Route path="/meetings/:slug" element={<MeetingDetails />} />
+                <Route path="/ctf" element={<CTF />} />
+                <Route path="/ctf/challenges" element={<CTF />} />
+                <Route path="/ctf/challenge/:id" element={<CTF />} />
+                <Route path="/ctf/leaderboard" element={<CTF />} />
+                <Route path="/study" element={<Study />} />
+                <Route path="/legal" element={<Legal />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route
+                  path="/@/:id"
+                  element={
+                    <ProtectedRoute requireOfficer>
+                      <UserProfile />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* BurpSuite Demo Routes */}
-              <Route path="/burpsuite" element={<BurpSuite />} />
-              <Route path="/burpsuite/demo1" element={<BurpSuiteDemo1 />} />
-              <Route path="/burpsuite/demo2" element={<BurpSuiteDemo2 />} />
-              <Route path="/burpsuite/demo3" element={<BurpSuiteDemo3 />} />
-              <Route path="/burpsuite/dashboard" element={<BurpSuiteDashboard />} />
-              <Route path="/burpsuite/demo4" element={<BurpSuiteDemo4 />} />
-              <Route path="/burpsuite/demo5" element={<BurpSuiteDemo5 />} />
+                {/* BurpSuite Demo Routes */}
+                <Route path="/burpsuite" element={<BurpSuite />} />
+                <Route path="/burpsuite/demo1" element={<BurpSuiteDemo1 />} />
+                <Route path="/burpsuite/demo2" element={<BurpSuiteDemo2 />} />
+                <Route path="/burpsuite/demo3" element={<BurpSuiteDemo3 />} />
+                <Route
+                  path="/burpsuite/dashboard"
+                  element={<BurpSuiteDashboard />}
+                />
+                <Route path="/burpsuite/demo4" element={<BurpSuiteDemo4 />} />
+                <Route path="/burpsuite/demo5" element={<BurpSuiteDemo5 />} />
 
-              {/* Weekly Challenge Route */}
-              <Route path="/weekly" element={<Weekly />} />
+                {/* Weekly Challenge Route */}
+                <Route path="/weekly" element={<Weekly />} />
 
-              {/* Weekly Puzzle Routes */}
-              <Route path="/puzzle/week1" element={<PuzzleWeek1 />} />
+                {/* Weekly Puzzle Routes */}
+                <Route path="/puzzle/week1" element={<PuzzleWeek1 />} />
 
-              {/* Hidden CTF Route */}
-              <Route path="/deleted-blog" element={<DeletedBlog />} />
+                {/* Protected routes - require authentication */}
+                <Route
+                  path="/live"
+                  element={
+                    <ProtectedRoute>
+                      <Attendance />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/officer"
+                  element={
+                    <ProtectedRoute requireOfficer>
+                      <Officer />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/ctf/team"
+                  element={
+                    <ProtectedRoute>
+                      <CTFTeam />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/ctf/join"
+                  element={
+                    <ProtectedRoute>
+                      <CTFJoinTeam />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/ctf/join/:code"
+                  element={
+                    <ProtectedRoute>
+                      <CTFJoinTeam />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/ctf/challenge/:id/edit"
+                  element={
+                    <ProtectedRoute requireOfficer>
+                      <CTFChallengeEditor />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/ctf/challenges/new"
+                  element={
+                    <ProtectedRoute requireOfficer>
+                      <CTFChallengeEditor />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Protected routes - require authentication */}
-              <Route path="/live" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/officer" element={<ProtectedRoute requireOfficer><Officer /></ProtectedRoute>} />
-              <Route path="/ctf/team" element={<ProtectedRoute><CTFTeam /></ProtectedRoute>} />
-              <Route path="/ctf/join" element={<ProtectedRoute><CTFJoinTeam /></ProtectedRoute>} />
-              <Route path="/ctf/join/:code" element={<ProtectedRoute><CTFJoinTeam /></ProtectedRoute>} />
-              <Route path="/ctf/challenge/:id/edit" element={<ProtectedRoute requireOfficer><CTFChallengeEditor /></ProtectedRoute>} />
-              <Route path="/ctf/challenges/new" element={<ProtectedRoute requireOfficer><CTFChallengeEditor /></ProtectedRoute>} />
-
-              <Route path="*" element={<NotFound />} />
-            </Route>
+                <Route path="*" element={<NotFound />} />
+              </Route>
             </Routes>
           </Suspense>
         </BrowserRouter>
