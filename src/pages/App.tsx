@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Discord,
@@ -27,34 +27,100 @@ import { useAuth } from "@/contexts/AuthContext";
 const prefetchMeetings = () => import("./Meetings");
 
 // ─── Typewriter for hero heading ─────────────────────
-const heroLines = ["LEARN TO HACK.", "LEARN TO DEFEND."];
+const HACKING_TERMS = [
+  "HACK",
+  "DEFEND",
+  "ATTACK",
+  "EXPLOIT",
+  "PENETRATE",
+  "ENUMERATE",
+  "DECRYPT",
+];
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+const INITIAL_TYPE_TEXT = "LEARN TO\n[HACK].";
 
 function HeroTypewriter() {
-  const [displayedChars, setDisplayedChars] = useState(0);
-  const fullText = heroLines.join("\n");
+  const [phase, setPhase] = useState<"typing" | "cycling">("typing");
+  const [typedChars, setTypedChars] = useState(0);
+  const [displayWord, setDisplayWord] = useState("HACK");
+  const termIndexRef = useRef(0);
+  const rafRef = useRef<number>(0);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const scrambleTo = useCallback((target: string) => {
+    cancelAnimationFrame(rafRef.current);
+    const duration = 700;
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const settled = Math.floor(progress * target.length);
+      setDisplayWord(
+        target
+          .split("")
+          .map((char, i) =>
+            i < settled
+              ? char
+              : SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
+          )
+          .join("")
+      );
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        setDisplayWord(target);
+      }
+    };
+    rafRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  // Phase 1: typewriter
   useEffect(() => {
-    if (displayedChars < fullText.length) {
-      const timeout = setTimeout(() => {
-        setDisplayedChars((prev) => prev + 1);
-      }, 40);
-      return () => clearTimeout(timeout);
+    if (phase !== "typing") return;
+    if (typedChars < INITIAL_TYPE_TEXT.length) {
+      const t = setTimeout(() => setTypedChars((p) => p + 1), 50);
+      return () => clearTimeout(t);
     }
-  }, [displayedChars, fullText.length]);
+    // Done typing — pause, then start cycling
+    const t = setTimeout(() => setPhase("cycling"), 900);
+    return () => clearTimeout(t);
+  }, [phase, typedChars]);
 
-  const visibleText = fullText.slice(0, displayedChars);
-  const lines = visibleText.split("\n");
+  // Phase 2: scramble cycling
+  useEffect(() => {
+    if (phase !== "cycling") return;
+    const cycle = () => {
+      termIndexRef.current = (termIndexRef.current + 1) % HACKING_TERMS.length;
+      scrambleTo(HACKING_TERMS[termIndexRef.current]);
+      timeoutRef.current = setTimeout(cycle, 2500);
+    };
+    timeoutRef.current = setTimeout(cycle, 2500);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [phase, scrambleTo]);
+
+  if (phase === "typing") {
+    const visible = INITIAL_TYPE_TEXT.slice(0, typedChars);
+    const lines = visible.split("\n");
+    return (
+      <h1 className="font-mono font-bold text-green-700 dark:text-matrix leading-tight">
+        {lines.map((line, i) => (
+          <span key={i} className="block text-5xl md:text-6xl lg:text-7xl">
+            {line}
+            {i === lines.length - 1 && <span className="cli-cursor">_</span>}
+          </span>
+        ))}
+      </h1>
+    );
+  }
 
   return (
     <h1 className="font-mono font-bold text-green-700 dark:text-matrix leading-tight">
-      {lines.map((line, i) => (
-        <span key={i} className="block text-5xl md:text-6xl lg:text-7xl">
-          {line}
-          {i === lines.length - 1 && displayedChars < fullText.length && (
-            <span className="cli-cursor">_</span>
-          )}
-        </span>
-      ))}
+      <span className="block text-5xl md:text-6xl lg:text-7xl">LEARN TO</span>
+      <span className="block text-5xl md:text-6xl lg:text-7xl">
+        [{displayWord}].<span className="cli-cursor">_</span>
+      </span>
     </h1>
   );
 }
@@ -372,14 +438,17 @@ function App() {
         >
           {/* Background ASCII Art - responsive sizing */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
-            <pre className="font-mono text-[clamp(60px,15vw,200px)] leading-[0.85] text-green-200/20 dark:text-matrix/[0.03] whitespace-pre">
-              {`██████╗  █████╗  ██████╗ ██████╗
+            <div className="dacc-bg-wrapper">
+              <pre className="font-mono text-[clamp(60px,15vw,200px)] leading-[0.85] text-green-200/20 dark:text-matrix/[0.03] whitespace-pre">
+                {`██████╗  █████╗  ██████╗ ██████╗
 ██╔══██╗██╔══██╗██╔════╝██╔════╝
 ██║  ██║███████║██║     ██║
 ██║  ██║██╔══██║██║     ██║
 ██████╔╝██║  ██║╚██████╗╚██████╗
 ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═════╝`}
-            </pre>
+              </pre>
+              <div className="dacc-scan-line" />
+            </div>
           </div>
 
           <div className="max-w-5xl mx-auto px-6 py-24 md:py-32 relative z-10">

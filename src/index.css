@@ -1205,3 +1205,48 @@ button {
 .shake {
     animation: shake 0.5s ease-in-out;
 }
+
+/* ============================================
+   DACC HERO BACKGROUND ANIMATION
+   ============================================ */
+@keyframes dacc-breathe {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+}
+
+@keyframes dacc-scan {
+    0% { top: -40%; }
+    100% { top: 120%; }
+}
+
+.dacc-bg-wrapper {
+    position: relative;
+    animation: dacc-breathe 7s ease-in-out infinite;
+}
+
+.dacc-scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 35%;
+    top: -35%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(34, 197, 94, 0.05) 40%,
+        rgba(34, 197, 94, 0.05) 60%,
+        transparent 100%
+    );
+    animation: dacc-scan 12s linear infinite;
+    pointer-events: none;
+}
+
+.dark .dacc-scan-line {
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 255, 65, 0.07) 40%,
+        rgba(0, 255, 65, 0.07) 60%,
+        transparent 100%
+    );
+}
