@@ -3,6 +3,19 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <!-- Blocking dark-mode script: runs before first paint to prevent white flash -->
+        <script>
+          (function () {
+            try {
+              var t = localStorage.getItem('theme');
+              var dark =
+                t === 'dark' ||
+                (!t || t === 'system') &&
+                  window.matchMedia('(prefers-color-scheme: dark)').matches;
+              if (dark) document.documentElement.classList.add('dark');
+            } catch (e) {}
+          })();
+        </script>
         <title>DACC - Cybersecurity Club @ De Anza College</title>
 
         <!-- SEO Meta Tags -->
