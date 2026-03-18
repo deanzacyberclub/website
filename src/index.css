@@ -1251,6 +1251,11 @@ button {
     100% { top: 120%; }
 }
 
+@keyframes ctf-float {
+    0%, 100% { transform: translateY(-6px); }
+    50%       { transform: translateY(6px); }
+}
+
 .dacc-bg-wrapper {
     position: relative;
     animation: dacc-breathe 7s ease-in-out infinite;
