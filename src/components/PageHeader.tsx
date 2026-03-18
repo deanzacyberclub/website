@@ -30,7 +30,7 @@ function PageHeader() {
   };
 
   const navLink = (active: boolean) =>
-    `font-terminal text-sm transition-colors whitespace-nowrap ${
+    `font-terminal text-sm font-bold transition-colors whitespace-nowrap ${
       active
         ? "text-blue-600 dark:text-matrix"
         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-matrix"
@@ -48,7 +48,7 @@ function PageHeader() {
         {/* Island 1 · Logo */}
         <Link
           to="/"
-          className="glass-island px-4 py-2 flex-shrink-0 font-terminal text-sm text-blue-600 dark:text-matrix hover:text-blue-700 dark:hover:text-matrix/80 transition-colors glitch"
+          className="glass-island px-4 py-2 flex-shrink-0 font-terminal text-sm font-bold text-blue-600 dark:text-matrix hover:text-blue-700 dark:hover:text-matrix/80 transition-colors glitch"
           data-text="[dacc]"
         >
           [dacc]
@@ -80,7 +80,7 @@ function PageHeader() {
                 to={`/auth?to=${encodeURIComponent(
                   location.pathname === "/" ? "/dashboard" : location.pathname
                 )}`}
-                className="flex items-center gap-1.5 font-terminal text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors"
+                className="flex items-center gap-1.5 font-terminal text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors"
               >
                 <Login className="w-3.5 h-3.5" />
                 sign in

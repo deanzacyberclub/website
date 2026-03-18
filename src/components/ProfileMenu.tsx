@@ -62,7 +62,7 @@ function ProfileMenu() {
   // Loading state - show skeleton
   if (loading) {
     return (
-      <div className="w-10 h-10 bg-gray-100 dark:bg-terminal-alt border-2 border-gray-300 dark:border-gray-700 animate-pulse" />
+      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-terminal-alt border-2 border-gray-300 dark:border-gray-700 animate-pulse" />
     )
   }
 
@@ -72,10 +72,10 @@ function ProfileMenu() {
       <div className="relative" ref={menuRef}>
         <button
           onClick={toggleMenu}
-          className="w-10 h-10 overflow-hidden border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-matrix transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-matrix/50"
+          className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-matrix transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-matrix/50"
         >
           <div className="w-full h-full bg-gray-100 dark:bg-terminal-alt flex items-center justify-center">
-            <User className="w-5 h-5 text-gray-500 dark:text-gray-500" />
+            <User className="w-4 h-4 text-gray-500 dark:text-gray-500" />
           </div>
         </button>
 
@@ -102,7 +102,7 @@ function ProfileMenu() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={toggleMenu}
-        className="w-10 h-10 overflow-hidden border-2 border-blue-300 dark:border-matrix/50 hover:border-blue-500 dark:hover:border-matrix transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-matrix/50"
+        className="w-8 h-8 rounded-full overflow-hidden border-2 border-blue-300 dark:border-matrix/50 hover:border-blue-500 dark:hover:border-matrix transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-matrix/50"
       >
         {userProfile.photo_url ? (
           <img

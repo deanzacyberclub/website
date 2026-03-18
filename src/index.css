@@ -1210,61 +1210,32 @@ button {
    LIQUID GLASS ISLANDS (iOS/macOS 26)
    ============================================ */
 .glass-island {
-    background: rgba(255, 255, 255, 0.58);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.70);
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.07),
-        0 1px 3px rgba(0, 0, 0, 0.04),
-        inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    background: transparent;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.70);
     border-radius: 9999px;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.glass-island:hover {
-    box-shadow:
-        0 6px 28px rgba(0, 0, 0, 0.1),
-        0 1px 4px rgba(0, 0, 0, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.90);
 }
 
 .dark .glass-island {
-    background: rgba(10, 10, 10, 0.68);
-    border: 1px solid rgba(0, 255, 65, 0.12);
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.55),
-        0 1px 3px rgba(0, 0, 0, 0.30),
-        inset 0 1px 0 rgba(0, 255, 65, 0.07);
-}
-
-.dark .glass-island:hover {
-    box-shadow:
-        0 6px 28px rgba(0, 0, 0, 0.65),
-        0 1px 4px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(0, 255, 65, 0.10);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* Rectangular glass for dropdown panels */
 .glass-panel {
-    background: rgba(255, 255, 255, 0.62);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.70);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.10),
-        0 2px 6px rgba(0, 0, 0, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    background: transparent;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.70);
     border-radius: 20px;
 }
 
 .dark .glass-panel {
-    background: rgba(10, 10, 10, 0.80);
-    border: 1px solid rgba(0, 255, 65, 0.12);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.65),
-        0 2px 6px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(0, 255, 65, 0.07);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* ============================================
