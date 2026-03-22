@@ -574,30 +574,35 @@ function App() {
                   icon: Shield,
                   title: "HACKING FUNDAMENTALS",
                   file: "hacking_fundamentals.sh",
+                  anchor: "hacking-fundamentals",
                   desc: "Think like an attacker. Learn reconnaissance, exploitation, and how real breaches happen.",
                 },
                 {
                   icon: Flag,
                   title: "GET CERTIFIED",
                   file: "get_certified.sh",
+                  anchor: "get-certified",
                   desc: "Study groups for Security+, Network+, and more. Land your first cybersecurity job.",
                 },
                 {
                   icon: Code,
                   title: "REAL TOOLS",
                   file: "real_tools.sh",
+                  anchor: "real-tools",
                   desc: "Get hands-on with Burp Suite, Nmap, Wireshark, Metasploit—the same tools pros use.",
                 },
                 {
                   icon: Trophy,
                   title: "CTF COMPETITIONS",
                   file: "ctf_competitions.sh",
+                  anchor: "ctf-competitions",
                   desc: "Compete in capture-the-flag events. Solve puzzles. Win bragging rights (and prizes).",
                 },
               ].map((mod) => (
-                <div
+                <Link
                   key={mod.file}
-                  className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors group"
+                  to={`/about#${mod.anchor}`}
+                  className="block border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors group"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <mod.icon className="w-5 h-5 text-gray-400 dark:text-matrix/40 group-hover:text-green-700 dark:group-hover:text-matrix transition-colors" />
@@ -611,7 +616,7 @@ function App() {
                   <p className="font-mono text-xs text-gray-600 dark:text-gray-500 leading-relaxed">
                     {mod.desc}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           </section>

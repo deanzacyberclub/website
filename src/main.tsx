@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import App from "@/pages/App";
 import "./index.css";
 
+const About = lazy(() => import("@/pages/About"));
 const Attendance = lazy(() => import("@/pages/Attendance"));
 const Legal = lazy(() => import("@/pages/Legal"));
 const Meetings = lazy(() => import("@/pages/Meetings"));
@@ -57,6 +58,7 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               <Route element={<Layout />}>
                 {/* Public routes */}
                 <Route path="/" element={<App />} />
+                <Route path="/about" element={<About />} />
                 <Route path="/meetings" element={<Meetings />} />
                 <Route path="/meetings/:slug" element={<MeetingDetails />} />
                 <Route path="/ctf" element={<CTF />} />
