@@ -11,6 +11,7 @@ import {
   Code,
   Clock,
   MapPin,
+  ChevronLeft,
   ChevronRight,
   ChevronDown,
   X,
@@ -19,7 +20,7 @@ import {
   Flag,
 } from "@/lib/cyberIcon";
 import { supabase } from "@/lib/supabase";
-import CircularGallery from "@/components/CircularGallery";
+import CircularGallery, { type CircularGalleryHandle } from "@/components/CircularGallery";
 import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -531,6 +532,7 @@ function App() {
   const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([]);
   const [supportsGallery] = useState(() => checkWebGLSupport());
   const [selectedOfficer, setSelectedOfficer] = useState<OfficerData | null>(null);
+  const galleryRef = useRef<CircularGalleryHandle>(null);
   const { userProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -850,15 +852,28 @@ function App() {
 
               <div style={{ height: "600px", position: "relative" }}>
                 <CircularGallery
-                  bend={3}
-                  textColor="#ffffff"
-                  borderRadius={0.05}
-                  scrollEase={0.02}
+                  ref={galleryRef}
                   bend={1}
+                  textColor="#ffffff"
                   borderRadius={0.05}
                   scrollSpeed={2}
                   scrollEase={0.05}
+                  disableScroll
                 />
+                <button
+                  onClick={() => galleryRef.current?.scrollLeft()}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 hover:border-white/40 text-white transition-all backdrop-blur-sm"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => galleryRef.current?.scrollRight()}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 hover:border-white/40 text-white transition-all backdrop-blur-sm"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
               </div>
             </section>
           )}

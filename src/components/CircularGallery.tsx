@@ -7,7 +7,7 @@ import {
   Texture,
   Transform,
 } from "ogl";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 
 type GL = Renderer["gl"];
 
@@ -419,6 +419,7 @@ interface AppConfig {
   font?: string;
   scrollSpeed?: number;
   scrollEase?: number;
+  disableScroll?: boolean;
 }
 
 class App {
@@ -451,6 +452,7 @@ class App {
 
   isDown: boolean = false;
   start: number = 0;
+  disableScroll: boolean = false;
 
   constructor(
     container: HTMLElement,
@@ -462,11 +464,13 @@ class App {
       font = "bold 30px Figtree",
       scrollSpeed = 2,
       scrollEase = 0.05,
+      disableScroll = false,
     }: AppConfig,
   ) {
     document.documentElement.classList.remove("no-js");
     this.container = container;
     this.scrollSpeed = scrollSpeed;
+    this.disableScroll = disableScroll;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onCheckDebounce = debounce(this.onCheck.bind(this), 200);
     this.createRenderer();
@@ -662,6 +666,13 @@ class App {
     this.raf = window.requestAnimationFrame(this.update.bind(this));
   }
 
+  scrollBy(direction: "left" | "right") {
+    if (!this.medias || !this.medias[0]) return;
+    const width = this.medias[0].width;
+    this.scroll.target += direction === "right" ? width : -width;
+    this.onCheck();
+  }
+
   addEventListeners() {
     this.boundOnResize = this.onResize.bind(this);
     this.boundOnWheel = this.onWheel.bind(this);
@@ -669,8 +680,10 @@ class App {
     this.boundOnTouchMove = this.onTouchMove.bind(this);
     this.boundOnTouchUp = this.onTouchUp.bind(this);
     window.addEventListener("resize", this.boundOnResize);
-    window.addEventListener("mousewheel", this.boundOnWheel);
-    window.addEventListener("wheel", this.boundOnWheel);
+    if (!this.disableScroll) {
+      window.addEventListener("mousewheel", this.boundOnWheel);
+      window.addEventListener("wheel", this.boundOnWheel);
+    }
     window.addEventListener("mousedown", this.boundOnTouchDown);
     window.addEventListener("mousemove", this.boundOnTouchMove);
     window.addEventListener("mouseup", this.boundOnTouchUp);
@@ -723,37 +736,61 @@ interface CircularGalleryProps {
   font?: string;
   scrollSpeed?: number;
   scrollEase?: number;
+  disableScroll?: boolean;
 }
 
-export default function CircularGallery({
-  items,
-  bend = 3,
-  textColor = "#ffffff",
-  borderRadius = 0.05,
-  font = "bold 30px Figtree",
-  scrollSpeed = 2,
-  scrollEase = 0.05,
-}: CircularGalleryProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const app = new App(containerRef.current, {
-      items,
-      bend,
-      textColor,
-      borderRadius,
-      font,
-      scrollSpeed,
-      scrollEase,
-    });
-    return () => {
-      app.destroy();
-    };
-  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase]);
-  return (
-    <div
-      className="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing"
-      ref={containerRef}
-    />
-  );
+export interface CircularGalleryHandle {
+  scrollLeft: () => void;
+  scrollRight: () => void;
 }
+
+const CircularGallery = forwardRef<CircularGalleryHandle, CircularGalleryProps>(
+  function CircularGallery(
+    {
+      items,
+      bend = 3,
+      textColor = "#ffffff",
+      borderRadius = 0.05,
+      font = "bold 30px Figtree",
+      scrollSpeed = 2,
+      scrollEase = 0.05,
+      disableScroll = false,
+    },
+    ref,
+  ) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const appRef = useRef<App | null>(null);
+
+    useImperativeHandle(ref, () => ({
+      scrollLeft: () => appRef.current?.scrollBy("left"),
+      scrollRight: () => appRef.current?.scrollBy("right"),
+    }));
+
+    useEffect(() => {
+      if (!containerRef.current) return;
+      const app = new App(containerRef.current, {
+        items,
+        bend,
+        textColor,
+        borderRadius,
+        font,
+        scrollSpeed,
+        scrollEase,
+        disableScroll,
+      });
+      appRef.current = app;
+      return () => {
+        app.destroy();
+        appRef.current = null;
+      };
+    }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, disableScroll]);
+    return (
+      <div
+        className="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing"
+        ref={containerRef}
+      />
+    );
+  },
+);
+
+export default CircularGallery;
