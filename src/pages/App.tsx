@@ -324,13 +324,8 @@ function FAQSection({ loaded }: { loaded: boolean }) {
   );
 }
 
-// ─── Officer Card ────────────────────────────────────
-function OfficerCard({
-  name,
-  role,
-  photo,
-  links,
-}: {
+// ─── Officer types & data ─────────────────────────────
+interface OfficerData {
   name: string;
   role: string;
   photo?: string;
@@ -339,9 +334,56 @@ function OfficerCard({
     href: string;
     label: string;
   }[];
-}) {
+}
+
+const OFFICERS: OfficerData[] = [
+  {
+    name: "Neel Anshu",
+    role: "President",
+    photo: "/neel-anshu.jpeg",
+    links: [
+      { icon: GitHub, href: "https://github.com/boredcreator", label: "GitHub" },
+      { icon: Instagram, href: "https://instagram.com/neel_reddy455", label: "Instagram" },
+      { icon: Globe, href: "https://flippedbyneel.com", label: "Website" },
+    ],
+  },
+  {
+    name: "Aaron Ma",
+    role: "Vice President",
+    photo: "/aaron-ma.jpeg",
+    links: [
+      { icon: GitHub, href: "https://github.com/aaronhma", label: "GitHub" },
+      { icon: X, href: "https://x.com/aaronhma", label: "X" },
+      { icon: LinkedIn, href: "https://www.linkedin.com/in/air-rn/", label: "LinkedIn" },
+      { icon: Mail, href: "mailto:hi@aaronhma.com", label: "Email" },
+      { icon: Globe, href: "https://aaronhma.com/", label: "Website" },
+    ],
+  },
+  {
+    name: "Thant Thu Hein",
+    role: "Outreach Manager",
+    links: [
+      { icon: Instagram, href: "https://www.instagram.com/butter.daxxton", label: "Instagram" },
+    ],
+  },
+  { name: "Arin Thakkar", role: "Secretary" },
+  { name: "Mobin Norouzi", role: "Treasurer" },
+  { name: "Ollin Ruiz", role: "Curriculum Lead" },
+];
+
+// ─── Officer Card ────────────────────────────────────
+function OfficerCard({
+  name,
+  role,
+  photo,
+  links,
+  onClick,
+}: OfficerData & { onClick: () => void }) {
   return (
-    <div className="border border-gray-200 dark:border-matrix/20 p-4 hover:border-green-500 dark:hover:border-matrix/40 transition-colors">
+    <button
+      onClick={onClick}
+      className="w-full text-left border border-gray-200 dark:border-matrix/20 p-4 hover:border-green-500 dark:hover:border-matrix/40 transition-colors group"
+    >
       <div className="flex items-center gap-3 mb-3">
         {photo ? (
           <img
@@ -362,23 +404,109 @@ function OfficerCard({
             {name}
           </p>
         </div>
+        <ChevronRight className="w-4 h-4 ml-auto transition-all opacity-0 group-hover:opacity-100 text-green-600 dark:text-matrix/50" />
       </div>
       {links && links.length > 0 && (
         <div className="flex gap-1.5 ml-[52px]">
           {links.map((link) => (
-            <a
+            <span
               key={link.href}
-              href={link.href}
-              target={link.href.startsWith("mailto:") ? undefined : "_blank"}
-              rel="noopener noreferrer"
               aria-label={link.label}
-              className="w-6 h-6 border border-gray-200 dark:border-matrix/20 flex items-center justify-center hover:border-green-700 dark:hover:border-matrix hover:text-green-700 dark:hover:text-matrix transition-colors text-gray-500 dark:text-gray-600"
+              className="w-6 h-6 border border-gray-200 dark:border-matrix/20 flex items-center justify-center text-gray-500 dark:text-gray-600"
             >
               <link.icon className="w-3 h-3" />
-            </a>
+            </span>
           ))}
         </div>
       )}
+    </button>
+  );
+}
+
+// ─── Officer Modal ────────────────────────────────────
+function OfficerModal({
+  officer,
+  onClose,
+}: {
+  officer: OfficerData | null;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!officer) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [officer, onClose]);
+
+  if (!officer) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative terminal-window max-w-sm w-full">
+        <div className="terminal-header">
+          <div className="terminal-dot red" />
+          <div className="terminal-dot yellow" />
+          <div className="terminal-dot green" />
+          <span className="ml-4 text-xs font-terminal text-gray-500 dark:text-matrix/60">
+            officer_profile.sh
+          </span>
+          <button
+            onClick={onClose}
+            className="ml-auto text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <div className="terminal-body">
+          <div className="flex flex-col items-center text-center mb-6">
+            {officer.photo ? (
+              <img
+                src={officer.photo}
+                alt={officer.name}
+                className="w-20 h-20 border-2 border-gray-300 dark:border-matrix/40 object-cover mb-4"
+              />
+            ) : (
+              <div className="w-20 h-20 border-2 border-gray-300 dark:border-matrix/30 bg-green-100 dark:bg-matrix/10 flex items-center justify-center mb-4">
+                <Code className="w-8 h-8 text-green-700 dark:text-matrix" />
+              </div>
+            )}
+            <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-1">
+              {officer.role}
+            </p>
+            <h3 className="font-mono font-bold text-lg text-green-700 dark:text-matrix">
+              {officer.name}
+            </h3>
+          </div>
+
+          {officer.links && officer.links.length > 0 ? (
+            <div className="space-y-2 border-t border-gray-200 dark:border-matrix/20 pt-4">
+              {officer.links.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-3 py-2 border border-gray-200 dark:border-matrix/20 hover:border-green-500 dark:hover:border-matrix/50 hover:text-green-700 dark:hover:text-matrix text-gray-600 dark:text-gray-400 transition-colors group"
+                >
+                  <link.icon className="w-4 h-4 shrink-0" />
+                  <span className="font-mono text-xs">{link.label}</span>
+                  <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="font-mono text-xs text-gray-500 dark:text-gray-600 text-center border-t border-gray-200 dark:border-matrix/20 pt-4">
+              No links available.
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -402,6 +530,7 @@ function App() {
   const [loaded, setLoaded] = useState(false);
   const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([]);
   const [supportsGallery] = useState(() => checkWebGLSupport());
+  const [selectedOfficer, setSelectedOfficer] = useState<OfficerData | null>(null);
   const { userProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -609,6 +738,7 @@ function App() {
                     <span className="font-mono text-xs text-gray-400 dark:text-matrix/40 group-hover:text-green-600 dark:group-hover:text-matrix/70 transition-colors">
                       {mod.file}
                     </span>
+                    <ChevronRight className="w-4 h-4 ml-auto transition-all opacity-0 group-hover:opacity-100 text-green-600 dark:text-matrix/50" />
                   </div>
                   <h3 className="font-mono font-bold text-green-700 dark:text-matrix text-sm mb-2 uppercase">
                     {mod.title}
@@ -691,70 +821,13 @@ function App() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <OfficerCard
-                name="Neel Anshu"
-                role="President"
-                photo="/neel-anshu.jpeg"
-                links={[
-                  {
-                    icon: GitHub,
-                    href: "https://github.com/boredcreator",
-                    label: "GitHub",
-                  },
-                  {
-                    icon: Instagram,
-                    href: "https://instagram.com/neel_reddy455",
-                    label: "Instagram",
-                  },
-                  {
-                    icon: Globe,
-                    href: "https://flippedbyneel.com",
-                    label: "Website",
-                  },
-                ]}
-              />
-              <OfficerCard
-                name="Aaron Ma"
-                role="Vice President"
-                photo="/aaron-ma.jpeg"
-                links={[
-                  {
-                    icon: GitHub,
-                    href: "https://github.com/aaronhma",
-                    label: "GitHub",
-                  },
-                  { icon: X, href: "https://x.com/aaronhma", label: "X" },
-                  {
-                    icon: LinkedIn,
-                    href: "https://www.linkedin.com/in/air-rn/",
-                    label: "LinkedIn",
-                  },
-                  {
-                    icon: Mail,
-                    href: "mailto:hi@aaronhma.com",
-                    label: "Email",
-                  },
-                  {
-                    icon: Globe,
-                    href: "https://aaronhma.com/",
-                    label: "Website",
-                  },
-                ]}
-              />
-              <OfficerCard
-                name="Thant Thu Hein"
-                role="Outreach Manager"
-                links={[
-                  {
-                    icon: Instagram,
-                    href: "https://www.instagram.com/butter.daxxton",
-                    label: "Instagram",
-                  },
-                ]}
-              />
-              <OfficerCard name="Arin Thakkar" role="Secretary" />
-              <OfficerCard name="Mobin Norouzi" role="Treasurer" />
-              <OfficerCard name="Ollin Ruiz" role="Curriculum Lead" />
+              {OFFICERS.map((officer) => (
+                <OfficerCard
+                  key={officer.name}
+                  {...officer}
+                  onClick={() => setSelectedOfficer(officer)}
+                />
+              ))}
             </div>
           </section>
 
@@ -791,6 +864,11 @@ function App() {
           )}
         </div>
       </div>
+
+      <OfficerModal
+        officer={selectedOfficer}
+        onClose={() => setSelectedOfficer(null)}
+      />
     </div>
   );
 }
