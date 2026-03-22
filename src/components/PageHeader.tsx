@@ -1,5 +1,6 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Tabs } from "./Tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import ProfileMenu from "./ProfileMenu";
 import { Login, Logout } from "@/lib/cyberIcon";
@@ -8,6 +9,7 @@ import ConfirmDialog from "./ConfirmDialog";
 function PageHeader() {
   const location = useLocation();
   const { user, userProfile, loading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -15,6 +17,19 @@ function PageHeader() {
   const isEventsActive = location.pathname.startsWith("/meetings");
   const isCTFActive = location.pathname.startsWith("/ctf");
   const isCheckInActive = location.pathname === "/live";
+
+  const navTabs = [
+    { id: "meetings", label: "events" },
+    { id: "ctf", label: "ctf" },
+    ...(user ? [{ id: "live", label: "check-in" }] : []),
+  ];
+  const activeNavTab = isEventsActive
+    ? "meetings"
+    : isCTFActive
+    ? "ctf"
+    : isCheckInActive
+    ? "live"
+    : "";
   const isDashboardActive = location.pathname === "/dashboard";
   const isSettingsActive = location.pathname === "/settings";
 
@@ -29,16 +44,6 @@ function PageHeader() {
     window.location.href = "/";
   };
 
-  const navLink = (active: boolean) =>
-    `font-terminal text-sm font-bold transition-colors whitespace-nowrap ${
-      active
-        ? "text-blue-600 dark:text-matrix"
-        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-matrix"
-    }`;
-
-  const Divider = () => (
-    <span className="w-px h-3 bg-gray-300 dark:bg-green-900/60 self-center flex-shrink-0" />
-  );
 
   return (
     <>
@@ -55,16 +60,16 @@ function PageHeader() {
         </Link>
 
         {/* Island 2 · Navigation (desktop only) */}
-        <div className="glass-island px-5 py-2 hidden md:flex items-center gap-3">
-          <Link to="/meetings" className={navLink(isEventsActive)}>events</Link>
-          <Divider />
-          <Link to="/ctf" className={navLink(isCTFActive)}>ctf</Link>
-          {user && (
-            <>
-              <Divider />
-              <Link to="/live" className={navLink(isCheckInActive)}>check-in</Link>
-            </>
-          )}
+        <div
+          className="hidden md:block glass-island"
+          style={{ borderRadius: "32px" }}
+        >
+          <Tabs
+            tabs={navTabs}
+            activeTab={activeNavTab}
+            onTabChange={(id) => navigate(`/${id}`)}
+            className="!bg-transparent dark:!bg-transparent !border-0 rounded-[28px] overflow-hidden font-terminal text-sm font-bold"
+          />
         </div>
 
         {/* Island 3 · Auth + mobile hamburger */}

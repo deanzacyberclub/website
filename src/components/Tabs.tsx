@@ -39,7 +39,7 @@ export function Tabs({
     >
       {/* Sliding indicator */}
       <div
-        className="absolute top-1 bottom-1 bg-blue-100 dark:bg-gray-800 transition-all duration-300 ease-out"
+        className="absolute top-1 bottom-1 bg-blue-100 dark:bg-gray-800 transition-all duration-300 ease-out rounded-full"
         style={{
           left: `${indicatorStyle.left}px`,
           width: `${indicatorStyle.width}px`,
