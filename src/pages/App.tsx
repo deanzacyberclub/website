@@ -850,7 +850,8 @@ function App() {
                 </p>
               </div>
 
-              <div style={{ height: "600px", position: "relative" }}>
+              {/* Full-bleed breakout from max-w-5xl container */}
+              <div className="relative w-screen left-1/2 -translate-x-1/2" style={{ height: "600px" }}>
                 <CircularGallery
                   ref={galleryRef}
                   bend={1}
