@@ -1,13 +1,22 @@
 import { Link, useLocation } from "react-router-dom";
-import ThemeSelector from "./ThemeSelector";
+import { Tabs } from "./Tabs";
+import { useTheme } from "@/contexts/ThemeContext";
+import type { Theme } from "@/contexts/ThemeContext";
 
 interface FooterProps {
   className?: string;
 }
 
+const THEME_TABS = [
+  { id: "light", label: "☀️ Light" },
+  { id: "dark", label: "🌙 Dark" },
+  { id: "system", label: "💻 Auto" },
+];
+
 function Footer({ className = "" }: FooterProps) {
   const location = useLocation();
   const currentYear = new Date().getFullYear();
+  const { theme, setTheme } = useTheme();
 
   return (
     <footer
@@ -118,7 +127,11 @@ function Footer({ className = "" }: FooterProps) {
 
         {/* Theme Selector */}
         <div className="border-t border-gray-200 dark:border-matrix/20 pt-6 pb-6 flex justify-center">
-          <ThemeSelector />
+          <Tabs
+            tabs={THEME_TABS}
+            activeTab={theme}
+            onTabChange={(id) => setTheme(id as Theme)}
+          />
         </div>
 
         {/* Bottom copyright */}

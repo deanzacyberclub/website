@@ -24,6 +24,7 @@ import CircularGallery, { type CircularGalleryHandle } from "@/components/Circul
 import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const prefetchMeetings = () => import("./Meetings");
 
@@ -329,6 +330,7 @@ function FAQSection({ loaded }: { loaded: boolean }) {
 interface OfficerData {
   name: string;
   role: string;
+  altRole?: string;
   photo?: string;
   links?: {
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -351,6 +353,7 @@ const OFFICERS: OfficerData[] = [
   {
     name: "Aaron Ma",
     role: "Vice President",
+    altRole: "ICC Representative",
     photo: "/aaron-ma.jpeg",
     links: [
       { icon: GitHub, href: "https://github.com/aaronhma", label: "GitHub" },
@@ -376,6 +379,7 @@ const OFFICERS: OfficerData[] = [
 function OfficerCard({
   name,
   role,
+  altRole,
   photo,
   links,
   onClick,
@@ -399,13 +403,13 @@ function OfficerCard({
         )}
         <div>
           <p className="text-xs text-gray-500 dark:text-matrix/50 font-mono uppercase tracking-widest">
-            {role}
+            {role}{altRole && <span className="text-gray-400 dark:text-matrix/30"> · {altRole}</span>}
           </p>
           <p className="text-green-700 dark:text-matrix font-mono font-semibold text-sm">
             {name}
           </p>
         </div>
-        <ChevronRight className="w-4 h-4 ml-auto transition-all opacity-0 group-hover:opacity-100 text-green-600 dark:text-matrix/50" />
+        <ChevronRight className="w-4 h-4 ml-auto transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 text-green-600 dark:text-matrix/50" />
       </div>
       {links && links.length > 0 && (
         <div className="flex gap-1.5 ml-[52px]">
@@ -478,7 +482,7 @@ function OfficerModal({
               </div>
             )}
             <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-1">
-              {officer.role}
+              {officer.role}{officer.altRole && <span className="text-gray-400 dark:text-matrix/30"> · {officer.altRole}</span>}
             </p>
             <h3 className="font-mono font-bold text-lg text-green-700 dark:text-matrix">
               {officer.name}
@@ -533,6 +537,7 @@ function App() {
   const [supportsGallery] = useState(() => checkWebGLSupport());
   const [selectedOfficer, setSelectedOfficer] = useState<OfficerData | null>(null);
   const galleryRef = useRef<CircularGalleryHandle>(null);
+  const { resolvedTheme } = useTheme();
   const { userProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -740,7 +745,7 @@ function App() {
                     <span className="font-mono text-xs text-gray-400 dark:text-matrix/40 group-hover:text-green-600 dark:group-hover:text-matrix/70 transition-colors">
                       {mod.file}
                     </span>
-                    <ChevronRight className="w-4 h-4 ml-auto transition-all opacity-0 group-hover:opacity-100 text-green-600 dark:text-matrix/50" />
+                    <ChevronRight className="w-4 h-4 ml-auto transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 text-green-600 dark:text-matrix/50" />
                   </div>
                   <h3 className="font-mono font-bold text-green-700 dark:text-matrix text-sm mb-2 uppercase">
                     {mod.title}
@@ -855,7 +860,7 @@ function App() {
                 <CircularGallery
                   ref={galleryRef}
                   bend={1}
-                  textColor="#ffffff"
+                  textColor={resolvedTheme === "dark" ? "#ffffff" : "#000000"}
                   borderRadius={0.05}
                   scrollSpeed={2}
                   scrollEase={0.05}
