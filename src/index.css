@@ -1190,32 +1190,34 @@ button {
    LIQUID GLASS ISLANDS (iOS/macOS 26)
    ============================================ */
 .glass-island {
-    background: transparent;
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1.5px solid rgba(255, 255, 255, 0.55);
-    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.70);
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 1.5px solid rgba(255, 255, 255, 0.80);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.90);
     border-radius: 9999px;
 }
 
 .dark .glass-island {
-    border: 1.5px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: rgba(15, 15, 15, 0.72);
+    border: 1.5px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* Rectangular glass for dropdown panels */
 .glass-panel {
-    background: transparent;
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1.5px solid rgba(255, 255, 255, 0.55);
-    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.70);
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 1.5px solid rgba(255, 255, 255, 0.80);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.90);
     border-radius: 20px;
 }
 
 .dark .glass-panel {
-    border: 1.5px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: rgba(15, 15, 15, 0.82);
+    border: 1.5px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* ============================================
