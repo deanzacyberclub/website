@@ -20,7 +20,7 @@ function Footer({ className = "" }: FooterProps) {
 
   return (
     <footer
-      className={`border-t border-gray-200 dark:border-matrix/20 ${className}`}
+      className={`bg-white dark:bg-transparent border-t border-gray-200 dark:border-matrix/20 ${className}`}
     >
       {/* Top status bar */}
       <div className="border-b border-gray-200 dark:border-matrix/20 px-6 py-4">

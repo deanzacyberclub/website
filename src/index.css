@@ -77,29 +77,37 @@
 }
 
 :root {
+    /* Light mode values */
+    --matrix-green: #2563eb;
+    --matrix-green-dim: #1d4ed8;
+    --matrix-green-glow: rgba(37, 99, 235, 0.4);
+    --terminal-bg: #ffffff;
+    --terminal-bg-alt: #f9fafb;
+    --scanline-opacity: 0.03;
+    --crt-curve: 2px;
+}
+
+html.dark {
+    /* Dark mode overrides */
     --matrix-green: #00ff41;
     --matrix-green-dim: #00cc33;
     --matrix-green-glow: rgba(0, 255, 65, 0.6);
     --terminal-bg: #0a0a0a;
     --terminal-bg-alt: #0d1117;
-    --scanline-opacity: 0.03;
-    --crt-curve: 2px;
+    background-color: #0a0a0a;
+}
+
+html {
+    background-color: #ffffff;
 }
 
 * {
     scrollbar-width: thin;
+    scrollbar-color: #9ca3af #f3f4f6;
 }
 
-@media (prefers-color-scheme: light) {
-    * {
-        scrollbar-color: #9ca3af #f3f4f6;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    * {
-        scrollbar-color: var(--matrix-green-dim) var(--terminal-bg);
-    }
+html.dark * {
+    scrollbar-color: var(--matrix-green-dim) var(--terminal-bg);
 }
 
 ::-webkit-scrollbar {
@@ -111,10 +119,8 @@
     background: #f3f4f6;
 }
 
-@media (prefers-color-scheme: dark) {
-    ::-webkit-scrollbar-track {
-        background: var(--terminal-bg);
-    }
+html.dark ::-webkit-scrollbar-track {
+    background: var(--terminal-bg);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -122,20 +128,16 @@
     border-radius: 3px;
 }
 
-@media (prefers-color-scheme: dark) {
-    ::-webkit-scrollbar-thumb {
-        background: var(--matrix-green-dim);
-    }
+html.dark ::-webkit-scrollbar-thumb {
+    background: var(--matrix-green-dim);
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: #6b7280;
 }
 
-@media (prefers-color-scheme: dark) {
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--matrix-green);
-    }
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: var(--matrix-green);
 }
 
 img {
@@ -145,37 +147,19 @@ img {
 
 html {
     scroll-behavior: smooth;
-}
-
-@media (prefers-color-scheme: light) {
-    html {
-        background-color: #ffffff;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    html {
-        background-color: var(--terminal-bg);
-    }
+    background-color: #ffffff;
 }
 
 body {
     font-family: "Fira Code", "Share Tech Mono", monospace;
     overflow-x: hidden;
+    background-color: #ffffff;
+    color: #111827;
 }
 
-@media (prefers-color-scheme: light) {
-    body {
-        background-color: #ffffff;
-        color: #111827;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: var(--terminal-bg);
-        color: var(--matrix-green);
-    }
+html.dark body {
+    background-color: var(--terminal-bg);
+    color: var(--matrix-green);
 }
 
 ::selection {
@@ -183,11 +167,9 @@ body {
     color: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-    ::selection {
-        background: var(--matrix-green);
-        color: var(--terminal-bg);
-    }
+html.dark ::selection {
+    background: var(--matrix-green);
+    color: var(--terminal-bg);
 }
 
 /* ============================================
@@ -281,27 +263,25 @@ body {
 }
 
 /* Dark mode: full CRT effect */
-@media (prefers-color-scheme: dark) {
-    .crt-overlay::before {
-        background: repeating-linear-gradient(
-            0deg,
-            rgba(0, 0, 0, 0.15) 0px,
-            rgba(0, 0, 0, 0.15) 1px,
-            transparent 1px,
-            transparent 2px
-        );
-        opacity: 1;
-    }
+html.dark .crt-overlay::before {
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15) 0px,
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    opacity: 1;
+}
 
-    .crt-overlay::after {
-        background: radial-gradient(
-            ellipse at center,
-            transparent 0%,
-            rgba(0, 0, 0, 0.2) 80%,
-            rgba(0, 0, 0, 0.5) 100%
-        );
-        opacity: 1;
-    }
+html.dark .crt-overlay::after {
+    background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        rgba(0, 0, 0, 0.2) 80%,
+        rgba(0, 0, 0, 0.5) 100%
+    );
+    opacity: 1;
 }
 
 @keyframes scanline-scroll {
