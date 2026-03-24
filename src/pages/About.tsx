@@ -11,6 +11,8 @@ import {
   Discord,
   ChevronRight,
 } from "@/lib/cyberIcon";
+import { OFFICERS } from "@/constants";
+import Monogram from "@/components/Monogram";
 
 // ─── Section definitions ───────────────────────────────
 const SECTIONS = [
@@ -160,6 +162,30 @@ const SECTIONS = [
   },
 ];
 
+// ─── Build quarter → officers map ──────────────────────
+const QUARTER_ORDER = ["Fall", "Winter", "Spring", "Summer"];
+
+const quarterMap = new Map<string, { name: string; role: string; altRole?: string; photo?: string }[]>();
+OFFICERS.forEach((officer) => {
+  officer.leadershipHistory.forEach((entry) => {
+    if (!entry.role) return;
+    if (!quarterMap.has(entry.quarter)) quarterMap.set(entry.quarter, []);
+    quarterMap.get(entry.quarter)!.push({
+      name: officer.name,
+      role: entry.role,
+      altRole: entry.altRole,
+      photo: officer.photo,
+    });
+  });
+});
+
+const QUARTERS = Array.from(quarterMap.keys()).sort((a, b) => {
+  const [qA, yA] = a.split(" ");
+  const [qB, yB] = b.split(" ");
+  if (yA !== yB) return parseInt(yA) - parseInt(yB);
+  return QUARTER_ORDER.indexOf(qA) - QUARTER_ORDER.indexOf(qB);
+});
+
 // ─── About Page ────────────────────────────────────────
 function About() {
   const location = useLocation();
@@ -285,6 +311,74 @@ function About() {
             </section>
           );
         })}
+
+        {/* ── Leadership History ── */}
+        <section>
+          <div className="border-t border-b border-dashed border-gray-300 dark:border-matrix/30 py-8 mb-8 text-center">
+            <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-2">
+              ./leadership_history.sh
+            </p>
+            <h2 className="font-mono text-4xl md:text-5xl font-bold text-green-700 dark:text-matrix uppercase tracking-wide">
+              LEADERSHIP HISTORY
+            </h2>
+          </div>
+
+          <div className="space-y-10">
+            {QUARTERS.map((quarter) => {
+              const officers = quarterMap.get(quarter)!;
+              return (
+                <div key={quarter}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="font-mono text-xs text-green-700 dark:text-matrix">$</span>
+                    <h3 className="font-mono text-sm font-bold text-green-700 dark:text-matrix uppercase tracking-widest">
+                      {quarter}
+                    </h3>
+                    <div className="flex-1 border-t border-dashed border-gray-200 dark:border-matrix/20" />
+                    <span className="font-mono text-xs text-gray-400 dark:text-matrix/40">
+                      {officers.length} officer{officers.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {officers.map((officer) => (
+                      <div
+                        key={officer.name}
+                        className="border border-gray-200 dark:border-matrix/20 p-4 flex items-center gap-3 hover:border-green-500 dark:hover:border-matrix/40 transition-colors"
+                      >
+                        {officer.photo ? (
+                          <img
+                            src={officer.photo}
+                            alt={officer.name}
+                            className="w-8 h-8 rounded-full object-cover shrink-0 grayscale opacity-80"
+                          />
+                        ) : (
+                          <Monogram
+                            name={officer.name}
+                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-matrix/10 shrink-0"
+                            textClassName="text-xs"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-mono text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
+                            {officer.name}
+                          </p>
+                          <p className="font-mono text-xs text-green-700 dark:text-matrix/70 truncate">
+                            {officer.role}
+                          </p>
+                          {officer.altRole && (
+                            <p className="font-mono text-xs text-gray-400 dark:text-matrix/40 truncate">
+                              {officer.altRole}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         {/* ── Logistics ── */}
         <section className="border border-gray-200 dark:border-matrix/20 p-8">

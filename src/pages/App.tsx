@@ -16,6 +16,7 @@ import {
 } from "@/lib/cyberIcon";
 import { supabase } from "@/lib/supabase";
 import CircularGallery, { type CircularGalleryHandle } from "@/components/CircularGallery";
+import Monogram from "@/components/Monogram";
 import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -345,9 +346,11 @@ function OfficerCard({
             className="w-10 h-10 border border-gray-300 dark:border-matrix/30 object-cover"
           />
         ) : (
-          <div className="w-10 h-10 border border-gray-300 dark:border-matrix/30 bg-green-100 dark:bg-matrix/10 flex items-center justify-center">
-            <Code className="w-5 h-5 text-green-700 dark:text-matrix" />
-          </div>
+          <Monogram
+            name={name}
+            className="w-10 h-10 border border-gray-300 dark:border-matrix/30 bg-green-100 dark:bg-matrix/10"
+            textClassName="text-xs"
+          />
         )}
         <div>
           <p className="text-xs text-gray-500 dark:text-matrix/50 font-mono uppercase tracking-widest">
@@ -425,9 +428,11 @@ function OfficerModal({
                 className="w-20 h-20 border-2 border-gray-300 dark:border-matrix/40 object-cover mb-4"
               />
             ) : (
-              <div className="w-20 h-20 border-2 border-gray-300 dark:border-matrix/30 bg-green-100 dark:bg-matrix/10 flex items-center justify-center mb-4">
-                <Code className="w-8 h-8 text-green-700 dark:text-matrix" />
-              </div>
+              <Monogram
+                name={officer.name}
+                className="w-20 h-20 border-2 border-gray-300 dark:border-matrix/30 bg-green-100 dark:bg-matrix/10 mb-4"
+                textClassName="text-xl"
+              />
             )}
             <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-1">
               {officer.role}{officer.altRole && <span className="text-gray-400 dark:text-matrix/30"> · {officer.altRole}</span>}

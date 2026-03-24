@@ -26,28 +26,44 @@ export const OFFICERS: OfficerData[] = [
     role: "President",
     photo: "/neel-anshu.jpeg",
     links: [
-      { icon: GitHub, href: "https://github.com/boredcreator", label: "GitHub" },
-      { icon: Instagram, href: "https://instagram.com/neel_reddy455", label: "Instagram" },
+      {
+        icon: GitHub,
+        href: "https://github.com/boredcreator",
+        label: "GitHub",
+      },
+      {
+        icon: Instagram,
+        href: "https://instagram.com/neel_reddy455",
+        label: "Instagram",
+      },
       { icon: Globe, href: "https://flippedbyneel.com", label: "Website" },
     ],
     leadershipHistory: [
       { quarter: "Winter 2026", role: "President" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
   {
     name: "Aaron Ma",
-    role: "Vice President",
-    altRole: "ICC Representative",
+    role: "President",
     photo: "/aaron-ma.jpeg",
     links: [
       { icon: GitHub, href: "https://github.com/aaronhma", label: "GitHub" },
       { icon: X, href: "https://x.com/aaronhma", label: "X" },
-      { icon: LinkedIn, href: "https://www.linkedin.com/in/air-rn/", label: "LinkedIn" },
+      {
+        icon: LinkedIn,
+        href: "https://www.linkedin.com/in/air-rn/",
+        label: "LinkedIn",
+      },
       { icon: Mail, href: "mailto:hi@aaronhma.com", label: "Email" },
       { icon: Globe, href: "https://aaronhma.com/", label: "Website" },
     ],
     leadershipHistory: [
-      { quarter: "Winter 2026", role: "Vice President", altRole: "ICC Representative" },
+      {
+        quarter: "Winter 2026",
+        role: "Vice President",
+        altRole: "ICC Representative",
+      },
       { quarter: "Spring 2026", role: "President" },
     ],
   },
@@ -55,10 +71,15 @@ export const OFFICERS: OfficerData[] = [
     name: "Thant Thu Hein",
     role: "Outreach Manager",
     links: [
-      { icon: Instagram, href: "https://www.instagram.com/butter.daxxton", label: "Instagram" },
+      {
+        icon: Instagram,
+        href: "https://www.instagram.com/butter.daxxton",
+        label: "Instagram",
+      },
     ],
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Outreach Manager" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
   {
@@ -66,6 +87,7 @@ export const OFFICERS: OfficerData[] = [
     role: "Secretary",
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Secretary" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
   {
@@ -73,6 +95,7 @@ export const OFFICERS: OfficerData[] = [
     role: "Treasurer",
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Treasurer" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
   {
@@ -80,6 +103,7 @@ export const OFFICERS: OfficerData[] = [
     role: "Curriculum Lead",
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Curriculum Lead" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
 ];
