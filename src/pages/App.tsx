@@ -3,11 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Discord,
   Calendar,
-  GitHub,
-  Instagram,
-  Globe,
-  LinkedIn,
-  Mail,
   Code,
   Clock,
   MapPin,
@@ -25,6 +20,8 @@ import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { OFFICERS } from "@/constants";
+import type { OfficerData } from "@/constants";
 
 const prefetchMeetings = () => import("./Meetings");
 
@@ -326,55 +323,6 @@ function FAQSection({ loaded }: { loaded: boolean }) {
   );
 }
 
-// ─── Officer types & data ─────────────────────────────
-interface OfficerData {
-  name: string;
-  role: string;
-  altRole?: string;
-  photo?: string;
-  links?: {
-    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-    href: string;
-    label: string;
-  }[];
-}
-
-const OFFICERS: OfficerData[] = [
-  {
-    name: "Neel Anshu",
-    role: "President",
-    photo: "/neel-anshu.jpeg",
-    links: [
-      { icon: GitHub, href: "https://github.com/boredcreator", label: "GitHub" },
-      { icon: Instagram, href: "https://instagram.com/neel_reddy455", label: "Instagram" },
-      { icon: Globe, href: "https://flippedbyneel.com", label: "Website" },
-    ],
-  },
-  {
-    name: "Aaron Ma",
-    role: "Vice President",
-    altRole: "ICC Representative",
-    photo: "/aaron-ma.jpeg",
-    links: [
-      { icon: GitHub, href: "https://github.com/aaronhma", label: "GitHub" },
-      { icon: X, href: "https://x.com/aaronhma", label: "X" },
-      { icon: LinkedIn, href: "https://www.linkedin.com/in/air-rn/", label: "LinkedIn" },
-      { icon: Mail, href: "mailto:hi@aaronhma.com", label: "Email" },
-      { icon: Globe, href: "https://aaronhma.com/", label: "Website" },
-    ],
-  },
-  {
-    name: "Thant Thu Hein",
-    role: "Outreach Manager",
-    links: [
-      { icon: Instagram, href: "https://www.instagram.com/butter.daxxton", label: "Instagram" },
-    ],
-  },
-  { name: "Arin Thakkar", role: "Secretary" },
-  { name: "Mobin Norouzi", role: "Treasurer" },
-  { name: "Ollin Ruiz", role: "Curriculum Lead" },
-];
-
 // ─── Officer Card ────────────────────────────────────
 function OfficerCard({
   name,
@@ -488,6 +436,27 @@ function OfficerModal({
               {officer.name}
             </h3>
           </div>
+
+          {officer.leadershipHistory.length > 0 && (
+            <div className="border-t border-gray-200 dark:border-matrix/20 pt-4 mb-4">
+              <p className="font-mono text-xs text-gray-400 dark:text-matrix/40 uppercase tracking-widest mb-2">
+                Leadership History
+              </p>
+              <div className="space-y-1">
+                {officer.leadershipHistory.map((entry) => (
+                  <div key={entry.quarter} className="flex items-baseline justify-between gap-2">
+                    <span className="font-mono text-xs text-gray-500 dark:text-matrix/50 shrink-0">
+                      {entry.quarter}
+                    </span>
+                    <span className="font-mono text-xs text-green-700 dark:text-matrix text-right">
+                      {entry.role}
+                      {entry.altRole && <span className="text-gray-400 dark:text-matrix/40"> · {entry.altRole}</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {officer.links && officer.links.length > 0 ? (
             <div className="space-y-2 border-t border-gray-200 dark:border-matrix/20 pt-4">
