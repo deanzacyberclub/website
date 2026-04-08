@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { isAppDeepLink, redirectToApp } from '@/lib/authRedirect'
 import { Spinner } from '@/lib/cyberIcon'
 
 function AuthCallback() {
@@ -89,6 +90,7 @@ function AuthCallback() {
       }
 
       if (session) {
+        const returnTo = searchParams.get('to') || '/dashboard'
 
         // Check if user profile exists
         const { data: profile } = await supabase
@@ -98,11 +100,12 @@ function AuthCallback() {
           .single()
 
         if (!profile) {
-          // New user - redirect to profile setup
-          navigate('/auth?step=profile')
+          // New user - go to profile setup, preserving the return destination
+          navigate(`/auth?step=profile&to=${encodeURIComponent(returnTo)}`)
+        } else if (isAppDeepLink(returnTo)) {
+          // Hand tokens back to the iOS app via deep link
+          redirectToApp(returnTo, session)
         } else {
-          // Get the return URL from the 'to' parameter
-          const returnTo = searchParams.get('to') || '/dashboard'
           navigate(returnTo)
         }
       } else {

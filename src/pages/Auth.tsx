@@ -1,6 +1,8 @@
 import { useState, useEffect, FormEvent, ChangeEvent, useRef, KeyboardEvent, ClipboardEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
+import { isAppDeepLink, redirectToApp } from '@/lib/authRedirect'
 import { Spinner, GitHubAlt, Discord, LinkedIn, Plus } from '@/lib/cyberIcon'
 
 type AuthStep = 'signin' | 'profile'
@@ -20,7 +22,7 @@ function Auth() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const studentIdRefs = useRef<(HTMLInputElement | null)[]>([])
   const navigate = useNavigate()
-  const { user, userProfile, loading: authLoading, signInWithGitHub, signInWithDiscord, signInWithLinkedIn, createProfile } = useAuth()
+  const { user, session, userProfile, loading: authLoading, signInWithGitHub, signInWithDiscord, signInWithLinkedIn, createProfile } = useAuth()
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100)
@@ -33,7 +35,11 @@ function Auth() {
     // If user is logged in and has a profile, go to return URL or dashboard
     if (user && userProfile) {
       const returnTo = searchParams.get('to') || '/dashboard'
-      navigate(returnTo)
+      if (isAppDeepLink(returnTo) && session) {
+        redirectToApp(returnTo, session)
+      } else {
+        navigate(returnTo)
+      }
       return
     }
 
@@ -67,7 +73,7 @@ function Auth() {
         navigate('/auth', { replace: true })
       }
     }
-  }, [user, userProfile, authLoading, navigate, searchParams, profilePreview, displayName])
+  }, [user, session, userProfile, authLoading, navigate, searchParams, profilePreview, displayName])
 
   const handleGitHubSignIn = async () => {
     setLoading(true)
@@ -126,7 +132,16 @@ function Auth() {
         !profilePicture && oauthAvatarUrl ? oauthAvatarUrl : undefined
       )
       const returnTo = searchParams.get('to') || '/dashboard'
-      navigate(returnTo)
+      if (isAppDeepLink(returnTo)) {
+        const { data: { session: newSession } } = await supabase.auth.getSession()
+        if (newSession) {
+          redirectToApp(returnTo, newSession)
+        } else {
+          navigate('/dashboard')
+        }
+      } else {
+        navigate(returnTo)
+      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       console.error('Profile creation error:', err)

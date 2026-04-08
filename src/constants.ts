@@ -23,7 +23,7 @@ export interface OfficerData {
 export const OFFICERS: OfficerData[] = [
   {
     name: "Neel Anshu",
-    role: "Treasurer",
+    role: "President",
     photo: "/neel-anshu.jpeg",
     links: [
       {
@@ -40,7 +40,7 @@ export const OFFICERS: OfficerData[] = [
     ],
     leadershipHistory: [
       { quarter: "Winter 2026", role: "President" },
-      { quarter: "Spring 2026", role: "Treasurer" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
   {
@@ -79,7 +79,7 @@ export const OFFICERS: OfficerData[] = [
     ],
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Outreach Manager" },
-      { quarter: "Spring 2026", role: "Outreach Manager" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
   {
@@ -87,7 +87,7 @@ export const OFFICERS: OfficerData[] = [
     role: "Secretary",
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Secretary" },
-      { quarter: "Spring 2026", role: "Vice President" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
   {
@@ -95,7 +95,7 @@ export const OFFICERS: OfficerData[] = [
     role: "Treasurer",
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Treasurer" },
-      { quarter: "Spring 2026", role: "Events" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
   {
@@ -103,7 +103,7 @@ export const OFFICERS: OfficerData[] = [
     role: "Curriculum Lead",
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Curriculum Lead" },
-      { quarter: "Spring 2026", role: "Curriculum Lead" },
+      { quarter: "Spring 2026", role: "" },
     ],
   },
 ];
