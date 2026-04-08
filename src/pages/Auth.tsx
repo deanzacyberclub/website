@@ -35,11 +35,14 @@ function Auth() {
     // If user is logged in and has a profile, go to return URL or dashboard
     if (user && userProfile) {
       const returnTo = searchParams.get('to') || '/dashboard'
-      if (isAppDeepLink(returnTo) && session) {
-        redirectToApp(returnTo, session)
-      } else {
-        navigate(returnTo)
+      if (isAppDeepLink(returnTo)) {
+        // Never use navigate() for deep links — React Router treats them as
+        // relative paths. Redirect via window.location only when session is ready;
+        // the effect re-runs when session updates.
+        if (session) redirectToApp(returnTo, session)
+        return
       }
+      navigate(returnTo)
       return
     }
 
