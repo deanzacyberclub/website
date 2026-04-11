@@ -83,7 +83,15 @@ function Auth() {
     setError('')
     try {
       const returnTo = searchParams.get('to') || undefined
-      await signInWithGitHub(returnTo)
+      // For app deep links, stash returnTo in sessionStorage so the base
+      // redirect URL stays clean (Supabase rejects redirectTo URLs that
+      // don't exactly match the allowlist).
+      if (returnTo && isAppDeepLink(returnTo)) {
+        sessionStorage.setItem('auth_return_to', returnTo)
+        await signInWithGitHub()
+      } else {
+        await signInWithGitHub(returnTo)
+      }
     } catch {
       setError('[ERROR] Failed to sign in with GitHub. Retry.')
       setLoading(false)
@@ -95,7 +103,12 @@ function Auth() {
     setError('')
     try {
       const returnTo = searchParams.get('to') || undefined
-      await signInWithDiscord(returnTo)
+      if (returnTo && isAppDeepLink(returnTo)) {
+        sessionStorage.setItem('auth_return_to', returnTo)
+        await signInWithDiscord()
+      } else {
+        await signInWithDiscord(returnTo)
+      }
     } catch {
       setError('[ERROR] Failed to sign in with Discord. Retry.')
       setLoading(false)
@@ -107,7 +120,12 @@ function Auth() {
     setError('')
     try {
       const returnTo = searchParams.get('to') || undefined
-      await signInWithLinkedIn(returnTo)
+      if (returnTo && isAppDeepLink(returnTo)) {
+        sessionStorage.setItem('auth_return_to', returnTo)
+        await signInWithLinkedIn()
+      } else {
+        await signInWithLinkedIn(returnTo)
+      }
     } catch {
       setError('[ERROR] Failed to sign in with LinkedIn. Retry.')
       setLoading(false)

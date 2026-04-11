@@ -90,7 +90,11 @@ function AuthCallback() {
       }
 
       if (session) {
-        const returnTo = searchParams.get('to') || '/dashboard'
+        // sessionStorage takes priority — used when returnTo is an app deep link
+        // (we avoid putting dacc:// in the Supabase redirectTo allowlist).
+        const storedReturnTo = sessionStorage.getItem('auth_return_to')
+        if (storedReturnTo) sessionStorage.removeItem('auth_return_to')
+        const returnTo = storedReturnTo || searchParams.get('to') || '/dashboard'
 
         // Check if user profile exists
         const { data: profile } = await supabase
