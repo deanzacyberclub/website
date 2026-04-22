@@ -20,24 +20,15 @@ const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const CTF = lazy(() => import("@/pages/CTF"));
-const CTFChallenges = lazy(() => import("@/pages/ctf/Challenges"));
-const CTFChallengeDetail = lazy(() => import("@/pages/ctf/ChallengeDetail"));
+// const CTFChallenges = lazy(() => import("@/pages/ctf/Challenges"));
+// const CTFChallengeDetail = lazy(() => import("@/pages/ctf/ChallengeDetail"));
 const CTFTeam = lazy(() => import("@/pages/ctf/Team"));
 const CTFJoinTeam = lazy(() => import("@/pages/ctf/JoinTeam"));
-const CTFLeaderboard = lazy(() => import("@/pages/ctf/Leaderboard"));
+// const CTFLeaderboard = lazy(() => import("@/pages/ctf/Leaderboard"));
 const CTFChallengeEditor = lazy(() => import("@/pages/ctf/ChallengeEditor"));
 const Study = lazy(() => import("@/pages/Study"));
 const Officer = lazy(() => import("@/pages/Officer"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
-const BurpSuite = lazy(() => import("@/pages/BurpSuite"));
-const BurpSuiteDemo1 = lazy(() => import("@/pages/burpsuite/Demo1"));
-const BurpSuiteDemo2 = lazy(() => import("@/pages/burpsuite/Demo2"));
-const BurpSuiteDemo3 = lazy(() => import("@/pages/burpsuite/Demo3"));
-const BurpSuiteDashboard = lazy(() => import("@/pages/burpsuite/Dashboard"));
-const BurpSuiteDemo4 = lazy(() => import("@/pages/burpsuite/Demo4"));
-const BurpSuiteDemo5 = lazy(() => import("@/pages/burpsuite/Demo5"));
-const Weekly = lazy(() => import("@/pages/Weekly"));
-const PuzzleWeek1 = lazy(() => import("@/pages/puzzle/Week1"));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
@@ -77,24 +68,6 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
                     </ProtectedRoute>
                   }
                 />
-
-                {/* BurpSuite Demo Routes */}
-                <Route path="/burpsuite" element={<BurpSuite />} />
-                <Route path="/burpsuite/demo1" element={<BurpSuiteDemo1 />} />
-                <Route path="/burpsuite/demo2" element={<BurpSuiteDemo2 />} />
-                <Route path="/burpsuite/demo3" element={<BurpSuiteDemo3 />} />
-                <Route
-                  path="/burpsuite/dashboard"
-                  element={<BurpSuiteDashboard />}
-                />
-                <Route path="/burpsuite/demo4" element={<BurpSuiteDemo4 />} />
-                <Route path="/burpsuite/demo5" element={<BurpSuiteDemo5 />} />
-
-                {/* Weekly Challenge Route */}
-                <Route path="/weekly" element={<Weekly />} />
-
-                {/* Weekly Puzzle Routes */}
-                <Route path="/puzzle/week1" element={<PuzzleWeek1 />} />
 
                 {/* Protected routes - require authentication */}
                 <Route

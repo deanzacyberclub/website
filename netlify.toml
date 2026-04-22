@@ -9,61 +9,6 @@
   node_bundler = "esbuild"
   directory = "netlify/functions"
 
-# BurpSuite Demo API Endpoints
-[[redirects]]
-  from = "/api/burpsuite/demo1/login"
-  to = "/.netlify/functions/burpsuite-demo1-login"
-  status = 200
-
-[[redirects]]
-  from = "/api/documents"
-  to = "/.netlify/functions/documents"
-  status = 200
-
-[[redirects]]
-  from = "/api/auth/login"
-  to = "/.netlify/functions/auth-login"
-  status = 200
-
-# CTF Challenge API Endpoints
-[[redirects]]
-  from = "/api/burpsuite/dashboard/auth"
-  to = "/.netlify/functions/burpsuite-dashboard-auth"
-  status = 200
-
-[[redirects]]
-  from = "/api/burpsuite/dashboard/data"
-  to = "/.netlify/functions/burpsuite-dashboard-data"
-  status = 200
-
-# Weekly Puzzle API Endpoints
-[[redirects]]
-  from = "/api/puzzle/week1/login"
-  to = "/.netlify/functions/puzzle-week1-login"
-  status = 200
-
-[[redirects]]
-  from = "/api/puzzle/week1/employees"
-  to = "/.netlify/functions/puzzle-week1-employees"
-  status = 200
-
-# The Hive (Demo 4) API Endpoints
-[[redirects]]
-  from = "/api/burpsuite/hive/profile"
-  to = "/.netlify/functions/hive-profile"
-  status = 200
-
-# MFA Bypass (Demo 5) API Endpoints
-[[redirects]]
-  from = "/api/hive/login"
-  to = "/.netlify/functions/hive-login"
-  status = 200
-
-[[redirects]]
-  from = "/api/hive/mfa/toggle"
-  to = "/.netlify/functions/hive-mfa-toggle"
-  status = 200
-
 # CTFd Sync API
 [[redirects]]
   from = "/api/ctfd/sync"
