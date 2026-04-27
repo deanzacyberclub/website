@@ -1622,12 +1622,13 @@ function MeetingDetails() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {meeting.topics.map((topic) => (
-                          <span
+                          <Link
                             key={topic}
-                            className="px-3 py-1.5  text-sm bg-terminal-alt border border-gray-700 text-gray-300 hover:border-matrix/50 transition-colors"
+                            to={`/meetings?q=${encodeURIComponent(topic)}`}
+                            className="px-3 py-1.5 text-sm bg-terminal-alt border border-gray-700 text-gray-300 hover:border-matrix/50 hover:text-matrix transition-colors cursor-pointer"
                           >
                             {topic}
-                          </span>
+                          </Link>
                         ))}
                       </div>
                     </div>

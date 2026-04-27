@@ -15,7 +15,9 @@ import {
   Flag,
 } from "@/lib/cyberIcon";
 import { supabase } from "@/lib/supabase";
-import CircularGallery, { type CircularGalleryHandle } from "@/components/CircularGallery";
+import CircularGallery, {
+  type CircularGalleryHandle,
+} from "@/components/CircularGallery";
 import Monogram from "@/components/Monogram";
 import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import type { Meeting } from "@/types/database.types";
@@ -61,9 +63,11 @@ function HeroTypewriter() {
           .map((char, i) =>
             i < settled
               ? char
-              : SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
+              : SCRAMBLE_CHARS[
+                  Math.floor(Math.random() * SCRAMBLE_CHARS.length)
+                ],
           )
-          .join("")
+          .join(""),
       );
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(animate);
@@ -128,13 +132,34 @@ function HeroTypewriter() {
 
 // ─── Floating Hex Decorations ────────────────────────
 const HEX_STRINGS = [
-  "0x7F3A", "0xC9E1", "0x2B4D", "0xFF00", "0x1A3C",
-  "0x5E8F", "0xD220", "0x99BB", "0x4A6E", "0x1133",
-  "0x88AA", "0x3C5F", "0xE007", "0x66DD", "0xBB44",
+  "0x7F3A",
+  "0xC9E1",
+  "0x2B4D",
+  "0xFF00",
+  "0x1A3C",
+  "0x5E8F",
+  "0xD220",
+  "0x99BB",
+  "0x4A6E",
+  "0x1133",
+  "0x88AA",
+  "0x3C5F",
+  "0xE007",
+  "0x66DD",
+  "0xBB44",
 ];
 
 function FloatingHexBackground() {
-  const [hexes, setHexes] = useState<{ id: number; text: string; left: number; top: number; delay: number; duration: number }[]>([]);
+  const [hexes, setHexes] = useState<
+    {
+      id: number;
+      text: string;
+      left: number;
+      top: number;
+      delay: number;
+      duration: number;
+    }[]
+  >([]);
 
   useEffect(() => {
     const items = Array.from({ length: 15 }, (_, i) => ({
@@ -169,19 +194,66 @@ function FloatingHexBackground() {
 }
 
 // ─── Scroll Indicator ────────────────────────────────
-function ScrollIndicator() {
+function ScrollIndicator({ onClick }: { onClick: () => void }) {
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
+    <button
+      onClick={onClick}
+      className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce cursor-pointer hover:opacity-70 transition-opacity"
+      aria-label="Scroll to content"
+    >
       <span className="font-mono text-[10px] text-gray-400 dark:text-matrix/40 uppercase tracking-widest">
         Scroll
       </span>
       <ChevronDown className="w-4 h-4 text-gray-400 dark:text-matrix/40" />
-    </div>
+    </button>
+  );
+}
+
+// ─── Cycling Status Messages ─────────────────────────
+const STATUS_MESSAGES = [
+  "Join 100+ members learning cybersecurity at De Anza College",
+  "Mondays 2:30–4:00 PM · ATC Room 205",
+  "No experience required — beginners welcome",
+  "Next meeting: check Discord for updates",
+  "Compete in CTFs · Earn certifications · Build real skills",
+];
+
+function CyclingStatus() {
+  const [index, setIndex] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setFading(true);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % STATUS_MESSAGES.length);
+        setFading(false);
+      }, 300);
+    }, 3500);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <p className="font-mono text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-2">
+      <span className="w-1.5 h-1.5 bg-green-500 dark:bg-matrix rounded-full animate-pulse shrink-0" />
+      <span
+        className="transition-opacity duration-300"
+        style={{ opacity: fading ? 0 : 1 }}
+      >
+        {STATUS_MESSAGES[index]}
+      </span>
+    </p>
   );
 }
 
 // ─── Animated Counter ────────────────────────────────
-function AnimatedCounter({ value, inView }: { value: string; inView: boolean }) {
+function AnimatedCounter({
+  value,
+  inView,
+}: {
+  value: string;
+  inView: boolean;
+}) {
   const numeric = parseInt(value.replace(/\D/g, ""), 10);
   const suffix = value.replace(/[0-9]/g, "");
   const [count, setCount] = useState(0);
@@ -259,7 +331,7 @@ function SectionHeader({
 
 // ─── Stats Bar ───────────────────────────────────────
 const stats = [
-  { label: "ACTIVE MEMBERS", value: "90+", sub: "And growing" },
+  { label: "ACTIVE MEMBERS", value: "100+", sub: "And growing" },
   { label: "WORKSHOPS", value: "20+", sub: "Hands-on sessions" },
   { label: "TOOLS COVERED", value: "15+", sub: "Industry standard" },
   { label: "CTF CHALLENGES", value: "30+", sub: "All difficulty levels" },
@@ -267,6 +339,7 @@ const stats = [
 
 function StatsBar({ loaded }: { loaded: boolean }) {
   const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.3 });
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
     <div
@@ -275,20 +348,31 @@ function StatsBar({ loaded }: { loaded: boolean }) {
     >
       <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4">
         {stats.map((stat, i) => (
-          <div
+          <button
             key={i}
-            className={`group px-6 py-8 hover:bg-green-50/50 dark:hover:bg-matrix/[0.02] transition-colors ${i < stats.length - 1 ? "md:border-r md:border-gray-200 dark:md:border-matrix/20" : ""} ${i < 2 ? "border-b md:border-b-0 border-gray-200 dark:border-matrix/20" : ""}`}
+            onClick={() => setActiveIndex(activeIndex === i ? null : i)}
+            className={`group text-left px-6 py-8 transition-colors relative overflow-hidden cursor-pointer
+              ${activeIndex === i ? "bg-green-50 dark:bg-matrix/[0.05]" : "hover:bg-green-50/50 dark:hover:bg-matrix/[0.02]"}
+              ${i < stats.length - 1 ? "md:border-r md:border-gray-200 dark:md:border-matrix/20" : ""}
+              ${i < 2 ? "border-b md:border-b-0 border-gray-200 dark:border-matrix/20" : ""}`}
           >
+            {activeIndex === i && (
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-green-400 to-green-600 dark:from-matrix/60 dark:to-matrix" />
+            )}
             <p className="font-mono text-xs text-gray-400 dark:text-matrix/50 uppercase tracking-widest mb-2">
               {stat.label}
             </p>
-            <p className="font-mono text-3xl md:text-4xl font-bold text-green-700 dark:text-matrix dark:group-hover:neon-text-subtle transition-all duration-300">
+            <p
+              className={`font-mono text-3xl md:text-4xl font-bold text-green-700 dark:text-matrix transition-all duration-300 ${activeIndex === i ? "dark:neon-text-subtle scale-105 origin-left" : "dark:group-hover:neon-text-subtle"}`}
+            >
               <AnimatedCounter value={stat.value} inView={inView} />
             </p>
-            <p className="font-mono text-xs text-gray-400 dark:text-gray-600 mt-1">
+            <p
+              className={`font-mono text-xs mt-1 transition-colors duration-200 ${activeIndex === i ? "text-green-600 dark:text-matrix/70" : "text-gray-400 dark:text-gray-600"}`}
+            >
               {stat.sub}
             </p>
-          </div>
+          </button>
         ))}
       </div>
     </div>
@@ -450,7 +534,10 @@ function CTFTeaser({ loaded }: { loaded: boolean }) {
           <div className="relative flex flex-col md:flex-row items-center gap-6">
             <div className="shrink-0">
               <div className="w-16 h-16 border border-gray-300 dark:border-matrix/30 bg-green-100 dark:bg-matrix/10 flex items-center justify-center group-hover:border-green-600 dark:group-hover:border-matrix/60 transition-colors">
-                <Trophy className="w-8 h-8 text-green-700 dark:text-matrix group-hover:scale-110 transition-transform duration-300" style={{ animation: "ctf-float 3s ease-in-out infinite" }} />
+                <Trophy
+                  className="w-8 h-8 text-green-700 dark:text-matrix group-hover:scale-110 transition-transform duration-300"
+                  style={{ animation: "ctf-float 3s ease-in-out infinite" }}
+                />
               </div>
             </div>
 
@@ -468,8 +555,8 @@ function CTFTeaser({ loaded }: { loaded: boolean }) {
                 DACC CAPTURE THE FLAG
               </h3>
               <p className="font-mono text-gray-600 dark:text-gray-500 text-sm mb-3">
-                A full-day cybersecurity competition with $500+ in prizes,
-                30+ challenges, and hackers of all skill levels welcome.
+                A full-day cybersecurity competition with $500+ in prizes, 30+
+                challenges, and hackers of all skill levels welcome.
               </p>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs text-gray-500 dark:text-gray-600 font-mono">
                 <span className="flex items-center gap-1">
@@ -538,10 +625,7 @@ function FAQSection({ loaded }: { loaded: boolean }) {
       ref={ref}
       className={`transition-all duration-700 delay-300 ${loaded && inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
     >
-      <SectionHeader
-        index="05"
-        title="FREQUENTLY ASKED QUESTIONS"
-      />
+      <SectionHeader index="05" title="FREQUENTLY ASKED QUESTIONS" />
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Left: Usage info box */}
@@ -552,7 +636,8 @@ function FAQSection({ loaded }: { loaded: boolean }) {
           <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
 
           <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 mb-4">
-            <span className="text-green-700 dark:text-matrix">$</span> read_faq --help
+            <span className="text-green-700 dark:text-matrix">$</span> read_faq
+            --help
           </p>
           <div className="font-mono text-xs text-gray-500 dark:text-matrix/50 space-y-2">
             <p>
@@ -599,13 +684,18 @@ function FAQSection({ loaded }: { loaded: boolean }) {
               </button>
               <div
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  openIndex === index ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
+                  openIndex === index
+                    ? "max-h-60 opacity-100"
+                    : "max-h-0 opacity-0"
                 }`}
               >
                 <div className="mx-3 mb-3 border-l-2 border-green-300 dark:border-matrix/30 pl-4">
                   <p className="font-mono text-xs text-gray-400 dark:text-matrix/40 mb-2">
-                    <span className="text-green-700 dark:text-matrix">$</span> echo{" "}
-                    <span className="text-green-600 dark:text-matrix/70">$ANSWER</span>
+                    <span className="text-green-700 dark:text-matrix">$</span>{" "}
+                    echo{" "}
+                    <span className="text-green-600 dark:text-matrix/70">
+                      $ANSWER
+                    </span>
                   </p>
                   <p className="font-mono text-xs text-gray-600 dark:text-matrix/70 leading-relaxed">
                     {faq.answer}
@@ -655,7 +745,10 @@ function OfficerCard({
           <p className="text-xs text-gray-400 dark:text-matrix/50 font-mono uppercase tracking-widest">
             {role}
             {altRole && (
-              <span className="text-gray-400 dark:text-matrix/30"> · {altRole}</span>
+              <span className="text-gray-400 dark:text-matrix/30">
+                {" "}
+                · {altRole}
+              </span>
             )}
           </p>
           <p className="text-green-700 dark:text-matrix font-mono font-semibold text-sm truncate">
@@ -757,7 +850,10 @@ function OfficerModal({
               </p>
               <div className="space-y-1">
                 {officer.leadershipHistory.map((entry) => (
-                  <div key={entry.quarter} className="flex items-baseline justify-between gap-2">
+                  <div
+                    key={entry.quarter}
+                    className="flex items-baseline justify-between gap-2"
+                  >
                     <span className="font-mono text-xs text-gray-500 dark:text-matrix/50 shrink-0">
                       {entry.quarter}
                     </span>
@@ -782,7 +878,9 @@ function OfficerModal({
                 <a
                   key={link.href}
                   href={link.href}
-                  target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+                  target={
+                    link.href.startsWith("mailto:") ? undefined : "_blank"
+                  }
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 px-3 py-2 border border-gray-200 dark:border-matrix/20 hover:border-green-500 dark:hover:border-matrix/50 hover:text-green-700 dark:hover:text-matrix text-gray-600 dark:text-gray-400 transition-colors group"
                 >
@@ -828,6 +926,44 @@ function ScrollReveal({
   );
 }
 
+// ─── Discord CTA Button ──────────────────────────────
+const DISCORD_URL = "https://discord.gg/v5JWDrZVNp";
+
+function DiscordButton() {
+  const [copied, setCopied] = useState(false);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigator.clipboard.writeText(DISCORD_URL).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <a
+      href={DISCORD_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      onContextMenu={handleContextMenu}
+      className="cli-btn-filled font-mono w-full sm:w-auto justify-center uppercase relative overflow-hidden"
+      title="Right-click to copy invite link"
+    >
+      <Discord className="w-4 h-4 shrink-0" />
+      <span
+        className={`transition-all duration-200 ${copied ? "opacity-0" : "opacity-100"}`}
+      >
+        Join Discord
+      </span>
+      {copied && (
+        <span className="absolute inset-0 flex items-center justify-center font-mono text-xs">
+          &nbsp;&nbsp;LINK COPIED!
+        </span>
+      )}
+    </a>
+  );
+}
+
 // ═══════════════════════════════════════════════════════
 // MAIN APP COMPONENT
 // ═══════════════════════════════════════════════════════
@@ -847,8 +983,11 @@ function App() {
   const [loaded, setLoaded] = useState(false);
   const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([]);
   const [supportsGallery] = useState(() => checkWebGLSupport());
-  const [selectedOfficer, setSelectedOfficer] = useState<OfficerData | null>(null);
+  const [selectedOfficer, setSelectedOfficer] = useState<OfficerData | null>(
+    null,
+  );
   const galleryRef = useRef<CircularGalleryHandle>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
   const { userProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -959,15 +1098,7 @@ function App() {
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-10">
-              <a
-                href="https://discord.gg/v5JWDrZVNp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cli-btn-filled font-mono w-full sm:w-auto justify-center uppercase"
-              >
-                <Discord className="w-4 h-4" />
-                Join Discord
-              </a>
+              <DiscordButton />
               <Link
                 to="/meetings"
                 className="cli-btn-dashed font-mono w-full sm:w-auto justify-center uppercase"
@@ -978,15 +1109,16 @@ function App() {
               </Link>
             </div>
 
-            {/* Status line */}
-            <p className="font-mono text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-green-500 dark:bg-matrix rounded-full animate-pulse" />
-              STATUS: Join 90+ members learning cybersecurity at De Anza College
-            </p>
+            {/* Cycling status line */}
+            <CyclingStatus />
           </div>
 
           {/* Scroll indicator */}
-          <ScrollIndicator />
+          <ScrollIndicator
+            onClick={() =>
+              contentRef.current?.scrollIntoView({ behavior: "smooth" })
+            }
+          />
         </section>
 
         {/* ════════════════════════════════════════════
@@ -997,7 +1129,10 @@ function App() {
         {/* ════════════════════════════════════════════
             CONTENT SECTIONS
             ════════════════════════════════════════════ */}
-        <div className="max-w-5xl mx-auto px-6 py-20 space-y-24">
+        <div
+          ref={contentRef}
+          className="max-w-5xl mx-auto px-6 py-20 space-y-24"
+        >
           {/* ── RECENT EVENTS ── */}
           <ScrollReveal delay={0}>
             <section>
@@ -1047,7 +1182,7 @@ function App() {
                 {[...OFFICERS]
                   .map((officer) => {
                     const currentEntry = officer.leadershipHistory.find(
-                      (e) => e.quarter === CURRENT_QUARTER
+                      (e) => e.quarter === CURRENT_QUARTER,
                     );
                     return {
                       officer,
@@ -1058,7 +1193,9 @@ function App() {
                   .sort((a, b) => {
                     const ai = ROLE_ORDER.indexOf(a.role);
                     const bi = ROLE_ORDER.indexOf(b.role);
-                    return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+                    return (
+                      (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi)
+                    );
                   })
                   .map(({ officer, role, altRole }) => (
                     <OfficerCard
@@ -1087,7 +1224,10 @@ function App() {
                 />
 
                 {/* Full-bleed breakout from max-w-5xl container */}
-                <div className="relative w-screen left-1/2 -translate-x-1/2" style={{ height: "600px" }}>
+                <div
+                  className="relative w-screen left-1/2 -translate-x-1/2"
+                  style={{ height: "600px" }}
+                >
                   <CircularGallery
                     ref={galleryRef}
                     bend={1}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useOfficerVerification } from '@/hooks/useOfficerVerification'
 import type { Meeting, MeetingType } from '@/types/database.types'
@@ -58,10 +58,12 @@ const parseLocalDate = (dateStr: string) => {
 
 function Meetings() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { isVerifiedOfficer } = useOfficerVerification()
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<FilterType>('all')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [topicFilter, setTopicFilter] = useState<string | null>(() => searchParams.get('q'))
   const [loaded, setLoaded] = useState(false)
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [loading, setLoading] = useState(true)
@@ -118,22 +120,31 @@ function Meetings() {
     return meetings.filter(m => m.featured && parseLocalDate(m.date) >= today)
   }, [meetings])
 
+  const allTopics = useMemo(() => {
+    const set = new Set<string>()
+    meetings.forEach(m => m.topics?.forEach(t => set.add(t)))
+    return Array.from(set).sort()
+  }, [meetings])
+
   const filteredMeetings = useMemo(() => {
     let filtered = meetings.filter(m => !m.featured || parseLocalDate(m.date) < today)
 
-    // Apply time filter
     if (filter === 'upcoming') {
       filtered = filtered.filter(m => parseLocalDate(m.date) >= today)
     } else if (filter === 'past') {
       filtered = filtered.filter(m => parseLocalDate(m.date) < today)
     }
 
-    // Apply type filter
     if (typeFilter !== 'all') {
       filtered = filtered.filter(m => m.type === typeFilter)
     }
 
-    // Apply search filter
+    if (topicFilter) {
+      filtered = filtered.filter(m =>
+        m.topics?.some(t => t.toLowerCase() === topicFilter.toLowerCase())
+      )
+    }
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(m =>
@@ -144,15 +155,14 @@ function Meetings() {
       )
     }
 
-    // Sort by date (most recent first for all filters)
     filtered.sort((a, b) => {
       const dateA = parseLocalDate(a.date).getTime()
       const dateB = parseLocalDate(b.date).getTime()
-      return dateB - dateA // Most recent first
+      return dateB - dateA
     })
 
     return filtered
-  }, [meetings, filter, typeFilter, searchQuery])
+  }, [meetings, filter, typeFilter, topicFilter, searchQuery])
 
   const formatDate = (dateStr: string) => {
     const date = parseLocalDate(dateStr)
@@ -627,6 +637,26 @@ function Meetings() {
                   </div>
                 </div>
 
+                {/* Topic Filter Chips */}
+                {allTopics.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal self-center mr-2">TOPIC:</span>
+                    {allTopics.map(topic => (
+                      <button
+                        key={topic}
+                        onClick={() => setTopicFilter(topicFilter?.toLowerCase() === topic.toLowerCase() ? null : topic)}
+                        className={`px-3 py-1.5 text-xs font-terminal transition-all ${
+                          topicFilter?.toLowerCase() === topic.toLowerCase()
+                            ? 'bg-matrix/20 text-matrix border border-matrix'
+                            : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-matrix/50'
+                        }`}
+                      >
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Type Filter Buttons */}
                 <div className="flex flex-wrap gap-2">
                   <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal self-center mr-2">TYPE:</span>
@@ -718,6 +748,7 @@ function Meetings() {
                     setSearchQuery('')
                     setFilter('all')
                     setTypeFilter('all')
+                    setTopicFilter(null)
                   }}
                   className="text-blue-600 dark:text-matrix hover:text-blue-700 dark:hover:neon-text-subtle transition-all text-sm"
                 >
