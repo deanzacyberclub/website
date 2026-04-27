@@ -206,7 +206,7 @@ function ProfileMenu() {
                   closeMenu()
                   setShowLogoutConfirm(true)
                 }}
-                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-hack-red/10 hover:text-red-600 dark:hover:text-hack-red transition-all group relative"
+                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-hack-red/10 hover:text-red-600 dark:hover:text-hack-red transition-all group relative"
               >
                 <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-red-500 dark:bg-hack-red scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
                 <Logout className="w-4 h-4 shrink-0" />

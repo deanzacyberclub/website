@@ -214,7 +214,7 @@ function PageHeader() {
                     closeMobileMenu();
                     setShowLogoutConfirm(true);
                   }}
-                  className="flex items-center gap-2 px-5 py-3 font-terminal text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-hack-red transition-colors group"
+                  className="w-full flex items-center gap-2 px-5 py-3 font-terminal text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-hack-red transition-colors group"
                 >
                   <span className="text-gray-400 dark:text-gray-600 group-hover:text-red-500 dark:group-hover:text-hack-red">&gt;</span>
                   logout

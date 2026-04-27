@@ -21,7 +21,7 @@ import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { OFFICERS } from "@/constants";
+import { OFFICERS, CURRENT_QUARTER, ROLE_ORDER } from "@/constants";
 import type { OfficerData } from "@/constants";
 import { useInView } from "@/hooks/useInView";
 
@@ -1044,13 +1044,31 @@ function App() {
                 subtitle="Meet the team building DACC"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {OFFICERS.map((officer) => (
-                  <OfficerCard
-                    key={officer.name}
-                    {...officer}
-                    onClick={() => setSelectedOfficer(officer)}
-                  />
-                ))}
+                {[...OFFICERS]
+                  .map((officer) => {
+                    const currentEntry = officer.leadershipHistory.find(
+                      (e) => e.quarter === CURRENT_QUARTER
+                    );
+                    return {
+                      officer,
+                      role: currentEntry?.role ?? officer.role,
+                      altRole: currentEntry?.altRole ?? officer.altRole,
+                    };
+                  })
+                  .sort((a, b) => {
+                    const ai = ROLE_ORDER.indexOf(a.role);
+                    const bi = ROLE_ORDER.indexOf(b.role);
+                    return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+                  })
+                  .map(({ officer, role, altRole }) => (
+                    <OfficerCard
+                      key={officer.name}
+                      {...officer}
+                      role={role}
+                      altRole={altRole}
+                      onClick={() => setSelectedOfficer(officer)}
+                    />
+                  ))}
               </div>
             </section>
           </ScrollReveal>

@@ -20,6 +20,20 @@ export interface OfficerData {
   leadershipHistory: LeadershipEntry[];
 }
 
+export const CURRENT_QUARTER = "Spring 2026";
+
+export const ROLE_ORDER = [
+  "President",
+  "Vice President",
+  "Secretary",
+  "Treasurer",
+  "Curriculum Lead",
+  "Outreach Manager",
+  "Outreach",
+  "Events",
+  "ICC Representative",
+];
+
 export const OFFICERS: OfficerData[] = [
   {
     name: "Neel Anshu",
