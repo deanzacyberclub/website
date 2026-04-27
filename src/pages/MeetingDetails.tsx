@@ -621,29 +621,26 @@ function MeetingDetails() {
       );
 
       const { data, error } = await supabase
-        .from("meetings")
-        .update({
-          slug: editForm.slug,
-          title: editForm.title,
-          description: editForm.description,
-          date: editForm.date,
-          time: editForm.time,
-          location: editForm.location,
-          type: editForm.type,
-          featured: editForm.featured,
-          topics: topicsArray,
-          secret_code: editForm.secret_code || null,
-          registration_type: editForm.registration_type,
-          registration_capacity: editForm.registration_capacity,
-          invite_code: editForm.invite_code || null,
-          invite_form_url: editForm.invite_form_url || null,
-          announcements: validAnnouncements,
-          photos: validPhotos,
-          resources: validResources,
-          updated_at: new Date().toISOString(),
+        .rpc("officer_update_meeting", {
+          meeting_id: meeting.id,
+          p_slug: editForm.slug,
+          p_title: editForm.title,
+          p_description: editForm.description,
+          p_date: editForm.date,
+          p_time: editForm.time,
+          p_location: editForm.location,
+          p_type: editForm.type,
+          p_featured: editForm.featured,
+          p_topics: topicsArray,
+          p_secret_code: editForm.secret_code || null,
+          p_registration_type: editForm.registration_type,
+          p_registration_capacity: editForm.registration_capacity,
+          p_invite_code: editForm.invite_code || null,
+          p_invite_form_url: editForm.invite_form_url || null,
+          p_announcements: validAnnouncements,
+          p_photos: validPhotos,
+          p_resources: validResources,
         })
-        .eq("id", meeting.id)
-        .select()
         .single();
 
       if (error) throw error;

@@ -5,83 +5,26 @@ interface ScrollRaysProps {
   pageRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function easeOut(t: number) {
-  return 1 - Math.pow(1 - t, 3);
-}
-
-function animateScaleY(
-  el: HTMLDivElement,
-  from: number,
-  to: number,
-  duration: number,
-  onDone?: () => void,
-) {
-  const start = performance.now();
-  let raf: number;
-
-  function tick(now: number) {
-    const t = Math.min((now - start) / duration, 1);
-    const value = from + (to - from) * easeOut(t);
-    el.style.transform = `scaleY(${value})`;
-
-    if (t < 1) {
-      raf = requestAnimationFrame(tick);
-    } else {
-      onDone?.();
-    }
-  }
-
-  raf = requestAnimationFrame(tick);
-  return () => cancelAnimationFrame(raf);
-}
-
-
 export default function ScrollRays({ footerRef, pageRef }: ScrollRaysProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const phaseRef = useRef<"idle" | "revealing" | "collapsing" | "collapsed">(
-    "idle",
-  );
-  const cancelRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const footer = footerRef.current;
     const container = containerRef.current;
     if (!footer || !container) return;
 
-    const page = pageRef.current;
-    if (!page) return;
-
-    page.style.transition = "transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)";
+    const thresholds = Array.from({ length: 101 }, (_, i) => i / 100);
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && phaseRef.current === "idle") {
-          phaseRef.current = "revealing";
-          page.style.transform = "translateY(-65vh)";
-          cancelRef.current = animateScaleY(container, 0, 1, 900, () => {
-            phaseRef.current = "collapsing";
-            page.style.transform = "translateY(0)";
-            cancelRef.current = animateScaleY(container, 1, 0, 900, () => {
-              phaseRef.current = "collapsed";
-            });
-          });
-        }
-
-        if (!entry.isIntersecting && phaseRef.current === "collapsed") {
-          phaseRef.current = "idle";
-          container.style.transform = "scaleY(0)";
-        }
+        const ratio = entry.intersectionRatio;
+        container.style.transform = `scaleY(${ratio})`;
       },
-      { threshold: 0.05 },
+      { threshold: thresholds },
     );
 
     io.observe(footer);
-    return () => {
-      io.disconnect();
-      cancelRef.current?.();
-      page.style.transition = "";
-      page.style.transform = "";
-    };
+    return () => io.disconnect();
   }, [footerRef, pageRef]);
 
   return (
