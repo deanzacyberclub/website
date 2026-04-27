@@ -1,9 +1,13 @@
+import { useRef } from "react";
 import { Outlet } from "react-router-dom";
 import PageHeader from "./PageHeader";
 import Footer from "./Footer";
 import CtfdCredentialsPopup from "./CtfdCredentialsPopup";
+import ScrollRays from "./ScrollRays";
 
 function Layout() {
+  const footerRef = useRef<HTMLElement>(null);
+
   return (
     <>
       <div className="sticky top-0 z-50">
@@ -12,9 +16,8 @@ function Layout() {
         </div>
       </div>
       <Outlet />
-      <div className="max-w-5xl mx-auto px-6 pb-6">
-        <Footer />
-      </div>
+      <Footer ref={footerRef} />
+      <ScrollRays footerRef={footerRef} />
       <CtfdCredentialsPopup />
     </>
   );

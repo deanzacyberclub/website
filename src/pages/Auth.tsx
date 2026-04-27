@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { isAppDeepLink, redirectToApp } from '@/lib/authRedirect'
-import { Spinner, GitHubAlt, Discord, LinkedIn, Plus } from '@/lib/cyberIcon'
+import { Spinner, GitHubAlt, Discord, LinkedIn, Apple, Plus } from '@/lib/cyberIcon'
 
 type AuthStep = 'signin' | 'profile'
 
@@ -314,6 +314,17 @@ function Auth() {
           >
             <LinkedIn className="w-5 h-5 shrink-0" />
             <span className="font-medium flex-1 text-center">Continue with LinkedIn</span>
+          </button>
+
+          <button
+            disabled
+            className="w-full flex items-center px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg opacity-50 cursor-not-allowed relative"
+          >
+            <Apple className="w-5 h-5 shrink-0 text-white" />
+            <span className="font-medium flex-1 text-center text-white">Continue with Apple</span>
+            <span className="text-[10px] font-terminal text-gray-400 border border-gray-600 px-1.5 py-0.5 bg-gray-800">
+              COMING SOON
+            </span>
           </button>
         </div>
 

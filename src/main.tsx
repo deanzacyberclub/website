@@ -27,6 +27,7 @@ const CTFJoinTeam = lazy(() => import("@/pages/ctf/JoinTeam"));
 // const CTFLeaderboard = lazy(() => import("@/pages/ctf/Leaderboard"));
 const CTFChallengeEditor = lazy(() => import("@/pages/ctf/ChallengeEditor"));
 const Study = lazy(() => import("@/pages/Study"));
+const AppPromo = lazy(() => import("@/pages/AppPromo"));
 const Officer = lazy(() => import("@/pages/Officer"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
 
@@ -57,6 +58,7 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
                 <Route path="/ctf/challenge/:id" element={<CTF />} />
                 <Route path="/ctf/leaderboard" element={<CTF />} />
                 <Route path="/study" element={<Study />} />
+                <Route path="/app" element={<AppPromo />} />
                 <Route path="/legal" element={<Legal />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />

@@ -2,7 +2,7 @@ import { useState, useEffect, FormEvent, ChangeEvent, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import { GitHubAlt, Discord, LinkedIn, Spinner, User, Unlink, Check, Key, AlertTriangle, Code } from '@/lib/cyberIcon'
+import { GitHubAlt, Discord, LinkedIn, Apple, Spinner, User, Unlink, Check, Key, AlertTriangle, Code } from '@/lib/cyberIcon'
 import { useInView } from '@/hooks/useInView'
 
 // ─── Scroll Reveal Wrapper ───────────────────────────
@@ -200,35 +200,32 @@ function Settings() {
   const providerConfig = {
     github: {
       name: 'GitHub',
-      icon: <GitHubAlt className="w-5 h-5" />,
-      bgColor: 'bg-[#24292e]',
-      lightBg: 'bg-gray-100',
-      hoverColor: 'hover:bg-[#2f363d]',
+      icon: <GitHubAlt className="w-5 h-5 text-white" />,
+      iconBg: 'bg-[#24292e]',
       borderColor: 'border-gray-700 dark:border-gray-600',
-      textColor: 'text-gray-900 dark:text-white',
-      accentColor: 'text-gray-600 dark:text-gray-400',
     },
     discord: {
       name: 'Discord',
-      icon: <Discord className="w-5 h-5" />,
-      bgColor: 'bg-[#5865F2]',
-      lightBg: 'bg-indigo-50',
-      hoverColor: 'hover:bg-[#4752c4]',
+      icon: <Discord className="w-5 h-5 text-white" />,
+      iconBg: 'bg-[#5865F2]',
       borderColor: 'border-indigo-300 dark:border-[#5865F2]/50',
-      textColor: 'text-indigo-700 dark:text-white',
-      accentColor: 'text-indigo-600 dark:text-indigo-300',
     },
     linkedin_oidc: {
       name: 'LinkedIn',
-      icon: <LinkedIn className="w-5 h-5" />,
-      bgColor: 'bg-[#0A66C2]',
-      lightBg: 'bg-blue-50',
-      hoverColor: 'hover:bg-[#004182]',
+      icon: <LinkedIn className="w-5 h-5 text-white" />,
+      iconBg: 'bg-[#0A66C2]',
       borderColor: 'border-blue-300 dark:border-[#0A66C2]/50',
-      textColor: 'text-blue-700 dark:text-white',
-      accentColor: 'text-blue-600 dark:text-blue-300',
-    }
+    },
   }
+
+  const comingSoonProviders = [
+    {
+      name: 'Apple',
+      icon: <Apple className="w-5 h-5 text-white" />,
+      iconBg: 'bg-gray-900 dark:bg-gray-800',
+      borderColor: 'border-gray-300 dark:border-gray-700',
+    },
+  ]
 
   const isLinked = (provider: string) => linkedAccounts.some(a => a.provider === provider)
   const getLinkedAccount = (provider: string) => linkedAccounts.find(a => a.provider === provider)
@@ -431,10 +428,8 @@ function Settings() {
                         className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-terminal-bg/50 hover:border-green-500 dark:hover:border-matrix/30 transition-all duration-300 group"
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`p-2.5 ${config.bgColor} ${config.lightBg} border ${config.borderColor} transition-colors`}>
-                            <div className={config.textColor}>
-                              {config.icon}
-                            </div>
+                          <div className={`p-2.5 ${config.iconBg} border ${config.borderColor} transition-colors`}>
+                            {config.icon}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
@@ -485,6 +480,35 @@ function Settings() {
                       </div>
                     )
                   })}
+                </div>
+
+                <div className="space-y-3 mt-3">
+                  {comingSoonProviders.map((provider) => (
+                    <div
+                      key={provider.name}
+                      className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-terminal-bg/50 opacity-60"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`p-2.5 ${provider.iconBg} border ${provider.borderColor}`}>
+                          {provider.icon}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900 dark:text-white text-sm">{provider.name}</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-500 font-terminal border border-gray-300 dark:border-gray-700 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800">
+                              COMING SOON
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        disabled
+                        className="px-3 py-1.5 text-xs font-terminal border border-gray-300 dark:border-gray-700 text-gray-400 dark:text-gray-600 cursor-not-allowed"
+                      >
+                        LINK
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
                 <p className="text-xs text-gray-500 dark:text-gray-600 font-terminal mt-4">
