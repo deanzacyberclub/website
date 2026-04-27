@@ -450,15 +450,13 @@ html.dark .crt-overlay::after {
     overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-    .terminal-window {
-        background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
-        border: 1px solid #333;
-        box-shadow:
-            0 0 0 1px rgba(0, 255, 65, 0.1),
-            0 4px 30px rgba(0, 0, 0, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    }
+.dark .terminal-window {
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 1px solid #333;
+    box-shadow:
+        0 0 0 1px rgba(0, 255, 65, 0.1),
+        0 4px 30px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .terminal-window.overflow-visible {
@@ -474,11 +472,9 @@ html.dark .crt-overlay::after {
     border-bottom: 1px solid #d1d5db;
 }
 
-@media (prefers-color-scheme: dark) {
-    .terminal-header {
-        background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
-        border-bottom: 1px solid #333;
-    }
+.dark .terminal-header {
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    border-bottom: 1px solid #333;
 }
 
 .terminal-dot {
@@ -693,22 +689,18 @@ button {
     outline: none;
 }
 
-@media (prefers-color-scheme: dark) {
-    .input-hack {
-        background: rgba(0, 255, 65, 0.05);
-        border: 1px solid rgba(0, 255, 65, 0.3);
-        color: var(--matrix-green);
-    }
+.dark .input-hack {
+    background: rgba(0, 255, 65, 0.05);
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    color: var(--matrix-green);
 }
 
 .input-hack::placeholder {
     color: #9ca3af;
 }
 
-@media (prefers-color-scheme: dark) {
-    .input-hack::placeholder {
-        color: rgba(0, 255, 65, 0.4);
-    }
+.dark .input-hack::placeholder {
+    color: rgba(0, 255, 65, 0.4);
 }
 
 .input-hack:focus {
@@ -716,13 +708,11 @@ button {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    .input-hack:focus {
-        border-color: var(--matrix-green);
-        box-shadow:
-            0 0 10px rgba(0, 255, 65, 0.2),
-            inset 0 0 10px rgba(0, 255, 65, 0.05);
-    }
+.dark .input-hack:focus {
+    border-color: var(--matrix-green);
+    box-shadow:
+        0 0 10px rgba(0, 255, 65, 0.2),
+        inset 0 0 10px rgba(0, 255, 65, 0.05);
 }
 
 /* ============================================
@@ -736,15 +726,13 @@ button {
     transition: all 0.3s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-    .card-hack {
-        background: linear-gradient(
-            135deg,
-            rgba(0, 255, 65, 0.03) 0%,
-            transparent 100%
-        );
-        border: 1px solid rgba(0, 255, 65, 0.2);
-    }
+.dark .card-hack {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 255, 65, 0.03) 0%,
+        transparent 100%
+    );
+    border: 1px solid rgba(0, 255, 65, 0.2);
 }
 
 .card-hack::before {
@@ -764,15 +752,13 @@ button {
     transition: opacity 0.3s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-    .card-hack::before {
-        background: linear-gradient(
-            90deg,
-            transparent,
-            var(--matrix-green),
-            transparent
-        );
-    }
+.dark .card-hack::before {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--matrix-green),
+        transparent
+    );
 }
 
 .card-hack:hover {
@@ -780,18 +766,16 @@ button {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    .card-hack:hover {
-        border-color: rgba(0, 255, 65, 0.5);
-        background: linear-gradient(
-            135deg,
-            rgba(0, 255, 65, 0.08) 0%,
-            transparent 100%
-        );
-        box-shadow:
-            0 0 20px rgba(0, 255, 65, 0.1),
-            inset 0 0 20px rgba(0, 255, 65, 0.02);
-    }
+.dark .card-hack:hover {
+    border-color: rgba(0, 255, 65, 0.5);
+    background: linear-gradient(
+        135deg,
+        rgba(0, 255, 65, 0.08) 0%,
+        transparent 100%
+    );
+    box-shadow:
+        0 0 20px rgba(0, 255, 65, 0.1),
+        inset 0 0 20px rgba(0, 255, 65, 0.02);
 }
 
 .card-hack:hover::before {
@@ -919,11 +903,9 @@ button {
     text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-    .cli-btn-filled {
-        background: var(--matrix-green);
-        color: var(--terminal-bg);
-    }
+.dark .cli-btn-filled {
+    background: var(--matrix-green);
+    color: var(--terminal-bg);
 }
 
 .cli-btn-filled:hover {
@@ -931,11 +913,9 @@ button {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    .cli-btn-filled:hover {
-        background: #00ff6a;
-        box-shadow: 0 0 20px var(--matrix-green-glow);
-    }
+.dark .cli-btn-filled:hover {
+    background: #00ff6a;
+    box-shadow: 0 0 20px var(--matrix-green-glow);
 }
 
 /* Dashed outline button */
@@ -953,11 +933,9 @@ button {
     text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-    .cli-btn-dashed {
-        color: var(--matrix-green);
-        border: 1px dashed var(--matrix-green);
-    }
+.dark .cli-btn-dashed {
+    color: var(--matrix-green);
+    border: 1px dashed var(--matrix-green);
 }
 
 .cli-btn-dashed:hover {
@@ -966,11 +944,9 @@ button {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    .cli-btn-dashed:hover {
-        background: rgba(0, 255, 65, 0.1);
-        box-shadow: 0 0 15px rgba(0, 255, 65, 0.15);
-    }
+.dark .cli-btn-dashed:hover {
+    background: rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.15);
 }
 
 /* Blinking cursor */

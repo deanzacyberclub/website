@@ -7,17 +7,20 @@ import ScrollRays from "./ScrollRays";
 
 function Layout() {
   const footerRef = useRef<HTMLElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
 
   return (
     <>
-      <div className="sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-6 pt-4 pb-3">
-          <PageHeader />
+      <div ref={pageRef}>
+        <div className="sticky top-0 z-50">
+          <div className="max-w-5xl mx-auto px-6 pt-4 pb-3">
+            <PageHeader />
+          </div>
         </div>
+        <Outlet />
+        <Footer ref={footerRef} />
       </div>
-      <Outlet />
-      <Footer ref={footerRef} />
-      <ScrollRays footerRef={footerRef} />
+      <ScrollRays footerRef={footerRef} pageRef={pageRef} />
       <CtfdCredentialsPopup />
     </>
   );

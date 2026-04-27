@@ -390,7 +390,7 @@ function Dashboard() {
                 description="At a meeting? Enter the secret code to check in and record your attendance."
                 headerFile="attendance_check_in.sh"
                 headerTag="READY"
-                tagColor="text-hack-cyan animate-pulse"
+                tagColor="text-cyan-600 dark:text-hack-cyan animate-pulse"
                 iconBg="bg-blue-50 dark:bg-matrix/10"
                 iconBorder="border-blue-200 dark:border-matrix/30"
                 iconColor="text-blue-600 dark:text-matrix"
@@ -406,7 +406,7 @@ function Dashboard() {
                   description="Manage members, view registrations, and access admin tools."
                   headerFile="officer_dashboard.sh"
                   headerTag="ADMIN"
-                  tagColor="text-hack-purple"
+                  tagColor="text-purple-600 dark:text-hack-purple"
                   iconBg="bg-purple-50 dark:bg-hack-purple/10"
                   iconBorder="border-purple-200 dark:border-hack-purple/30"
                   iconColor="text-purple-600 dark:text-hack-purple"
@@ -427,7 +427,7 @@ function Dashboard() {
                     <span className="ml-4 text-xs text-gray-500 font-terminal">
                       ctfd_account.sh
                     </span>
-                    <span className="ml-auto text-xs text-hack-cyan font-terminal">
+                    <span className="ml-auto text-xs text-cyan-600 dark:text-hack-cyan font-terminal">
                       CTF
                     </span>
                   </div>
