@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ScrollRaysProps {
   footerRef: React.RefObject<HTMLElement | null>;
@@ -7,6 +8,7 @@ interface ScrollRaysProps {
 
 export default function ScrollRays({ footerRef, pageRef }: ScrollRaysProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const footer = footerRef.current;
@@ -44,6 +46,8 @@ export default function ScrollRays({ footerRef, pageRef }: ScrollRaysProps) {
         bottom: 0,
         left: 0,
         right: 0,
+        opacity: resolvedTheme === "dark" ? 0.45 : 0.3,
+        transition: "opacity 0.3s ease",
       }}
     >
       <svg

@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Tabs } from "./Tabs";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Theme } from "@/contexts/ThemeContext";
+import type { CSSProperties } from "react";
 
 interface FooterProps {
   className?: string;
@@ -20,12 +21,18 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
 ) {
   const location = useLocation();
   const currentYear = new Date().getFullYear();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+
+  // TODO: keep transparent for now, eventually remove
+  const footerStyle: CSSProperties = {
+    backgroundColor: resolvedTheme === "dark" ? "transparent" : "transparent",
+  };
 
   return (
     <footer
       ref={ref}
-      className={`bg-white dark:bg-transparent border-t border-gray-200 dark:border-matrix/20 relative z-10 ${className}`}
+      style={footerStyle}
+      className={`border-t border-gray-200 dark:border-matrix/20 relative z-10 ${className}`}
     >
       <div className="max-w-7xl mx-auto px-6">
         {/* Top status bar */}
