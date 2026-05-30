@@ -182,6 +182,13 @@ function Meetings() {
     setCreateForm({ ...createForm, [field]: value })
   }
 
+  const clearAllFilters = () => {
+    setSearchQuery('')
+    setFilter('all')
+    setTypeFilter('all')
+    setTopicFilter(null)
+  }
+
   const generateSlugFromTitle = (title: string) => {
     return title
       .toLowerCase()
@@ -591,131 +598,140 @@ function Meetings() {
               <div className="terminal-dot green" />
               <span className="ml-4 text-xs text-gray-500 dark:text-gray-500 font-terminal">search_meetings</span>
             </div>
-            <div className="terminal-body">
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Search Input */}
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      placeholder="Search meetings, topics, locations..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="input-hack w-full pl-10"
-                    />
-                  </div>
-
-                  {/* Time Filter Buttons */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setFilter('all')}
-                      className={`px-4 py-2 text-sm font-terminal transition-all ${filter === 'all'
-                        ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
-                        : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
-                        }`}
-                    >
-                      ALL
-                    </button>
-                    <button
-                      onClick={() => setFilter('upcoming')}
-                      className={`px-4 py-2 text-sm font-terminal transition-all ${filter === 'upcoming'
-                        ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
-                        : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
-                        }`}
-                    >
-                      UPCOMING
-                    </button>
-                    <button
-                      onClick={() => setFilter('past')}
-                      className={`px-4 py-2 text-sm font-terminal transition-all ${filter === 'past'
-                        ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
-                        : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
-                        }`}
-                    >
-                      PAST
-                    </button>
-                  </div>
+            <div className="terminal-body space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-matrix/40">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </div>
+                <input
+                  type="text"
+                  placeholder="Search meetings, topics, locations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input-hack w-full pl-12 pr-10"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-matrix/60 transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <Close className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
 
-                {/* Topic Filter Chips */}
-                {allTopics.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal self-center mr-2">TOPIC:</span>
-                    {allTopics.map(topic => (
+              {/* Active Filters Summary */}
+              {(filter !== 'all' || typeFilter !== 'all' || topicFilter || searchQuery) && (
+                <div className="flex flex-wrap items-center gap-2 pb-1 border-b border-gray-200 dark:border-gray-800">
+                  <span className="text-xs text-gray-500 dark:text-gray-600 font-terminal">ACTIVE:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {filter !== 'all' && (
                       <button
-                        key={topic}
-                        onClick={() => setTopicFilter(topicFilter?.toLowerCase() === topic.toLowerCase() ? null : topic)}
-                        className={`px-3 py-1.5 text-xs font-terminal transition-all ${
-                          topicFilter?.toLowerCase() === topic.toLowerCase()
-                            ? 'bg-matrix/20 text-matrix border border-matrix'
-                            : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-matrix/50'
+                        onClick={() => setFilter('all')}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-terminal border border-blue-300 dark:border-matrix/60 bg-blue-50 dark:bg-matrix/10 text-blue-700 dark:text-matrix hover:bg-blue-100 dark:hover:bg-matrix/20 transition-colors"
+                      >
+                        {filter.toUpperCase()} <Close className="w-3 h-3" />
+                      </button>
+                    )}
+                    {typeFilter !== 'all' && (
+                      <button
+                        onClick={() => setTypeFilter('all')}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-terminal border hover:bg-gray-100 dark:hover:bg-white/5 transition-colors ${TYPE_COLORS[typeFilter]}`}
+                      >
+                        {TYPE_LABELS[typeFilter]} <Close className="w-3 h-3" />
+                      </button>
+                    )}
+                    {topicFilter && (
+                      <button
+                        onClick={() => setTopicFilter(null)}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-terminal border border-matrix/60 bg-matrix/10 text-matrix hover:bg-matrix/20 transition-colors"
+                      >
+                        {topicFilter} <Close className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    onClick={clearAllFilters}
+                    className="ml-auto text-xs font-terminal text-hack-red hover:text-red-400 transition-colors"
+                  >
+                    CLEAR ALL
+                  </button>
+                </div>
+              )}
+
+              {/* Time + Type Filters */}
+              <div className="flex flex-col lg:flex-row lg:items-center gap-x-6 gap-y-3">
+                {/* Time Filter - Segmented */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-terminal text-gray-500 dark:text-gray-600 w-12 shrink-0">TIME</span>
+                  <div className="inline-flex rounded border border-gray-300 dark:border-gray-700 overflow-hidden text-sm font-terminal">
+                    {(['all', 'upcoming', 'past'] as const).map((f, idx) => (
+                      <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`px-3 py-1.5 transition-all border-r last:border-r-0 border-gray-300 dark:border-gray-700 ${
+                          filter === f
+                            ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix'
+                            : 'bg-white dark:bg-terminal-bg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-terminal-alt/50'
                         }`}
                       >
-                        {topic}
+                        {f === 'all' ? 'ALL' : f.toUpperCase()}
                       </button>
                     ))}
                   </div>
-                )}
+                </div>
 
-                {/* Type Filter Buttons */}
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-xs text-gray-600 dark:text-gray-500 font-terminal self-center mr-2">TYPE:</span>
-                  <button
-                    onClick={() => setTypeFilter('all')}
-                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'all'
-                      ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
-                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
-                      }`}
-                  >
-                    ALL TYPES
-                  </button>
-                  <button
-                    onClick={() => setTypeFilter('workshop')}
-                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'workshop'
-                      ? 'bg-cyan-100 dark:bg-hack-cyan/20 text-cyan-700 dark:text-hack-cyan border border-cyan-300 dark:border-hack-cyan'
-                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-cyan-400 dark:hover:border-hack-cyan/50'
-                      }`}
-                  >
-                    WORKSHOP
-                  </button>
-                  <button
-                    onClick={() => setTypeFilter('lecture')}
-                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'lecture'
-                      ? 'bg-yellow-100 dark:bg-hack-yellow/20 text-yellow-700 dark:text-hack-yellow border border-yellow-300 dark:border-hack-yellow'
-                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-yellow-400 dark:hover:border-hack-yellow/50'
-                      }`}
-                  >
-                    LECTURE
-                  </button>
-                  <button
-                    onClick={() => setTypeFilter('ctf')}
-                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'ctf'
-                      ? 'bg-red-100 dark:bg-hack-red/20 text-red-700 dark:text-hack-red border border-red-300 dark:border-hack-red'
-                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-red-400 dark:hover:border-hack-red/50'
-                      }`}
-                  >
-                    CTF
-                  </button>
-                  <button
-                    onClick={() => setTypeFilter('social')}
-                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'social'
-                      ? 'bg-purple-100 dark:bg-purple-400/20 text-purple-700 dark:text-purple-400 border border-purple-300 dark:border-purple-400'
-                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-400/50'
-                      }`}
-                  >
-                    SOCIAL
-                  </button>
-                  <button
-                    onClick={() => setTypeFilter('general')}
-                    className={`px-3 py-1.5 text-xs font-terminal transition-all ${typeFilter === 'general'
-                      ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix'
-                      : 'bg-gray-100 dark:bg-terminal-alt text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-matrix/50'
-                      }`}
-                  >
-                    GENERAL
-                  </button>
+                {/* Type Filters - Compact Pills */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-terminal text-gray-500 dark:text-gray-600 w-12 shrink-0">TYPE</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(['all', 'workshop', 'lecture', 'ctf', 'social', 'general'] as const).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => setTypeFilter(t)}
+                        className={`px-2.5 py-0.5 text-xs font-terminal transition-all border ${
+                          typeFilter === t
+                            ? t === 'all'
+                              ? 'bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border-blue-300 dark:border-matrix'
+                              : 'bg-opacity-15 dark:bg-opacity-15'
+                            : 'bg-gray-100 dark:bg-terminal-alt text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
+                        } ${typeFilter === t && t !== 'all' ? TYPE_COLORS[t] : ''}`}
+                      >
+                        {t === 'all' ? 'ALL' : TYPE_LABELS[t]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              {/* Topics - Secondary and Compact */}
+              {allTopics.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <span className="text-xs font-terminal text-gray-500 dark:text-gray-600 w-12 shrink-0 pt-1">TOPICS</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {allTopics.map(topic => {
+                      const active = topicFilter?.toLowerCase() === topic.toLowerCase()
+                      return (
+                        <button
+                          key={topic}
+                          onClick={() => setTopicFilter(active ? null : topic)}
+                          className={`px-2 py-0.5 text-xs font-terminal transition-all border ${
+                            active
+                              ? 'bg-matrix/20 text-matrix border-matrix'
+                              : 'bg-gray-100 dark:bg-terminal-alt text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
+                          }`}
+                        >
+                          {topic}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -744,12 +760,7 @@ function Meetings() {
                   <span className="text-yellow-600 dark:text-hack-yellow">[INFO]</span> No meetings found matching your criteria.
                 </p>
                 <button
-                  onClick={() => {
-                    setSearchQuery('')
-                    setFilter('all')
-                    setTypeFilter('all')
-                    setTopicFilter(null)
-                  }}
+                  onClick={clearAllFilters}
                   className="text-blue-600 dark:text-matrix hover:text-blue-700 dark:hover:neon-text-subtle transition-all text-sm"
                 >
                   Clear filters

@@ -20,13 +20,6 @@ const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const CTF = lazy(() => import("@/pages/CTF"));
-// const CTFChallenges = lazy(() => import("@/pages/ctf/Challenges"));
-// const CTFChallengeDetail = lazy(() => import("@/pages/ctf/ChallengeDetail"));
-const CTFTeam = lazy(() => import("@/pages/ctf/Team"));
-const CTFJoinTeam = lazy(() => import("@/pages/ctf/JoinTeam"));
-// const CTFLeaderboard = lazy(() => import("@/pages/ctf/Leaderboard"));
-const CTFChallengeEditor = lazy(() => import("@/pages/ctf/ChallengeEditor"));
-const Study = lazy(() => import("@/pages/Study"));
 const AppPromo = lazy(() => import("@/pages/AppPromo"));
 const Officer = lazy(() => import("@/pages/Officer"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
@@ -54,10 +47,6 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
                 <Route path="/meetings" element={<Meetings />} />
                 <Route path="/meetings/:slug" element={<MeetingDetails />} />
                 <Route path="/ctf" element={<CTF />} />
-                <Route path="/ctf/challenges" element={<CTF />} />
-                <Route path="/ctf/challenge/:id" element={<CTF />} />
-                <Route path="/ctf/leaderboard" element={<CTF />} />
-                <Route path="/study" element={<Study />} />
                 <Route path="/app" element={<AppPromo />} />
                 <Route path="/legal" element={<Legal />} />
                 <Route path="/auth" element={<Auth />} />
@@ -101,46 +90,6 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
                   element={
                     <ProtectedRoute requireOfficer>
                       <Officer />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/ctf/team"
-                  element={
-                    <ProtectedRoute>
-                      <CTFTeam />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/ctf/join"
-                  element={
-                    <ProtectedRoute>
-                      <CTFJoinTeam />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/ctf/join/:code"
-                  element={
-                    <ProtectedRoute>
-                      <CTFJoinTeam />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/ctf/challenge/:id/edit"
-                  element={
-                    <ProtectedRoute requireOfficer>
-                      <CTFChallengeEditor />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/ctf/challenges/new"
-                  element={
-                    <ProtectedRoute requireOfficer>
-                      <CTFChallengeEditor />
                     </ProtectedRoute>
                   }
                 />

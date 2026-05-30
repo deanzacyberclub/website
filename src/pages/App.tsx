@@ -105,13 +105,15 @@ function HeroTypewriter() {
     };
   }, [phase, scrambleTo]);
 
+  const isLongWord = displayWord.length >= 8;
+
   if (phase === "typing") {
     const visible = INITIAL_TYPE_TEXT.slice(0, typedChars);
     const lines = visible.split("\n");
     return (
-      <h1 className="font-mono font-bold text-green-700 dark:text-matrix leading-tight">
+      <h1 className="font-mono font-bold text-green-700 dark:text-matrix leading-tight text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
         {lines.map((line, i) => (
-          <span key={i} className="block text-5xl md:text-6xl lg:text-7xl">
+          <span key={i} className="block">
             {line}
             {i === lines.length - 1 && <span className="cli-cursor">_</span>}
           </span>
@@ -121,9 +123,9 @@ function HeroTypewriter() {
   }
 
   return (
-    <h1 className="font-mono font-bold text-green-700 dark:text-matrix leading-tight">
-      <span className="block text-5xl md:text-6xl lg:text-7xl">LEARN TO</span>
-      <span className="block text-5xl md:text-6xl lg:text-7xl">
+    <h1 className="font-mono font-bold text-green-700 dark:text-matrix leading-tight text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
+      <span className="block">LEARN TO</span>
+      <span className={`block ${isLongWord ? "tracking-tighter" : ""}`}>
         [{displayWord}].<span className="cli-cursor">_</span>
       </span>
     </h1>

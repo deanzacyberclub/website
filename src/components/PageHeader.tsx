@@ -15,18 +15,14 @@ function PageHeader() {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const isEventsActive = location.pathname.startsWith("/meetings");
-  const isCTFActive = location.pathname.startsWith("/ctf");
   const isCheckInActive = location.pathname === "/live";
 
   const navTabs = [
     { id: "meetings", label: "events" },
-    { id: "ctf", label: "ctf" },
-    ...(user ? [{ id: "live", label: "check-in" }] : []),
+    { id: "live", label: "check in" },
   ];
   const activeNavTab = isEventsActive
     ? "meetings"
-    : isCTFActive
-    ? "ctf"
     : isCheckInActive
     ? "live"
     : "";
@@ -154,33 +150,20 @@ function PageHeader() {
               {isEventsActive && <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />}
             </Link>
             <Link
-              to="/ctf"
+              to="/live"
               onClick={closeMobileMenu}
               className={`flex items-center gap-2 px-5 py-3 font-terminal text-sm transition-all group ${
-                isCTFActive
+                isCheckInActive
                   ? "text-green-700 dark:text-matrix bg-green-50/50 dark:bg-matrix/5"
                   : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5"
               }`}
             >
-              <span className={isCTFActive ? "text-green-700 dark:text-matrix" : "text-gray-400 dark:text-gray-600"}>&gt;</span>
-              ctf
-              {isCTFActive && <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />}
+              <span className={isCheckInActive ? "text-green-700 dark:text-matrix" : "text-gray-400 dark:text-gray-600"}>&gt;</span>
+              check in
+              {isCheckInActive && <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />}
             </Link>
             {user && (
               <>
-                <Link
-                  to="/live"
-                  onClick={closeMobileMenu}
-                  className={`flex items-center gap-2 px-5 py-3 font-terminal text-sm transition-all group ${
-                    isCheckInActive
-                      ? "text-green-700 dark:text-matrix bg-green-50/50 dark:bg-matrix/5"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5"
-                  }`}
-                >
-                  <span className={isCheckInActive ? "text-green-700 dark:text-matrix" : "text-gray-400 dark:text-gray-600"}>&gt;</span>
-                  check-in
-                  {isCheckInActive && <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />}
-                </Link>
                 <div className="mx-5 my-1 h-px bg-gray-200 dark:bg-gray-700" />
                 <Link
                   to="/dashboard"
