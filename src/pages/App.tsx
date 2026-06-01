@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Discord,
@@ -16,10 +16,14 @@ import {
   Users,
 } from "@/lib/cyberIcon";
 import { supabase } from "@/lib/supabase";
-import CircularGallery, {
-  type CircularGalleryHandle,
-} from "@/components/CircularGallery";
 import Monogram from "@/components/Monogram";
+
+// Lazy load the heavy CircularGallery (uses ogl/WebGL) only when needed
+const CircularGallery = lazy(() =>
+  import("@/components/CircularGallery").then((mod) => ({
+    default: mod.default as React.ComponentType<any>,
+  }))
+);
 import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,6 +34,7 @@ import { useInView } from "@/hooks/useInView";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
 const prefetchMeetings = () => import("./Meetings");
+const prefetchLive = () => import("./Attendance");
 
 // ─── Typewriter for hero heading ─────────────────────
 const HACKING_TERMS = [
@@ -1275,7 +1280,7 @@ function DiscordButton() {
       target="_blank"
       rel="noopener noreferrer"
       onContextMenu={handleContextMenu}
-      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-medium text-black hover:bg-emerald-400 active:bg-emerald-600 transition-all w-full sm:w-auto"
+      className="relative inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-medium text-black hover:bg-emerald-400 active:bg-emerald-600 transition-all w-full sm:w-auto"
       title="Right-click to copy invite link"
     >
       <Discord className="w-4 h-4 shrink-0" />
@@ -1285,8 +1290,8 @@ function DiscordButton() {
         Join Discord
       </span>
       {copied && (
-        <span className="absolute inset-0 flex items-center justify-center font-mono text-xs">
-          &nbsp;&nbsp;LINK COPIED!
+        <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-emerald-500 text-xs font-medium text-black">
+          LINK COPIED!
         </span>
       )}
     </a>
@@ -1430,7 +1435,7 @@ function App() {
               <DiscordButton />
               <Link
                 to="/meetings"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-all w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 px-6 py-3 text-sm font-medium text-gray-800 dark:text-white/80 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-all w-full sm:w-auto"
                 onMouseEnter={prefetchMeetings}
                 onFocus={prefetchMeetings}
               >
@@ -1476,6 +1481,7 @@ function App() {
                   to="/meetings"
                   className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-all group"
                   onMouseEnter={prefetchMeetings}
+                  onFocus={prefetchMeetings}
                 >
                   VIEW ALL EVENTS
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -1539,7 +1545,7 @@ function App() {
           {/* ── FAQ ── */}
           <FAQSection loaded={loaded} />
 
-          {/* ── GALLERY ── Only show on supported devices */}
+          {/* ── GALLERY ── Only show on supported devices (lazy loaded) */}
           {supportsGallery && (
             <ScrollReveal delay={100}>
               <section>
@@ -1554,15 +1560,17 @@ function App() {
                   className="relative w-screen left-1/2 -translate-x-1/2"
                   style={{ height: "600px" }}
                 >
-                  <CircularGallery
-                    ref={galleryRef}
-                    bend={1}
-                    textColor={resolvedTheme === "dark" ? "#ffffff" : "#000000"}
-                    borderRadius={0.05}
-                    scrollSpeed={2}
-                    scrollEase={0.05}
-                    disableScroll
-                  />
+                  <Suspense fallback={null}>
+                    <CircularGallery
+                      ref={galleryRef}
+                      bend={1}
+                      textColor={resolvedTheme === "dark" ? "#ffffff" : "#000000"}
+                      borderRadius={0.05}
+                      scrollSpeed={2}
+                      scrollEase={0.05}
+                      disableScroll
+                    />
+                  </Suspense>
                   <button
                     onClick={() => galleryRef.current?.scrollLeft()}
                     className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 bg-black/40 hover:bg-black/60 border border-white/20 hover:border-white/40 text-white transition-all backdrop-blur-sm"

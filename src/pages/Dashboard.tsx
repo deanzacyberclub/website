@@ -17,7 +17,6 @@ import {
   Clock,
 } from "@/lib/cyberIcon";
 import { Tabs } from "@/components/Tabs";
-import { getCtfdCredentials } from "@/lib/ctfd";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
@@ -113,26 +112,15 @@ function Dashboard() {
   const [dataLoading, setDataLoading] = useState(true);
   const [meetings, setMeetings] = useState<MeetingWithRegistration[]>([]);
   const [attendanceCount, setAttendanceCount] = useState(0);
-  const [activeTab, setActiveTab] = useState<"upcoming" | "attended">("upcoming");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "attended">(
+    "upcoming",
+  );
   const { user, userProfile } = useAuth();
   const { isVerifiedOfficer } = useOfficerVerification();
-  const [ctfdCreds, setCtfdCreds] = useState<{
-    ctfd_username: string | null;
-    ctfd_password: string | null;
-  } | null>(null);
-  const [ctfdCopied, setCtfdCopied] = useState<string | null>(null);
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100);
   }, []);
-
-  useEffect(() => {
-    if (user) {
-      getCtfdCredentials()
-        .then(setCtfdCreds)
-        .catch(() => {});
-    }
-  }, [user]);
 
   useEffect(() => {
     async function fetchData() {
@@ -358,95 +346,6 @@ function Dashboard() {
                   iconBorder="border-purple-200 dark:border-hack-purple/30"
                   iconColor="text-purple-600 dark:text-hack-purple"
                 />
-              </ScrollReveal>
-            )}
-
-            {ctfdCreds?.ctfd_username && (
-              <ScrollReveal delay={100}>
-                <div className="terminal-window relative overflow-hidden group">
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500 dark:via-matrix to-transparent" />
-                  </div>
-                  <div className="terminal-header">
-                    <div className="terminal-dot red" />
-                    <div className="terminal-dot yellow" />
-                    <div className="terminal-dot green" />
-                    <span className="ml-4 text-xs text-gray-500 font-terminal">
-                      ctfd_account.sh
-                    </span>
-                    <span className="ml-auto text-xs text-cyan-600 dark:text-hack-cyan font-terminal">
-                      CTF
-                    </span>
-                  </div>
-                  <div className="terminal-body">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className="flex-1 space-y-3">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-matrix mb-1">
-                          Your CTFd Account
-                        </h2>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 dark:text-gray-600 font-terminal w-20 shrink-0">
-                            USERNAME
-                          </span>
-                          <code className="font-mono text-sm text-green-700 dark:text-matrix bg-green-50 dark:bg-matrix/5 px-2 py-0.5 border border-green-200 dark:border-matrix/20">
-                            {ctfdCreds.ctfd_username}
-                          </code>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(
-                                ctfdCreds.ctfd_username!,
-                              );
-                              setCtfdCopied("user");
-                              setTimeout(() => setCtfdCopied(null), 2000);
-                            }}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-terminal-alt transition-colors"
-                            title="Copy username"
-                          >
-                            {ctfdCopied === "user" ? (
-                              <Check className="w-3.5 h-3.5 text-green-600 dark:text-matrix" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5 text-gray-400" />
-                            )}
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 dark:text-gray-600 font-terminal w-20 shrink-0">
-                            PASSWORD
-                          </span>
-                          <code className="font-mono text-sm text-green-700 dark:text-matrix bg-green-50 dark:bg-matrix/5 px-2 py-0.5 border border-green-200 dark:border-matrix/20">
-                            {ctfdCreds.ctfd_password}
-                          </code>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(
-                                ctfdCreds.ctfd_password!,
-                              );
-                              setCtfdCopied("pass");
-                              setTimeout(() => setCtfdCopied(null), 2000);
-                            }}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-terminal-alt transition-colors"
-                            title="Copy password"
-                          >
-                            {ctfdCopied === "pass" ? (
-                              <Check className="w-3.5 h-3.5 text-green-600 dark:text-matrix" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5 text-gray-400" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      <a
-                        href="https://dactf.com/login"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cli-btn-filled px-5 py-2.5 flex items-center justify-center gap-2 shrink-0 text-sm"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Go to CTFd
-                      </a>
-                    </div>
-                  </div>
-                </div>
               </ScrollReveal>
             )}
           </div>
@@ -681,7 +580,9 @@ function Dashboard() {
                           <span className="text-green-700 dark:text-matrix">
                             {eligiblePastMeetings.length > 0
                               ? Math.round(
-                                  (attendanceCount / eligiblePastMeetings.length) * 100,
+                                  (attendanceCount /
+                                    eligiblePastMeetings.length) *
+                                    100,
                                 )
                               : 0}
                             %

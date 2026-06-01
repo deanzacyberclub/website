@@ -1,478 +1,522 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
-import { autoSyncToCtfd } from '@/lib/ctfd'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
 export interface LinkedAccount {
-  provider: string
-  provider_account_id: string
-  provider_email: string | null
-  provider_username: string | null
-  provider_avatar_url: string | null
-  linked_at: string
+  provider: string;
+  provider_account_id: string;
+  provider_email: string | null;
+  provider_username: string | null;
+  provider_avatar_url: string | null;
+  linked_at: string;
 }
 
 export interface UserProfile {
-  id: string
-  email: string
-  display_name: string
-  student_id: string | null
-  photo_url: string | null
-  linked_accounts: LinkedAccount[]
-  is_officer: boolean
-  created_at: string
+  id: string;
+  email: string;
+  display_name: string;
+  student_id: string | null;
+  photo_url: string | null;
+  linked_accounts: LinkedAccount[];
+  is_officer: boolean;
+  created_at: string;
 }
 
 interface AuthContextType {
-  user: User | null
-  session: Session | null
-  userProfile: UserProfile | null
-  loading: boolean
-  signInWithGitHub: (returnTo?: string) => Promise<void>
-  signInWithDiscord: (returnTo?: string) => Promise<void>
-  signInWithLinkedIn: (returnTo?: string) => Promise<void>
-  signOut: () => Promise<void>
+  user: User | null;
+  session: Session | null;
+  userProfile: UserProfile | null;
+  loading: boolean;
+  signInWithGitHub: (returnTo?: string) => Promise<void>;
+  signInWithDiscord: (returnTo?: string) => Promise<void>;
+  signInWithLinkedIn: (returnTo?: string) => Promise<void>;
+  signOut: () => Promise<void>;
   updateUserProfile: (
     displayName: string,
     studentId: string,
-    profilePicture?: File | null
-  ) => Promise<void>
-  deleteAccount: () => Promise<void>
+    profilePicture?: File | null,
+  ) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   createProfile: (
     displayName: string,
     studentId: string,
     profilePicture?: File,
-    avatarUrl?: string
-  ) => Promise<void>
-  linkIdentity: (provider: 'github' | 'discord' | 'linkedin_oidc') => Promise<void>
-  unlinkIdentity: (provider: string) => Promise<void>
+    avatarUrl?: string,
+  ) => Promise<void>;
+  linkIdentity: (
+    provider: "github" | "discord" | "linkedin_oidc",
+  ) => Promise<void>;
+  unlinkIdentity: (provider: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id)
-        setSession(session)
-        setUser(session?.user ?? null)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change:", event, session?.user?.id);
+      setSession(session);
+      setUser(session?.user ?? null);
 
-        if (session?.user) {
-          // Use setTimeout to avoid Supabase deadlock issues
-          setTimeout(async () => {
-            const profile = await fetchUserProfile(session.user.id)
+      if (session?.user) {
+        // Use setTimeout to avoid Supabase deadlock issues
+        setTimeout(async () => {
+          const profile = await fetchUserProfile(session.user.id);
 
-            // If we just linked an identity, sync it to the database
-            if (event === 'USER_UPDATED' && session.user.identities && profile) {
-              await syncIdentitiesToProfile(session.user.id, session.user.identities, profile)
-            }
-          }, 0)
-        } else {
-          setUserProfile(null)
-          setLoading(false)
-        }
+          // If we just linked an identity, sync it to the database
+          if (event === "USER_UPDATED" && session.user.identities && profile) {
+            await syncIdentitiesToProfile(
+              session.user.id,
+              session.user.identities,
+              profile,
+            );
+          }
+        }, 0);
+      } else {
+        setUserProfile(null);
+        setLoading(false);
       }
-    )
+    });
 
     // THEN get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('Initial session:', session?.user?.id)
-      setSession(session)
-      setUser(session?.user ?? null)
+      console.log("Initial session:", session?.user?.id);
+      setSession(session);
+      setUser(session?.user ?? null);
 
       if (session?.user) {
-        await fetchUserProfile(session.user.id)
+        await fetchUserProfile(session.user.id);
       } else {
-        setLoading(false)
+        setLoading(false);
       }
-    })
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
-  const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  const fetchUserProfile = async (
+    userId: string,
+  ): Promise<UserProfile | null> => {
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single()
+        .from("users")
+        .select("*")
+        .eq("id", userId)
+        .single();
 
       if (error) {
         // User might not have a profile yet (first login)
-        setUserProfile(null)
-        return null
+        setUserProfile(null);
+        return null;
       }
 
       // Ensure linked_accounts is always an array
       let profile: UserProfile = {
         ...data,
         linked_accounts: data.linked_accounts || [],
-        is_officer: data.is_officer || false
-      }
+        is_officer: data.is_officer || false,
+      };
 
       // Check if current auth identities need to be synced
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
       if (currentUser?.identities && currentUser.identities.length > 0) {
-        const existingProviders = new Set(profile.linked_accounts.map(a => a.provider))
-        const missingIdentities = currentUser.identities.filter(i => !existingProviders.has(i.provider))
+        const existingProviders = new Set(
+          profile.linked_accounts.map((a) => a.provider),
+        );
+        const missingIdentities = currentUser.identities.filter(
+          (i) => !existingProviders.has(i.provider),
+        );
 
         if (missingIdentities.length > 0) {
           // Sync missing identities
-          await syncIdentitiesToProfile(userId, currentUser.identities, profile)
+          await syncIdentitiesToProfile(
+            userId,
+            currentUser.identities,
+            profile,
+          );
           // Re-fetch to get updated data
           const { data: updatedData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', userId)
-            .single()
+            .from("users")
+            .select("*")
+            .eq("id", userId)
+            .single();
 
           if (updatedData) {
             profile = {
               ...updatedData,
               linked_accounts: updatedData.linked_accounts || [],
-              is_officer: updatedData.is_officer || false
-            }
+              is_officer: updatedData.is_officer || false,
+            };
           }
         }
       }
 
-      setUserProfile(profile)
+      setUserProfile(profile);
 
-      // Auto-sync user and their team to CTFd on every login
-      autoSyncToCtfd()
-
-      return profile
+      return profile;
     } catch {
-      setUserProfile(null)
-      return null
+      setUserProfile(null);
+      return null;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const syncIdentitiesToProfile = async (
     userId: string,
-    identities: Array<{ provider: string; id: string; identity_data?: Record<string, unknown> }>,
-    currentProfile: UserProfile
+    identities: Array<{
+      provider: string;
+      id: string;
+      identity_data?: Record<string, unknown>;
+    }>,
+    currentProfile: UserProfile,
   ): Promise<void> => {
-    const newLinkedAccounts: LinkedAccount[] = identities.map(identity => {
-      const identityData = identity.identity_data || {}
+    const newLinkedAccounts: LinkedAccount[] = identities.map((identity) => {
+      const identityData = identity.identity_data || {};
 
       // Check if this provider already exists
-      const existing = currentProfile.linked_accounts?.find(a => a.provider === identity.provider)
+      const existing = currentProfile.linked_accounts?.find(
+        (a) => a.provider === identity.provider,
+      );
 
       return {
         provider: identity.provider,
         provider_account_id: identity.id,
         provider_email: (identityData.email as string) || null,
-        provider_username: (identityData.user_name as string) ||
+        provider_username:
+          (identityData.user_name as string) ||
           (identityData.preferred_username as string) ||
-          (identityData.name as string) || null,
-        provider_avatar_url: (identityData.avatar_url as string) ||
-          (identityData.picture as string) || null,
-        linked_at: existing?.linked_at || new Date().toISOString()
-      }
-    })
+          (identityData.name as string) ||
+          null,
+        provider_avatar_url:
+          (identityData.avatar_url as string) ||
+          (identityData.picture as string) ||
+          null,
+        linked_at: existing?.linked_at || new Date().toISOString(),
+      };
+    });
 
     const { data, error } = await supabase
-      .from('users')
+      .from("users")
       .update({ linked_accounts: newLinkedAccounts })
-      .eq('id', userId)
+      .eq("id", userId)
       .select()
-      .single()
+      .single();
 
     if (error) {
-      console.error('Error syncing identities to profile:', error)
-      return
+      console.error("Error syncing identities to profile:", error);
+      return;
     }
 
     setUserProfile({
       ...data,
-      linked_accounts: data.linked_accounts || []
-    })
-  }
+      linked_accounts: data.linked_accounts || [],
+    });
+  };
 
   const signInWithGitHub = async (returnTo?: string) => {
     const redirectUrl = returnTo
       ? `${window.location.origin}/auth/callback?to=${encodeURIComponent(returnTo)}`
-      : `${window.location.origin}/auth/callback`
+      : `${window.location.origin}/auth/callback`;
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
+      provider: "github",
       options: {
-        redirectTo: redirectUrl
-      }
-    })
-    if (error) throw error
-  }
+        redirectTo: redirectUrl,
+      },
+    });
+    if (error) throw error;
+  };
 
   const signInWithDiscord = async (returnTo?: string) => {
     const redirectUrl = returnTo
       ? `${window.location.origin}/auth/callback?to=${encodeURIComponent(returnTo)}`
-      : `${window.location.origin}/auth/callback`
+      : `${window.location.origin}/auth/callback`;
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'discord',
+      provider: "discord",
       options: {
-        redirectTo: redirectUrl
-      }
-    })
-    if (error) throw error
-  }
+        redirectTo: redirectUrl,
+      },
+    });
+    if (error) throw error;
+  };
 
   const signInWithLinkedIn = async (returnTo?: string) => {
     const redirectUrl = returnTo
       ? `${window.location.origin}/auth/callback?to=${encodeURIComponent(returnTo)}`
-      : `${window.location.origin}/auth/callback`
+      : `${window.location.origin}/auth/callback`;
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'linkedin_oidc',
+      provider: "linkedin_oidc",
       options: {
-        redirectTo: redirectUrl
-      }
-    })
-    if (error) throw error
-  }
+        redirectTo: redirectUrl,
+      },
+    });
+    if (error) throw error;
+  };
 
-  const linkIdentity = async (provider: 'github' | 'discord' | 'linkedin_oidc') => {
+  const linkIdentity = async (
+    provider: "github" | "discord" | "linkedin_oidc",
+  ) => {
     // Store that we're linking so AuthCallback knows to redirect back to settings
-    sessionStorage.setItem('linking_provider', provider)
+    sessionStorage.setItem("linking_provider", provider);
 
     const { error } = await supabase.auth.linkIdentity({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/settings`
-      }
-    })
-    if (error) throw error
-  }
+        redirectTo: `${window.location.origin}/settings`,
+      },
+    });
+    if (error) throw error;
+  };
 
   const unlinkIdentity = async (provider: string) => {
-    if (!user || !userProfile) throw new Error('No user logged in')
+    if (!user || !userProfile) throw new Error("No user logged in");
 
     // Get fresh user data to ensure we have current identities
-    const { data: { user: currentUser } } = await supabase.auth.getUser()
-    if (!currentUser) throw new Error('Failed to get current user')
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+    if (!currentUser) throw new Error("Failed to get current user");
 
     // Find the identity to unlink
-    const identity = currentUser.identities?.find(i => i.provider === provider)
-    if (!identity) throw new Error('Identity not found')
+    const identity = currentUser.identities?.find(
+      (i) => i.provider === provider,
+    );
+    if (!identity) throw new Error("Identity not found");
 
     // Check we have more than one identity
     if ((currentUser.identities?.length || 0) <= 1) {
-      throw new Error('Cannot unlink the only identity')
+      throw new Error("Cannot unlink the only identity");
     }
 
     // Unlink from Supabase Auth - pass the identity object directly
-    const { error } = await supabase.auth.unlinkIdentity(identity)
-    if (error) throw error
+    const { error } = await supabase.auth.unlinkIdentity(identity);
+    if (error) throw error;
 
     // Remove from linked_accounts in users table
     const updatedLinkedAccounts = (userProfile.linked_accounts || []).filter(
-      a => a.provider !== provider
-    )
+      (a) => a.provider !== provider,
+    );
 
     const { data, error: updateError } = await supabase
-      .from('users')
+      .from("users")
       .update({ linked_accounts: updatedLinkedAccounts })
-      .eq('id', user.id)
+      .eq("id", user.id)
       .select()
-      .single()
+      .single();
 
-    if (updateError) throw updateError
+    if (updateError) throw updateError;
 
     setUserProfile({
       ...data,
-      linked_accounts: data.linked_accounts || []
-    })
-  }
+      linked_accounts: data.linked_accounts || [],
+    });
+  };
 
   const createProfile = async (
     displayName: string,
     studentId: string,
     profilePicture?: File,
-    avatarUrl?: string
+    avatarUrl?: string,
   ) => {
-    if (!user) throw new Error('No user logged in')
+    if (!user) throw new Error("No user logged in");
 
-    let photoUrl: string | null = null
+    let photoUrl: string | null = null;
 
     // Use OAuth avatar URL if provided and no custom picture
     if (avatarUrl && !profilePicture) {
-      photoUrl = avatarUrl
+      photoUrl = avatarUrl;
     }
 
     // Upload profile picture if provided (overrides OAuth avatar)
     if (profilePicture) {
-      const fileExt = profilePicture.name.split('.').pop()
-      const filePath = `${user.id}/avatar.${fileExt}`
+      const fileExt = profilePicture.name.split(".").pop();
+      const filePath = `${user.id}/avatar.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('profile-pictures')
-        .upload(filePath, profilePicture, { upsert: true })
+        .from("profile-pictures")
+        .upload(filePath, profilePicture, { upsert: true });
 
-      if (uploadError) throw uploadError
+      if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(filePath)
+        .from("profile-pictures")
+        .getPublicUrl(filePath);
 
-      photoUrl = urlData.publicUrl
+      photoUrl = urlData.publicUrl;
     }
 
     // Build initial linked accounts from identities
-    const initialLinkedAccounts: LinkedAccount[] = (user.identities || []).map(identity => {
-      const identityData = identity.identity_data || {}
-      return {
-        provider: identity.provider,
-        provider_account_id: identity.id,
-        provider_email: (identityData.email as string) || null,
-        provider_username: (identityData.user_name as string) ||
-          (identityData.preferred_username as string) ||
-          (identityData.name as string) || null,
-        provider_avatar_url: (identityData.avatar_url as string) ||
-          (identityData.picture as string) || null,
-        linked_at: new Date().toISOString()
-      }
-    })
+    const initialLinkedAccounts: LinkedAccount[] = (user.identities || []).map(
+      (identity) => {
+        const identityData = identity.identity_data || {};
+        return {
+          provider: identity.provider,
+          provider_account_id: identity.id,
+          provider_email: (identityData.email as string) || null,
+          provider_username:
+            (identityData.user_name as string) ||
+            (identityData.preferred_username as string) ||
+            (identityData.name as string) ||
+            null,
+          provider_avatar_url:
+            (identityData.avatar_url as string) ||
+            (identityData.picture as string) ||
+            null,
+          linked_at: new Date().toISOString(),
+        };
+      },
+    );
 
     // Create user profile in database
     const { data, error: profileError } = await supabase
-      .from('users')
+      .from("users")
       .insert({
         id: user.id,
         email: user.email!.toLowerCase(),
         display_name: displayName,
         student_id: studentId || null,
         photo_url: photoUrl,
-        linked_accounts: initialLinkedAccounts
+        linked_accounts: initialLinkedAccounts,
       })
       .select()
-      .single()
+      .single();
 
     if (profileError) {
       // Check for common setup issues
-      if (profileError.code === '42P01' || profileError.message?.includes('does not exist')) {
-        throw new Error('Database not configured. Please run supabase/setup.sql')
+      if (
+        profileError.code === "42P01" ||
+        profileError.message?.includes("does not exist")
+      ) {
+        throw new Error(
+          "Database not configured. Please run supabase/setup.sql",
+        );
       }
-      throw profileError
+      throw profileError;
     }
 
     setUserProfile({
       ...data,
-      linked_accounts: data.linked_accounts || []
-    })
-
-    // Auto-sync to CTFd after profile creation
-    autoSyncToCtfd()
-  }
+      linked_accounts: data.linked_accounts || [],
+    });
+  };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
-    setUserProfile(null)
-  }
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    setUserProfile(null);
+  };
 
   const updateUserProfile = async (
     displayName: string,
     studentId: string,
-    profilePicture?: File | null
+    profilePicture?: File | null,
   ) => {
-    if (!user || !userProfile) throw new Error('No user logged in')
+    if (!user || !userProfile) throw new Error("No user logged in");
 
-    let photoUrl = userProfile.photo_url
+    let photoUrl = userProfile.photo_url;
 
     // Handle profile picture update
     if (profilePicture) {
-      const fileExt = profilePicture.name.split('.').pop()
-      const filePath = `${user.id}/avatar.${fileExt}`
+      const fileExt = profilePicture.name.split(".").pop();
+      const filePath = `${user.id}/avatar.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('profile-pictures')
-        .upload(filePath, profilePicture, { upsert: true })
+        .from("profile-pictures")
+        .upload(filePath, profilePicture, { upsert: true });
 
-      if (uploadError) throw uploadError
+      if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(filePath)
+        .from("profile-pictures")
+        .getPublicUrl(filePath);
 
-      photoUrl = urlData.publicUrl
+      photoUrl = urlData.publicUrl;
     } else if (profilePicture === null && userProfile.photo_url) {
       // User wants to remove profile picture
       try {
         const { data: files } = await supabase.storage
-          .from('profile-pictures')
-          .list(user.id)
+          .from("profile-pictures")
+          .list(user.id);
 
         if (files && files.length > 0) {
-          const filesToRemove = files.map(f => `${user.id}/${f.name}`)
-          await supabase.storage
-            .from('profile-pictures')
-            .remove(filesToRemove)
+          const filesToRemove = files.map((f) => `${user.id}/${f.name}`);
+          await supabase.storage.from("profile-pictures").remove(filesToRemove);
         }
       } catch {
         // Ignore storage errors
       }
-      photoUrl = null
+      photoUrl = null;
     }
 
     // Update database profile
     const { data, error } = await supabase
-      .from('users')
+      .from("users")
       .update({
         display_name: displayName,
         student_id: studentId || null,
-        photo_url: photoUrl
+        photo_url: photoUrl,
       })
-      .eq('id', user.id)
+      .eq("id", user.id)
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
-    setUserProfile(data)
-  }
+    if (error) throw error;
+    setUserProfile(data);
+  };
 
   const deleteAccount = async () => {
-    if (!user) throw new Error('No user logged in')
+    if (!user) throw new Error("No user logged in");
 
     // Get the current session for authorization
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw new Error('No active session')
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) throw new Error("No active session");
 
     // Call the edge function to securely delete the account
     // This uses the Admin API to properly delete the auth user
-    const { data, error } = await supabase.functions.invoke('delete-account', {
+    const { data, error } = await supabase.functions.invoke("delete-account", {
       headers: {
-        Authorization: `Bearer ${session.access_token}`
-      }
-    })
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
 
     if (error) {
-      console.error('Delete account error:', error)
-      throw new Error(error.message || 'Failed to delete account')
+      console.error("Delete account error:", error);
+      throw new Error(error.message || "Failed to delete account");
     }
 
     if (data?.error) {
-      throw new Error(data.error)
+      throw new Error(data.error);
     }
 
     // Clear local state and sign out
     // Session is already invalid after deletion, so sign out may fail
     try {
-      await supabase.auth.signOut()
+      await supabase.auth.signOut();
     } catch {
       // Ignore sign out errors - user is already deleted
     }
 
     // Ensure local state is cleared
-    setUserProfile(null)
-  }
+    setUserProfile(null);
+  };
 
   return (
     <AuthContext.Provider
@@ -489,18 +533,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         deleteAccount,
         createProfile,
         linkIdentity,
-        unlinkIdentity
+        unlinkIdentity,
       }}
     >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }

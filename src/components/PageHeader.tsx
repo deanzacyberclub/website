@@ -4,6 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import ProfileMenu from "./ProfileMenu";
 import { Login, Logout, ChevronRight } from "@/lib/cyberIcon";
 import ConfirmDialog from "./ConfirmDialog";
+import {
+  preloadMeetings,
+  preloadLive,
+  preloadDashboard,
+  preloadSettings,
+} from "@/lib/preloadRoutes";
 
 function PageHeader() {
   const location = useLocation();
@@ -31,7 +37,10 @@ function PageHeader() {
     if (!mobileMenuOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(e.target as Node)
+      ) {
         setMobileMenuOpen(false);
       }
     };
@@ -64,21 +73,21 @@ function PageHeader() {
   };
 
   const authRedirect = `/auth?to=${encodeURIComponent(
-    location.pathname === "/" ? "/dashboard" : location.pathname
+    location.pathname === "/" ? "/dashboard" : location.pathname,
   )}`;
 
   return (
     <>
       {/* Header bar: full width on mobile, always compact + rounded + centered on desktop */}
-      <div
-        className="sticky top-0 z-50 w-full px-4 md:mx-auto md:max-w-7xl md:px-6 md:mt-3 md:rounded-3xl md:border md:border-gray-200 dark:md:border-gray-800 md:bg-white dark:md:bg-[#0a0a0a] md:shadow-sm border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]"
-      >
+      <div className="sticky top-0 z-50 w-full px-4 md:mx-auto md:max-w-7xl md:px-6 md:rounded-3xl md:border md:border-gray-200 dark:md:border-gray-800 md:bg-white dark:md:bg-[#0a0a0a] md:shadow-sm border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]">
         {/* Desktop layout: Nav | Centered Logo | Auth */}
         <div className="hidden md:flex items-center justify-between py-2.5 relative">
           {/* Left: Navigation */}
           <nav className="flex items-center gap-6 text-sm font-terminal font-bold">
             <Link
               to="/meetings"
+              onMouseEnter={preloadMeetings}
+              onFocus={preloadMeetings}
               className={`flex items-center gap-1.5 transition-colors font-medium ${
                 isEventsActive
                   ? "text-matrix"
@@ -90,6 +99,8 @@ function PageHeader() {
             </Link>
             <Link
               to="/live"
+              onMouseEnter={preloadLive}
+              onFocus={preloadLive}
               className={`flex items-center gap-1.5 transition-colors font-medium ${
                 isCheckInActive
                   ? "text-matrix"
@@ -97,7 +108,7 @@ function PageHeader() {
               }`}
             >
               {isCheckInActive && <span className="text-matrix">&gt;</span>}
-              check in
+              check-in
             </Link>
           </nav>
 
@@ -117,7 +128,9 @@ function PageHeader() {
             {loading ? (
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-gray-300 dark:bg-matrix/30 animate-pulse" />
-                <span className="text-xs text-gray-400 dark:text-gray-600 font-terminal">Loading...</span>
+                <span className="text-xs text-gray-400 dark:text-gray-600 font-terminal">
+                  Loading...
+                </span>
               </div>
             ) : user ? (
               <ProfileMenu />
@@ -170,13 +183,15 @@ function PageHeader() {
             </button>
           </div>
         </div>
-      </div> {/* /header bar */}
-
+      </div>{" "}
+      {/* /header bar */}
       {/* Mobile dropdown panel (rectangular, terminal-aligned, no heavy rounding) */}
       <div
         ref={mobileMenuRef}
         className={`md:hidden mt-2 overflow-hidden transition-all duration-200 ${
-          mobileMenuOpen ? "max-h-[520px] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+          mobileMenuOpen
+            ? "max-h-[520px] opacity-100"
+            : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
         <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-terminal overflow-hidden">
@@ -184,29 +199,53 @@ function PageHeader() {
             <Link
               to="/meetings"
               onClick={closeMobileMenu}
+              onMouseEnter={preloadMeetings}
+              onFocus={preloadMeetings}
               className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
                 isEventsActive
                   ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
                   : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
               }`}
             >
-              <span className={isEventsActive ? "text-matrix" : "text-gray-400 dark:text-gray-600"}>&gt;</span>
+              <span
+                className={
+                  isEventsActive
+                    ? "text-matrix"
+                    : "text-gray-400 dark:text-gray-600"
+                }
+              >
+                &gt;
+              </span>
               events
-              {isEventsActive && <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />}
+              {isEventsActive && (
+                <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />
+              )}
             </Link>
 
             <Link
               to="/live"
               onClick={closeMobileMenu}
+              onMouseEnter={preloadLive}
+              onFocus={preloadLive}
               className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
                 isCheckInActive
                   ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
                   : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
               }`}
             >
-              <span className={isCheckInActive ? "text-matrix" : "text-gray-400 dark:text-gray-600"}>&gt;</span>
+              <span
+                className={
+                  isCheckInActive
+                    ? "text-matrix"
+                    : "text-gray-400 dark:text-gray-600"
+                }
+              >
+                &gt;
+              </span>
               check in
-              {isCheckInActive && <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />}
+              {isCheckInActive && (
+                <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />
+              )}
             </Link>
 
             {user && (
@@ -215,26 +254,46 @@ function PageHeader() {
                 <Link
                   to="/dashboard"
                   onClick={closeMobileMenu}
+                  onMouseEnter={preloadDashboard}
+                  onFocus={preloadDashboard}
                   className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
                     isDashboardActive
                       ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
                       : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
-                  <span className={isDashboardActive ? "text-matrix" : "text-gray-400 dark:text-gray-600"}>&gt;</span>
+                  <span
+                    className={
+                      isDashboardActive
+                        ? "text-matrix"
+                        : "text-gray-400 dark:text-gray-600"
+                    }
+                  >
+                    &gt;
+                  </span>
                   dashboard
                   <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
                 <Link
                   to="/settings"
                   onClick={closeMobileMenu}
+                  onMouseEnter={preloadSettings}
+                  onFocus={preloadSettings}
                   className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
                     isSettingsActive
                       ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
                       : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
-                  <span className={isSettingsActive ? "text-matrix" : "text-gray-400 dark:text-gray-600"}>&gt;</span>
+                  <span
+                    className={
+                      isSettingsActive
+                        ? "text-matrix"
+                        : "text-gray-400 dark:text-gray-600"
+                    }
+                  >
+                    &gt;
+                  </span>
                   settings
                   <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
@@ -246,7 +305,9 @@ function PageHeader() {
                   }}
                   className="w-full flex items-center gap-2 px-5 py-3 text-left text-gray-800 dark:text-gray-200 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-hack-red transition-colors group font-medium"
                 >
-                  <span className="text-gray-400 dark:text-gray-600 group-hover:text-red-500 dark:group-hover:text-hack-red">&gt;</span>
+                  <span className="text-gray-400 dark:text-gray-600 group-hover:text-red-500 dark:group-hover:text-hack-red">
+                    &gt;
+                  </span>
                   logout
                   <Logout className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
@@ -267,7 +328,6 @@ function PageHeader() {
           </div>
         </div>
       </div>
-
       {/* Logout confirmation */}
       <ConfirmDialog
         isOpen={showLogoutConfirm}
@@ -279,7 +339,9 @@ function PageHeader() {
         cancelText="CANCEL"
         loading={loggingOut}
         variant="warning"
-        icon={<Logout className="w-8 h-8 text-yellow-600 dark:text-hack-yellow" />}
+        icon={
+          <Logout className="w-8 h-8 text-yellow-600 dark:text-hack-yellow" />
+        }
       />
     </>
   );

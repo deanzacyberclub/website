@@ -61,9 +61,13 @@ function Attendance() {
     }
 
     // Get student ID from profile or form input (optional for non-De Anza students)
-    const studentIdToUse = userProfile?.student_id || form.studentId.trim() || null;
+    const studentIdToUse =
+      userProfile?.student_id || form.studentId.trim() || null;
 
-    if (studentIdToUse && (studentIdToUse.length !== 8 || !/^\d+$/.test(studentIdToUse))) {
+    if (
+      studentIdToUse &&
+      (studentIdToUse.length !== 8 || !/^\d+$/.test(studentIdToUse))
+    ) {
       setError("[ERROR] Student ID must be 8 digits if provided");
       return;
     }
@@ -241,9 +245,6 @@ function Attendance() {
             </p>
 
             <h1 className="font-mono font-bold text-green-700 dark:text-matrix leading-tight mb-6">
-              <span className="block text-5xl md:text-6xl lg:text-7xl">
-                ATTENDANCE
-              </span>
               <span className="block text-5xl md:text-6xl lg:text-7xl">
                 CHECK-IN
               </span>
