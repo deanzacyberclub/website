@@ -292,7 +292,7 @@ function Auth() {
           <button
             onClick={handleGitHubSignIn}
             disabled={loading}
-            className="w-full flex items-center px-4 py-3 bg-[#24292e] hover:bg-[#2f363d] border border-gray-200 dark:border-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center px-4 py-3 bg-[#24292e] hover:bg-[#2f363d] border border-gray-200 dark:border-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white"
           >
             <GitHubAlt className="w-5 h-5 shrink-0" />
             <span className="font-medium flex-1 text-center">Continue with GitHub</span>
@@ -301,7 +301,7 @@ function Auth() {
           <button
             onClick={handleDiscordSignIn}
             disabled={loading}
-            className="w-full flex items-center px-4 py-3 bg-[#5865F2] hover:bg-[#4752c4] border border-[#5865F2] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center px-4 py-3 bg-[#5865F2] hover:bg-[#4752c4] border border-[#5865F2] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white"
           >
             <Discord className="w-5 h-5 shrink-0" />
             <span className="font-medium flex-1 text-center">Continue with Discord</span>
@@ -310,7 +310,7 @@ function Auth() {
           <button
             onClick={handleLinkedInSignIn}
             disabled={loading}
-            className="w-full flex items-center px-4 py-3 bg-[#0A66C2] hover:bg-[#004182] border border-[#0A66C2] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center px-4 py-3 bg-[#0A66C2] hover:bg-[#004182] border border-[#0A66C2] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white"
           >
             <LinkedIn className="w-5 h-5 shrink-0" />
             <span className="font-medium flex-1 text-center">Continue with LinkedIn</span>

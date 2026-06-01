@@ -2,7 +2,7 @@ import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Spinner, Check, Plus, ArrowLeft, User } from "@/lib/cyberIcon";
+import { Spinner, Check, Plus, ArrowLeft } from "@/lib/cyberIcon";
 
 interface AttendanceForm {
   secretCode: string;
@@ -14,7 +14,6 @@ function Attendance() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [attendanceCount, setAttendanceCount] = useState(0);
 
   const { user, userProfile } = useAuth();
 
@@ -158,15 +157,6 @@ function Attendance() {
         }
       }
 
-      // Fetch updated attendance count for signed-in users
-      if (user) {
-        const { count } = await supabase
-          .from("attendance")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
-        setAttendanceCount(count || 0);
-      }
-
       setSubmitted(true);
       setForm({
         secretCode: "",
@@ -200,48 +190,6 @@ function Attendance() {
               Your attendance has been verified and logged in the system.
             </p>
           </div>
-
-          {/* User Profile */}
-          {user && userProfile && (
-            <div className="border border-gray-200 dark:border-matrix/20 p-6 mb-6 text-left">
-              <div className="flex items-center gap-4 mb-6">
-                {userProfile.photo_url ? (
-                  <img
-                    src={userProfile.photo_url}
-                    alt="Profile"
-                    className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
-                    <User className="w-8 h-8 text-green-700 dark:text-matrix" />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg">
-                    {userProfile.display_name}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-500 text-sm font-mono">
-                    {user.email}
-                  </p>
-                  <p className="text-gray-500 dark:text-gray-600 text-xs font-mono mt-1">
-                    ID: {userProfile?.student_id || form.studentId}
-                  </p>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="border-t border-gray-200 dark:border-matrix/20 pt-6">
-                <div className="text-center">
-                  <p className="text-xs text-gray-500 dark:text-gray-600 font-mono uppercase tracking-widest mb-2">
-                    Total Meetings Attended
-                  </p>
-                  <div className="text-5xl font-bold font-mono text-green-700 dark:text-matrix">
-                    {attendanceCount}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -314,111 +262,69 @@ function Attendance() {
         <div className="max-w-5xl mx-auto px-6">
           <form
             onSubmit={handleSubmit}
-            className={`max-w-2xl space-y-8 pb-20 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            className={`max-w-2xl mx-auto space-y-6 pb-4 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
             style={{ transitionDelay: "200ms" }}
           >
-          {/* User Identity Section */}
-          {user && userProfile ? (
-            <div className="border border-gray-200 dark:border-matrix/20 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest">
-                  User Session
+            {/* Student ID - only for non-logged-in users */}
+            {!user && (
+              <div className="border border-gray-200 dark:border-matrix/20 p-6">
+                <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-4">
+                  Student ID
+                </label>
+                <input
+                  type="text"
+                  name="studentId"
+                  value={form.studentId}
+                  onChange={handleChange}
+                  maxLength={8}
+                  className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
+                  placeholder="12345678"
+                  autoComplete="off"
+                />
+                <p className="text-xs mt-3 text-gray-500 dark:text-gray-600 font-mono">
+                  <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
+                  Enter your 8-digit student ID (optional if signed in)
                 </p>
-                <span className="text-xs text-green-600 dark:text-matrix font-mono">
-                  AUTHENTICATED
-                </span>
               </div>
+            )}
 
-              <div className="flex items-center gap-4">
-                {userProfile.photo_url ? (
-                  <img
-                    src={userProfile.photo_url}
-                    alt="Profile"
-                    className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
-                    <User className="w-8 h-8 text-green-700 dark:text-matrix" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg truncate">
-                    {userProfile.display_name}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm mt-1">
-                    <span className="text-gray-600 dark:text-gray-500 font-mono">
-                      ID: {userProfile.student_id}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-600 truncate font-mono text-xs">
-                      {user.email}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="border border-gray-200 dark:border-matrix/20 p-6">
-              <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-4">
-                Student ID
+            {/* Secret Code */}
+            <div>
+              <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-2">
+                Secret Code
               </label>
               <input
                 type="text"
-                name="studentId"
-                value={form.studentId}
+                name="secretCode"
+                value={form.secretCode}
                 onChange={handleChange}
-                maxLength={8}
-                className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
-                placeholder="12345678"
+                required
+                className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono uppercase text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
+                placeholder="ENTER CODE"
                 autoComplete="off"
               />
-              <p className="text-xs mt-3 text-gray-500 dark:text-gray-600 font-mono">
-                <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
-                Enter your 8-digit student ID (optional if signed in)
-              </p>
             </div>
-          )}
 
-          {/* Secret Code */}
-          <div className="border border-gray-200 dark:border-matrix/20 p-6">
-            <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-4">
-              Secret Code
-            </label>
-            <input
-              type="text"
-              name="secretCode"
-              value={form.secretCode}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono uppercase text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
-              placeholder="ENTER CODE"
-              autoComplete="off"
-            />
-            <p className="text-xs mt-3 text-gray-500 dark:text-gray-600 font-mono">
-              <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
-              Enter the secret code provided during the meeting
-            </p>
-          </div>
-
-          {error && (
-            <div className="text-red-600 dark:text-hack-red text-sm font-mono border-l-2 border-red-500 dark:border-hack-red pl-4 py-2">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting || !form.secretCode.trim()}
-            className="cli-btn-filled w-full justify-center font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <Spinner className="animate-spin h-4 w-4" />
-                VERIFYING...
-              </span>
-            ) : (
-              "CHECK IN"
+            {error && (
+              <div className="text-red-600 dark:text-hack-red text-sm font-mono border-l-2 border-red-500 dark:border-hack-red pl-4 py-2">
+                {error}
+              </div>
             )}
-          </button>
+
+            <button
+              type="submit"
+              disabled={submitting || !form.secretCode.trim()}
+              className="cli-btn-filled w-full justify-center font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner className="animate-spin h-4 w-4" />
+                  VERIFYING...
+                </span>
+              ) : (
+                "CHECK IN"
+              )}
+            </button>
           </form>
         </div>
       </div>

@@ -3,45 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { GitHubAlt, Discord, LinkedIn, Apple, Spinner, User, Unlink, Check, Key, AlertTriangle, Code } from '@/lib/cyberIcon'
-import { useInView } from '@/hooks/useInView'
-
-// ─── Scroll Reveal Wrapper ───────────────────────────
-function ScrollReveal({
-  children,
-  delay = 0,
-  className = "",
-}: {
-  children: React.ReactNode
-  delay?: number
-  className?: string
-}) {
-  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.1 })
-
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ${className} ${
-        inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-      }`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  )
-}
-
-// ─── Section Header ──────────────────────────────────
-function SectionHeader({ index, title }: { index: string; title: string }) {
-  return (
-    <div className="flex items-center gap-3 mb-5">
-      <span className="font-mono text-xs text-green-600/40 dark:text-matrix/30">[{index}]</span>
-      <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-matrix uppercase tracking-wide">
-        {title}
-      </h2>
-      <div className="flex-1 h-px bg-gradient-to-r from-gray-200 dark:from-matrix/20 to-transparent" />
-    </div>
-  )
-}
+import { SectionHeader } from '@/components/SectionHeader'
+import { ScrollReveal } from '@/components/ScrollReveal'
 
 function Settings() {
   const [loaded, setLoaded] = useState(false)

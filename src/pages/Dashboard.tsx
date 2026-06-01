@@ -18,6 +18,9 @@ import {
 } from "@/lib/cyberIcon";
 import { Tabs } from "@/components/Tabs";
 import { getCtfdCredentials } from "@/lib/ctfd";
+import { SectionHeader } from "@/components/SectionHeader";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { useInView } from "@/hooks/useInView";
 
 interface MeetingWithRegistration extends Meeting {
@@ -29,74 +32,6 @@ const parseLocalDate = (dateStr: string) => {
   const [year, month, day] = dateStr.split("-").map(Number);
   return new Date(year, month - 1, day);
 };
-
-// ─── Section Header ──────────────────────────────────
-function SectionHeader({ index, title }: { index: string; title: string }) {
-  return (
-    <div className="flex items-center gap-3 mb-6">
-      <span className="font-mono text-xs text-green-600/40 dark:text-matrix/30">
-        [{index}]
-      </span>
-      <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-matrix uppercase tracking-wide">
-        {title}
-      </h2>
-      <div className="flex-1 h-px bg-gradient-to-r from-gray-200 dark:from-matrix/20 to-transparent" />
-    </div>
-  );
-}
-
-// ─── Scroll Reveal Wrapper ───────────────────────────
-function ScrollReveal({
-  children,
-  delay = 0,
-  className = "",
-}: {
-  children: React.ReactNode;
-  delay?: number;
-  className?: string;
-}) {
-  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.1 });
-
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ${className} ${
-        inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-      }`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  );
-}
-
-// ─── Animated Counter ────────────────────────────────
-function AnimatedCounter({
-  value,
-  inView,
-}: {
-  value: number;
-  inView: boolean;
-}) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!inView) return;
-    const duration = 1200;
-    const startTime = performance.now();
-
-    const animate = (now: number) => {
-      const progress = Math.min((now - startTime) / duration, 1);
-      const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-      setCount(Math.floor(eased * value));
-      if (progress < 1) requestAnimationFrame(animate);
-    };
-
-    requestAnimationFrame(animate);
-  }, [inView, value]);
-
-  return <span>{count}</span>;
-}
 
 // ─── Action Card ─────────────────────────────────────
 function ActionCard({
@@ -175,9 +110,10 @@ function ActionCard({
 
 function Dashboard() {
   const [loaded, setLoaded] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [meetings, setMeetings] = useState<MeetingWithRegistration[]>([]);
   const [attendanceCount, setAttendanceCount] = useState(0);
-  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "attended">("upcoming");
   const { user, userProfile } = useAuth();
   const { isVerifiedOfficer } = useOfficerVerification();
   const [ctfdCreds, setCtfdCreds] = useState<{
@@ -200,6 +136,7 @@ function Dashboard() {
 
   useEffect(() => {
     async function fetchData() {
+      setDataLoading(true);
       try {
         const { data: meetingsData } = await supabase
           .from("meetings_public")
@@ -238,11 +175,15 @@ function Dashboard() {
         }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
+      } finally {
+        setDataLoading(false);
       }
     }
 
     if (user) {
       fetchData();
+    } else {
+      setDataLoading(false);
     }
   }, [user]);
 
@@ -261,7 +202,8 @@ function Dashboard() {
       );
   }, [meetings, today]);
 
-  const pastMeetings = useMemo(() => {
+  // Only events the user has actually attended (used for the "Attended" tab + personal history)
+  const attendedMeetings = useMemo(() => {
     return meetings
       .filter((m) => {
         const isPast = parseLocalDate(m.date) < today;
@@ -274,8 +216,13 @@ function Dashboard() {
       );
   }, [meetings, today]);
 
+  // All past meetings the user *could* have attended (for accurate rate calculations)
+  const eligiblePastMeetings = useMemo(() => {
+    return meetings.filter((m) => parseLocalDate(m.date) < today);
+  }, [meetings, today]);
+
   const displayedMeetings =
-    activeTab === "upcoming" ? upcomingMeetings : pastMeetings;
+    activeTab === "upcoming" ? upcomingMeetings : attendedMeetings;
 
   const getStatusBadge = (registration?: Registration, isPastEvent = false) => {
     if (!registration || registration.status === "cancelled") {
@@ -397,7 +344,7 @@ function Dashboard() {
               />
             </ScrollReveal>
 
-            {isVerifiedOfficer && (
+            {isVerifiedOfficer === true && (
               <ScrollReveal delay={50}>
                 <ActionCard
                   to="/officer"
@@ -512,16 +459,29 @@ function Dashboard() {
                 <Tabs
                   tabs={[
                     { id: "upcoming", label: "Upcoming" },
-                    { id: "past", label: "Past" },
+                    { id: "attended", label: "Attended" },
                   ]}
                   activeTab={activeTab}
                   onTabChange={(tab) =>
-                    setActiveTab(tab as "upcoming" | "past")
+                    setActiveTab(tab as "upcoming" | "attended")
                   }
                 />
               </div>
 
-              {displayedMeetings.length > 0 ? (
+              {dataLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="w-24 h-14 bg-gray-100 dark:bg-gray-800/60 animate-pulse" />
+                      <div className="flex-1 border border-gray-200 dark:border-matrix/20 p-4">
+                        <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 mb-3 animate-pulse" />
+                        <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 mb-2 animate-pulse" />
+                        <div className="h-3 w-1/2 bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : displayedMeetings.length > 0 ? (
                 <div className="space-y-0">
                   {displayedMeetings.map((meeting, index) => (
                     <div key={meeting.id} className="flex gap-4 group">
@@ -582,15 +542,15 @@ function Dashboard() {
                               {meeting.userRegistration &&
                               getStatusBadge(
                                 meeting.userRegistration,
-                                activeTab === "past",
+                                activeTab === "attended",
                               ) ? (
                                 <span
-                                  className={`inline-block px-2 py-0.5 text-xs font-terminal border ${getStatusBadge(meeting.userRegistration, activeTab === "past")!.color}`}
+                                  className={`inline-block px-2 py-0.5 text-xs font-terminal border ${getStatusBadge(meeting.userRegistration, activeTab === "attended")!.color}`}
                                 >
                                   {
                                     getStatusBadge(
                                       meeting.userRegistration,
-                                      activeTab === "past",
+                                      activeTab === "attended",
                                     )!.label
                                   }
                                 </span>
@@ -624,12 +584,12 @@ function Dashboard() {
                       <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">
                         {activeTab === "upcoming"
                           ? "No upcoming events yet"
-                          : "No past events"}
+                          : "No attended events yet"}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-500 text-sm mb-6">
                         {activeTab === "upcoming"
                           ? "Check out our meetings page to discover and register for upcoming events and workshops."
-                          : "Events you attend will appear here. Register for upcoming events to start building your event history."}
+                          : "Events you check into will appear here. Your attendance history helps track your engagement over time."}
                       </p>
                       <Link
                         to="/meetings"
@@ -638,7 +598,7 @@ function Dashboard() {
                         <Calendar className="w-4 h-4" />
                         {activeTab === "upcoming"
                           ? "Browse All Events"
-                          : "Explore Events"}
+                          : "Browse Events"}
                       </Link>
                     </div>
                   </div>
@@ -654,12 +614,7 @@ function Dashboard() {
 
               <div className="grid md:grid-cols-3 gap-4">
                 {/* Attendance Ring */}
-                <div className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-                  <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-                  <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-                  <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-
+                <div className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors">
                   <div className="flex items-center gap-5">
                     <div className="relative w-24 h-24 shrink-0">
                       <svg
@@ -684,7 +639,7 @@ function Dashboard() {
                           strokeWidth="6"
                           strokeLinecap="round"
                           className="text-green-600 dark:text-matrix"
-                          strokeDasharray={`${(attendanceCount / Math.max(pastMeetings.length + attendanceCount, 1)) * 251.2} 251.2`}
+                          strokeDasharray={`${(attendanceCount / Math.max(eligiblePastMeetings.length, 1)) * 251.2} 251.2`}
                           style={{ transition: "stroke-dasharray 1s ease-out" }}
                         />
                       </svg>
@@ -724,9 +679,9 @@ function Dashboard() {
                             Attendance Rate
                           </span>
                           <span className="text-green-700 dark:text-matrix">
-                            {meetings.length > 0
+                            {eligiblePastMeetings.length > 0
                               ? Math.round(
-                                  (attendanceCount / meetings.length) * 100,
+                                  (attendanceCount / eligiblePastMeetings.length) * 100,
                                 )
                               : 0}
                             %
@@ -738,12 +693,7 @@ function Dashboard() {
                 </div>
 
                 {/* Event Types Breakdown */}
-                <div className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-                  <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-                  <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-                  <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-
+                <div className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors">
                   <h3 className="text-base font-semibold text-gray-900 dark:text-matrix mb-4">
                     Events by Type
                   </h3>
@@ -833,17 +783,13 @@ function Dashboard() {
                 <OverviewCard
                   meetings={meetings}
                   upcomingMeetings={upcomingMeetings}
+                  attendedMeetings={attendedMeetings}
                   studentId={userProfile?.student_id}
                 />
               </div>
 
               {/* Monthly Activity Chart */}
-              <div className="border border-gray-200 dark:border-matrix/20 p-5 mt-4 hover:border-green-500 dark:hover:border-matrix/40 transition-colors relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-                <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-
+              <div className="border border-gray-200 dark:border-matrix/20 p-5 mt-4 hover:border-green-500 dark:hover:border-matrix/40 transition-colors">
                 <h3 className="text-base font-semibold text-gray-900 dark:text-matrix mb-4">
                   Monthly Activity
                 </h3>
@@ -939,7 +885,7 @@ function Dashboard() {
                     <span className="text-green-700 dark:text-matrix">
                       {attendanceCount}
                     </span>
-                    /{meetings.length} events
+                    /{eligiblePastMeetings.length} past events
                   </span>
                 </div>
               </div>
@@ -972,10 +918,12 @@ function Dashboard() {
 function OverviewCard({
   meetings,
   upcomingMeetings,
+  attendedMeetings,
   studentId,
 }: {
   meetings: MeetingWithRegistration[];
   upcomingMeetings: MeetingWithRegistration[];
+  attendedMeetings: MeetingWithRegistration[];
   studentId: string | null | undefined;
 }) {
   const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.3 });
@@ -983,13 +931,8 @@ function OverviewCard({
   return (
     <div
       ref={ref}
-      className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors relative overflow-hidden group"
+      className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors"
     >
-      <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-      <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-      <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-      <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-gray-300 dark:border-matrix/30 group-hover:border-green-500 dark:group-hover:border-matrix transition-colors" />
-
       <h3 className="text-base font-semibold text-gray-900 dark:text-matrix mb-4">
         Quick Overview
       </h3>
