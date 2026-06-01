@@ -17,6 +17,15 @@ export function useOfficerVerification() {
     try {
       const { data, error } = await supabase.rpc('verify_officer_status')
 
+      // Diagnostic logging - remove after debugging
+      const { data: { user } } = await supabase.auth.getUser()
+      console.log('[OfficerVerification] RPC result:', {
+        returned: data,
+        error: error?.message || null,
+        authUid: user?.id,
+        timestamp: new Date().toISOString(),
+      })
+
       if (error) {
         console.error('Error verifying officer status:', error)
         setIsVerifiedOfficer(false)

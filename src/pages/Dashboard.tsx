@@ -126,43 +126,68 @@ function Dashboard() {
     async function fetchData() {
       setDataLoading(true);
       try {
-        const { data: meetingsData } = await supabase
-          .from("meetings_public")
-          .select("*")
-          .order("date", { ascending: true });
+        // Single roundtrip via optimized SECURITY DEFINER RPC.
+        // Returns meetings (public fields) + embedded my_registration + attendance_count.
+        const { data, error } = await supabase.rpc("get_my_dashboard_data");
 
-        if (meetingsData && user) {
-          const { data: registrationsData } = await supabase
-            .from("registrations")
-            .select("*")
-            .eq("user_id", user.id);
+        if (error) throw error;
 
-          const meetingsWithRegistrations: MeetingWithRegistration[] =
-            meetingsData.map((meeting) => {
-              const registration = registrationsData?.find(
-                (r) => r.meeting_id === meeting.id,
-              );
-              return {
-                ...(meeting as Meeting),
-                userRegistration: registration,
-              };
-            });
+        const meetingsRaw = (data?.meetings || []) as any[];
+        const mapped: MeetingWithRegistration[] = meetingsRaw.map((m) => ({
+          ...(m as Meeting),
+          userRegistration: m.my_registration
+            ? ({
+                id: m.my_registration.id,
+                meeting_id: m.id,
+                user_id: user?.id,
+                status: m.my_registration.status,
+                registered_at: m.my_registration.registered_at,
+              } as Registration)
+            : undefined,
+        }));
 
-          setMeetings(meetingsWithRegistrations);
-        } else if (meetingsData) {
-          setMeetings(meetingsData as Meeting[]);
-        }
-
-        if (user) {
-          const { count } = await supabase
-            .from("attendance")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id);
-
-          setAttendanceCount(count || 0);
-        }
+        setMeetings(mapped);
+        setAttendanceCount(data?.attendance_count || 0);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
+        // Fallback to the old (slower) path if the new RPC isn't deployed yet
+        try {
+          const { data: meetingsData } = await supabase
+            .from("meetings_public")
+            .select("*")
+            .order("date", { ascending: true });
+
+          if (meetingsData && user) {
+            const { data: registrationsData } = await supabase
+              .from("registrations")
+              .select("*")
+              .eq("user_id", user.id);
+
+            const meetingsWithRegistrations: MeetingWithRegistration[] =
+              meetingsData.map((meeting) => {
+                const registration = registrationsData?.find(
+                  (r) => r.meeting_id === meeting.id,
+                );
+                return {
+                  ...(meeting as Meeting),
+                  userRegistration: registration,
+                };
+              });
+            setMeetings(meetingsWithRegistrations);
+          } else if (meetingsData) {
+            setMeetings(meetingsData as Meeting[]);
+          }
+
+          if (user) {
+            const { count } = await supabase
+              .from("attendance")
+              .select("*", { count: "exact", head: true })
+              .eq("user_id", user.id);
+            setAttendanceCount(count || 0);
+          }
+        } catch (fallbackErr) {
+          console.error("Fallback fetch also failed:", fallbackErr);
+        }
       } finally {
         setDataLoading(false);
       }

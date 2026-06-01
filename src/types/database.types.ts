@@ -229,7 +229,29 @@ export interface Database {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_my_dashboard_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_meeting_page_data: {
+        Args: { p_slug: string }
+        Returns: Json
+      }
+      get_officer_dashboard_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_my_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: Json | null
+      }
+      // Existing officer + meeting RPCs (kept for reference)
+      verify_officer_status: { Args: Record<PropertyKey, never>; Returns: boolean }
+      get_all_users_for_officers: { Args: Record<PropertyKey, never>; Returns: Json }
+      get_user_details_for_officers: { Args: { target_user_id: string }; Returns: Json }
+      get_all_meetings_for_officers: { Args: Record<PropertyKey, never>; Returns: Json }
+      get_meeting_with_secrets: { Args: { meeting_slug: string }; Returns: Json }
+      // ... other existing functions omitted for brevity
     }
     Enums: {
       [_ in never]: never

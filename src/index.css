@@ -1215,3 +1215,67 @@ button {
         transparent 100%
     );
 }
+
+/* ============================================
+   MEETING DETAIL SHEET / DRAWER ANIMATIONS
+   ============================================ */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sheet-slide-right {
+  animation: slideInFromRight 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sheet-slide-up {
+  animation: slideUpFromBottom 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Exit animations (for close) */
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.sheet-slide-right-exit {
+  animation: slideOutToRight 0.2s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.sheet-slide-up-exit {
+  animation: slideOutToBottom 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}

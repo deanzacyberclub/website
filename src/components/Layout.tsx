@@ -1,9 +1,17 @@
-import { useRef } from "react";
+import { useRef, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import PageHeader from "./PageHeader";
 import Footer from "./Footer";
 import ScrollRays from "./ScrollRays";
+
+const PageLoading = () => (
+  <div className="flex min-h-[60vh] items-center justify-center pt-8">
+    <div className="font-terminal text-sm text-gray-500 dark:text-gray-400 tracking-widest">
+      LOADING...
+    </div>
+  </div>
+);
 
 function Layout() {
   const footerRef = useRef<HTMLElement>(null);
@@ -28,7 +36,9 @@ function Layout() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <Outlet />
+            <Suspense fallback={<PageLoading />}>
+              <Outlet />
+            </Suspense>
           </motion.div>
         </AnimatePresence>
 

@@ -22,8 +22,8 @@ function ProtectedRoute({
     requireOfficer ? null : true,
   );
 
-  // Server-side officer verification: queries the database directly
-  // instead of relying on client-side context state which can be intercepted
+  // Server-side officer verification via RPC (consistent with useOfficerVerification hook).
+  // Uses verify_officer_status() SECURITY DEFINER function to bypass RLS issues.
   useEffect(() => {
     if (!requireOfficer || !user) {
       setOfficerVerified(requireOfficer ? null : true);
@@ -34,19 +34,11 @@ function ProtectedRoute({
 
     async function verifyOfficerStatus() {
       try {
-        const { data, error } = await supabase
-          .from("users")
-          .select("is_officer")
-          .eq("id", user!.id)
-          .single();
+        const { data, error } = await supabase.rpc("verify_officer_status");
 
         if (cancelled) return;
 
-        if (error || !data?.is_officer) {
-          setOfficerVerified(false);
-        } else {
-          setOfficerVerified(true);
-        }
+        setOfficerVerified(!!data && !error);
       } catch {
         if (!cancelled) setOfficerVerified(false);
       }

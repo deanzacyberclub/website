@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -24,80 +24,70 @@ const AppPromo = lazy(() => import("@/pages/AppPromo"));
 const Officer = lazy(() => import("@/pages/Officer"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
 
-const LoadingFallback = () => (
-  <div className="min-h-screen bg-terminal-bg text-matrix flex items-center justify-center">
-    <div className="text-center">
-      <div className="font-terminal text-lg neon-pulse">Loading...</div>
-    </div>
-  </div>
-);
-
 ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
   <React.StrictMode>
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
           <ScrollToTop />
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              <Route element={<Layout />}>
-                {/* Public routes */}
-                <Route path="/" element={<App />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/meetings" element={<Meetings />} />
-                <Route path="/meetings/:slug" element={<MeetingDetails />} />
-                <Route path="/ctf" element={<CTF />} />
-                <Route path="/app" element={<AppPromo />} />
-                <Route path="/legal" element={<Legal />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route
-                  path="/@/:id"
-                  element={
-                    <ProtectedRoute requireOfficer>
-                      <UserProfile />
-                    </ProtectedRoute>
-                  }
-                />
+          <Routes>
+            <Route element={<Layout />}>
+              {/* Public routes */}
+              <Route path="/" element={<App />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/meetings" element={<Meetings />} />
+              <Route path="/meetings/:slug" element={<MeetingDetails />} />
+              <Route path="/ctf" element={<CTF />} />
+              <Route path="/app" element={<AppPromo />} />
+              <Route path="/legal" element={<Legal />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route
+                path="/@/:id"
+                element={
+                  <ProtectedRoute requireOfficer>
+                    <UserProfile />
+                  </ProtectedRoute>
+                }
+              />
 
-                {/* Protected routes - require authentication */}
-                <Route
-                  path="/live"
-                  element={
-                    <ProtectedRoute>
-                      <Attendance />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/officer"
-                  element={
-                    <ProtectedRoute requireOfficer>
-                      <Officer />
-                    </ProtectedRoute>
-                  }
-                />
+              {/* Protected routes - require authentication */}
+              <Route
+                path="/live"
+                element={
+                  <ProtectedRoute>
+                    <Attendance />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/officer"
+                element={
+                  <ProtectedRoute requireOfficer>
+                    <Officer />
+                  </ProtectedRoute>
+                }
+              />
 
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          </Suspense>
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

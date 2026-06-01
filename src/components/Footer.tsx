@@ -169,17 +169,8 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
           </div>
         </div>
 
-        {/* Theme selector */}
-        <div className="border-t border-gray-200 dark:border-matrix/20 py-4 flex justify-center">
-          <Tabs
-            tabs={THEME_TABS}
-            activeTab={theme}
-            onTabChange={(id) => setTheme(id as Theme)}
-          />
-        </div>
-
         {/* Bottom bar */}
-        <div className="border-t border-gray-200 dark:border-matrix/20 py-6 flex items-center justify-between gap-4">
+        <div className="border-t border-gray-200 dark:border-matrix/20 py-6 flex flex-wrap items-center justify-between gap-4">
           <p className="font-mono text-[10px] text-gray-400 dark:text-gray-400 uppercase tracking-widest">
             COPYRIGHT &nbsp;&nbsp; © {currentYear}
           </p>
@@ -188,9 +179,32 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
             <br />
             CUPERTINO, CALIFORNIA
           </p>
-          <p className="font-mono text-[10px] text-gray-400 dark:text-gray-400 uppercase tracking-widest text-right">
-            STATUS: ACTIVE
-          </p>
+
+          {/* Theme control: full Tabs on md+, compact cycle button on mobile */}
+          <div className="flex items-center">
+            <div className="hidden md:block">
+              <Tabs
+                tabs={THEME_TABS}
+                activeTab={theme}
+                onTabChange={(id) => setTheme(id as Theme)}
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                const order: Theme[] = ["light", "dark", "system"];
+                const idx = order.indexOf(theme);
+                const next = order[(idx + 1) % order.length];
+                setTheme(next);
+              }}
+              className="md:hidden font-mono text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-matrix border border-gray-200 dark:border-gray-800 px-2 py-0.5 transition-colors active:scale-[0.985]"
+              aria-label={`Current theme: ${theme}. Tap to cycle to next theme.`}
+            >
+              {theme === "light" && "☀️ LIGHT"}
+              {theme === "dark" && "🌙 DARK"}
+              {theme === "system" && "💻 AUTO"}
+            </button>
+          </div>
         </div>
       </div>
     </footer>

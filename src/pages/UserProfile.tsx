@@ -76,9 +76,16 @@ function UserProfile() {
   // Redirect non-authenticated users or non-officers
   useEffect(() => {
     if (!authLoading && (!user || !isOfficer)) {
+      console.warn('[UserProfile] Redirecting to /dashboard because officer check failed', {
+        hasUser: !!user,
+        isOfficer,
+        isVerifiedOfficer,
+        verifyingOfficer,
+        targetUserId: id,
+      });
       navigate("/dashboard");
     }
-  }, [authLoading, user, isOfficer, navigate]);
+  }, [authLoading, user, isOfficer, isVerifiedOfficer, verifyingOfficer, id, navigate]);
 
   // Note: Authorization is also enforced by ProtectedRoute wrapper (requireOfficer)
   // and server-side RLS policies on all Supabase operations
@@ -151,32 +158,9 @@ function UserProfile() {
           setAttendance(attendanceWithMeetings);
         }
 
-        // Fetch CTF team info
-        const { data: teamMember } = await supabase
-          .from("ctf_team_members")
-          .select("team_id, ctf_teams(id, name, captain_id)")
-          .eq("user_id", id)
-          .single();
-
-        if (teamMember && teamMember.ctf_teams) {
-          const team = teamMember.ctf_teams as any;
-
-          // Get team's submissions
-          const { data: submissions } = await supabase
-            .from("ctf_submissions")
-            .select("*")
-            .eq("team_id", team.id)
-            .eq("is_correct", true);
-
-          // Calculate points (simplified - you may want to join with challenges)
-          setCtfInfo({
-            team_id: team.id,
-            team_name: team.name,
-            is_captain: team.captain_id === id,
-            total_points: 0, // Would need challenge data to calculate
-            solves_count: submissions?.length || 0,
-          });
-        }
+        // CTF team feature was removed in 2026 (tables dropped).
+        // Leaving ctfInfo as null keeps the UI clean. No queries attempted.
+        setCtfInfo(null);
       } catch (err: any) {
         console.error("Error fetching user details:", err);
         // If authorization error, redirect to dashboard

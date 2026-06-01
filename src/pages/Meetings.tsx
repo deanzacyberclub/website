@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import { useOfficerVerification } from '@/hooks/useOfficerVerification'
 import type { Meeting, MeetingType, Resource } from '@/types/database.types'
 import { Spinner, Close, Plus, Calendar, Clock, MapPin, Star } from '@/lib/cyberIcon'
+import MeetingDetails from './MeetingDetails'
 
 type FilterType = 'all' | 'upcoming' | 'past'
 type TypeFilter = 'all' | MeetingType
@@ -75,7 +77,7 @@ const parseLocalDate = (dateStr: string) => {
 
 function Meetings() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { isVerifiedOfficer } = useOfficerVerification()
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<FilterType>('all')
@@ -90,6 +92,62 @@ function Meetings() {
   const [createError, setCreateError] = useState('')
 
   const isOfficer = isVerifiedOfficer === true
+
+  // Selected meeting for inline detail panel/sheet (controlled via URL ?meeting=slug)
+  const selectedSlug = searchParams.get('meeting')
+
+  const openMeeting = (slug: string) => {
+    const params = new URLSearchParams(searchParams)
+    params.set('meeting', slug)
+    setSearchParams(params, { replace: false })
+  }
+
+  const closeMeeting = () => {
+    const params = new URLSearchParams(searchParams)
+    params.delete('meeting')
+    setSearchParams(params, { replace: true })
+  }
+
+  // Responsive detection for sheet vs right drawer
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Lock background page scroll when the meeting sheet is open (especially important on mobile)
+  useEffect(() => {
+    if (!selectedSlug) return
+
+    const originalOverflow = document.body.style.overflow
+    const originalPosition = document.body.style.position
+    const originalTop = document.body.style.top
+    const scrollY = window.scrollY
+
+    // Prevent background from scrolling
+    document.body.style.overflow = 'hidden'
+
+    // Extra hardening for mobile Safari / iOS when the sheet is open
+    if (isMobile) {
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.position = originalPosition
+      document.body.style.top = originalTop
+      document.body.style.width = ''
+
+      // Restore scroll position on iOS-style lock
+      if (isMobile) {
+        window.scrollTo(0, scrollY)
+      }
+    }
+  }, [selectedSlug, isMobile])
 
   // Always fetch from the public view immediately so all users see meetings
   useEffect(() => {
@@ -270,11 +328,13 @@ function Meetings() {
       // The RPC returns an array with one item
       const newMeeting = Array.isArray(data) ? data[0] : data
 
-      // Add to local state and navigate to the new meeting
+      // Add to local state and open the detail sheet via URL param (no full route nav)
       setMeetings([newMeeting, ...meetings])
       setShowCreateModal(false)
       setCreateForm(defaultCreateForm)
-      navigate(`/meetings/${newMeeting.slug}`)
+      const params = new URLSearchParams()
+      params.set('meeting', newMeeting.slug)
+      setSearchParams(params, { replace: false })
     } catch (err) {
       console.error('Error creating meeting:', err)
       if (err instanceof Error && err.message.includes('duplicate')) {
@@ -285,19 +345,6 @@ function Meetings() {
     } finally {
       setCreating(false)
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
-        <div className="text-center">
-          <div className="flex items-center gap-3 justify-center">
-            <Spinner className="animate-spin h-6 w-6 text-blue-600 dark:text-matrix" />
-            <span className="font-terminal text-lg">Loading meetings...</span>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -539,71 +586,98 @@ function Meetings() {
 
       <div className="relative max-w-5xl mx-auto px-6">
 
-        {/* Featured Section */}
-        {featuredMeetings.length > 0 && (
+        {/* Featured Section - stable shell, skeleton while loading */}
+        {((loading && meetings.length === 0) || featuredMeetings.length > 0) && (
           <section className={`mb-12 transition-all duration-700 delay-100 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             <div className="flex items-center gap-3 mb-6">
               <span className="text-blue-600 dark:text-matrix neon-text-subtle text-lg">$</span>
               <span className="text-gray-600 dark:text-gray-400 font-terminal">./highlight --featured</span>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {featuredMeetings.map((meeting) => (
-                <Link
-                  to={`/meetings/${meeting.slug}`}
-                  key={meeting.id}
-                  className="relative overflow-hidden border-2 border-blue-300 dark:border-matrix bg-gradient-to-br from-blue-50 via-white to-blue-25 dark:from-matrix/10 dark:via-terminal-bg dark:to-matrix/5 p-6 group hover:shadow-xl dark:hover:shadow-neon transition-all duration-300 cursor-pointer"
-                >
-                  <div className="absolute top-3 right-3">
-                    <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-terminal bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix/50">
-                      <Star className="w-3 h-3" />
-                      FEATURED
-                    </span>
-                  </div>
-
-                  <div className="mb-4">
-                    <span className={`inline-block px-2 py-0.5 text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
-                      {TYPE_LABELS[meeting.type]}
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-matrix mb-2 group-hover:text-blue-600 dark:group-hover:neon-text-subtle transition-all">
-                    {meeting.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                    {meeting.description}
-                  </p>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500">
-                      <Calendar className="w-4 h-4 text-blue-500 dark:text-matrix/70" />
-                      {formatDate(meeting.date)}
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500">
-                      <Clock className="w-4 h-4 text-blue-500 dark:text-matrix/70" />
-                      {meeting.time}
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500">
-                      <MapPin className="w-4 h-4 text-blue-500 dark:text-matrix/70" />
-                      {meeting.location}
+            {loading && meetings.length === 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {[1, 2].map((i) => (
+                  <div key={i} className="border-2 border-blue-300/40 dark:border-matrix/30 bg-gray-50 dark:bg-terminal-alt p-6">
+                    <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-4" />
+                    <div className="h-6 w-4/5 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-2" />
+                    <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-4" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                      <div className="h-4 w-28 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                      <div className="h-4 w-36 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
                     </div>
                   </div>
-
-                  {meeting.topics && meeting.topics.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {meeting.topics.map((topic) => (
-                        <span
-                          key={topic}
-                          className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-terminal-alt border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-400"
-                        >
-                          {topic}
-                        </span>
-                      ))}
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {featuredMeetings.map((meeting) => (
+                  <div
+                    key={meeting.id}
+                    onClick={() => openMeeting(meeting.slug)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        openMeeting(meeting.slug)
+                      }
+                    }}
+                    className={`relative overflow-hidden border-2 border-blue-300 dark:border-matrix bg-gradient-to-br from-blue-50 via-white to-blue-25 dark:from-matrix/10 dark:via-terminal-bg dark:to-matrix/5 p-6 group hover:shadow-xl dark:hover:shadow-neon transition-all duration-300 cursor-pointer ${
+                      selectedSlug === meeting.slug ? 'ring-2 ring-offset-2 ring-blue-500 dark:ring-matrix dark:ring-offset-terminal-bg' : ''
+                    }`}
+                  >
+                    <div className="absolute top-3 right-3">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-terminal bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border border-blue-300 dark:border-matrix/50">
+                        <Star className="w-3 h-3" />
+                        FEATURED
+                      </span>
                     </div>
-                  )}
-                </Link>
-              ))}
-            </div>
+
+                    <div className="mb-4">
+                      <span className={`inline-block px-2 py-0.5 text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}>
+                        {TYPE_LABELS[meeting.type]}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-matrix mb-2 group-hover:text-blue-600 dark:group-hover:neon-text-subtle transition-all">
+                      {meeting.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                      {meeting.description}
+                    </p>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500">
+                        <Calendar className="w-4 h-4 text-blue-500 dark:text-matrix/70" />
+                        {formatDate(meeting.date)}
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500">
+                        <Clock className="w-4 h-4 text-blue-500 dark:text-matrix/70" />
+                        {meeting.time}
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600 dark:text-gray-500">
+                        <MapPin className="w-4 h-4 text-blue-500 dark:text-matrix/70" />
+                        {meeting.location}
+                      </div>
+                    </div>
+
+                    {meeting.topics && meeting.topics.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {meeting.topics.map((topic) => (
+                          <span
+                            key={topic}
+                            className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-terminal-alt border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-400"
+                          >
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -765,7 +839,33 @@ function Meetings() {
             </span>
           </div>
 
-          {filteredMeetings.length === 0 ? (
+          {loading && meetings.length === 0 ? (
+            /* Skeleton loading state - prevents flash of "no results" */
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="card-hack p-5">
+                  <div className="flex flex-col md:flex-row md:items-start gap-4">
+                    <div className="flex-shrink-0 w-16">
+                      <div className="h-8 w-12 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                      <div className="h-3 w-10 bg-gray-200 dark:bg-gray-800 rounded mt-1.5 animate-pulse" />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-2">
+                        <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                        <div className="h-5 w-16 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                      </div>
+                      <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                      <div className="h-4 w-5/6 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                      <div className="flex gap-4 pt-1">
+                        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                        <div className="h-4 w-28 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredMeetings.length === 0 ? (
             <div className="terminal-window">
               <div className="terminal-header">
                 <div className="terminal-dot red" />
@@ -788,11 +888,19 @@ function Meetings() {
           ) : (
             <div className="space-y-4">
               {filteredMeetings.map((meeting) => (
-                <Link
-                  to={`/meetings/${meeting.slug}`}
+                <div
                   key={meeting.id}
-                  className={`card-hack p-5 group transition-all block ${isPast(meeting.date) ? 'opacity-70' : ''
-                    }`}
+                  onClick={() => openMeeting(meeting.slug)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      openMeeting(meeting.slug)
+                    }
+                  }}
+                  className={`card-hack p-5 group transition-all cursor-pointer ${isPast(meeting.date) ? 'opacity-70' : ''
+                    } ${selectedSlug === meeting.slug ? 'ring-2 ring-offset-2 ring-blue-500 dark:ring-matrix dark:ring-offset-terminal-bg' : ''}`}
                 >
                   <div className="flex flex-col md:flex-row md:items-start gap-4">
                     {/* Date Badge */}
@@ -854,7 +962,7 @@ function Meetings() {
                       )}
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
@@ -870,37 +978,112 @@ function Meetings() {
               <span className="ml-4 text-xs text-gray-500 font-terminal">meeting_stats</span>
             </div>
             <div className="terminal-body">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-blue-600 dark:text-matrix neon-text-subtle">
-                    {meetings.length}
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">Total Meetings</div>
+              {loading && meetings.length === 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                  {[1,2,3,4].map(i => (
+                    <div key={i}>
+                      <div className="h-8 w-12 mx-auto bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                      <div className="h-3 w-16 mx-auto bg-gray-200 dark:bg-gray-800 rounded mt-2 animate-pulse" />
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-cyan-600 dark:text-hack-cyan">
-                    {meetings.filter(m => parseLocalDate(m.date) >= today).length}
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600 dark:text-matrix neon-text-subtle">
+                      {meetings.length}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">Total Meetings</div>
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">Upcoming</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-yellow-600 dark:text-hack-yellow">
-                    {meetings.filter(m => m.type === 'workshop').length}
+                  <div>
+                    <div className="text-2xl font-bold text-cyan-600 dark:text-hack-cyan">
+                      {meetings.filter(m => parseLocalDate(m.date) >= today).length}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">Upcoming</div>
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">Workshops</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-red-600 dark:text-hack-red">
-                    {meetings.filter(m => m.type === 'ctf').length}
+                  <div>
+                    <div className="text-2xl font-bold text-yellow-600 dark:text-hack-yellow">
+                      {meetings.filter(m => m.type === 'workshop').length}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">Workshops</div>
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">CTF Events</div>
+                  <div>
+                    <div className="text-2xl font-bold text-red-600 dark:text-hack-red">
+                      {meetings.filter(m => m.type === 'ctf').length}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-500 uppercase">CTF Events</div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </section>
 
       </div>
+
+      {/* Meeting Detail Sheet / Right Slide Panel (driven by ?meeting= in URL) */}
+      {selectedSlug &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-end md:items-stretch justify-end"
+            aria-modal="true"
+            role="dialog"
+          >
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/60 dark:bg-black/70 backdrop-blur-sm"
+              onClick={closeMeeting}
+            />
+
+            {/* Panel / Sheet — opens with slide animation, closes instantly */}
+            <div
+              className={`relative flex flex-col w-full md:w-[640px] lg:w-[760px] bg-white dark:bg-terminal-bg border-t md:border-t-0 md:border-l border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden ${
+                isMobile
+                  ? 'rounded-t-2xl max-h-[92vh] sheet-slide-up'
+                  : 'h-full sheet-slide-right'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Sheet Header Bar */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-terminal-alt flex-shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-terminal text-gray-500 dark:text-gray-400">MEETING</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix font-terminal">DETAIL</span>
+                </div>
+                <button
+                  onClick={closeMeeting}
+                  className="p-2 -mr-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                  aria-label="Close meeting details"
+                >
+                  <Close className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Mobile drag handle (visual only, placed right under header) */}
+              {isMobile && (
+                <div className="flex h-3 items-center justify-center md:hidden bg-gray-50 dark:bg-terminal-alt">
+                  <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
+                </div>
+              )}
+
+              {/* Scrollable Content Area — the sheet owns the scroll on mobile.
+                  MeetingDetails (embedded) renders plain flowing content inside this. */}
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+                <MeetingDetails
+                  slug={selectedSlug}
+                  embedded
+                  onClose={closeMeeting}
+                  onSelectMeeting={(newSlug) => {
+                    const params = new URLSearchParams(searchParams)
+                    params.set('meeting', newSlug)
+                    setSearchParams(params, { replace: true })
+                  }}
+                />
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   )
 }

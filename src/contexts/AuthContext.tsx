@@ -131,44 +131,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         is_officer: data.is_officer || false,
       };
 
-      // Check if current auth identities need to be synced
+      // Only do the expensive identity sync + refetch when we actually have new identities to sync.
+      // This avoids an extra getUser() + select() roundtrip on almost every load.
       const {
         data: { user: currentUser },
       } = await supabase.auth.getUser();
-      if (currentUser?.identities && currentUser.identities.length > 0) {
-        const existingProviders = new Set(
-          profile.linked_accounts.map((a) => a.provider),
-        );
-        const missingIdentities = currentUser.identities.filter(
-          (i) => !existingProviders.has(i.provider),
-        );
 
-        if (missingIdentities.length > 0) {
-          // Sync missing identities
-          await syncIdentitiesToProfile(
-            userId,
-            currentUser.identities,
-            profile,
+      const hasNewIdentitiesToSync =
+        currentUser?.identities &&
+        currentUser.identities.length > 0 &&
+        (() => {
+          const existingProviders = new Set(
+            profile.linked_accounts.map((a) => a.provider),
           );
-          // Re-fetch to get updated data
-          const { data: updatedData } = await supabase
-            .from("users")
-            .select("*")
-            .eq("id", userId)
-            .single();
+          return currentUser.identities.some(
+            (i) => !existingProviders.has(i.provider),
+          );
+        })();
 
-          if (updatedData) {
-            profile = {
-              ...updatedData,
-              linked_accounts: updatedData.linked_accounts || [],
-              is_officer: updatedData.is_officer || false,
-            };
-          }
+      if (hasNewIdentitiesToSync) {
+        await syncIdentitiesToProfile(
+          userId,
+          currentUser!.identities!,
+          profile,
+        );
+        // Re-fetch only in the rare sync case
+        const { data: updatedData } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", userId)
+          .single();
+
+        if (updatedData) {
+          profile = {
+            ...updatedData,
+            linked_accounts: updatedData.linked_accounts || [],
+            is_officer: updatedData.is_officer || false,
+          };
         }
       }
 
       setUserProfile(profile);
-
       return profile;
     } catch {
       setUserProfile(null);

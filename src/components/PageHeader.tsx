@@ -19,6 +19,7 @@ function PageHeader() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const hamburgerRef = useRef<HTMLDivElement>(null);
 
   const isEventsActive = location.pathname.startsWith("/meetings");
   const isCheckInActive = location.pathname === "/live";
@@ -37,10 +38,11 @@ function PageHeader() {
     if (!mobileMenuOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(e.target as Node)
-      ) {
+      const target = e.target as Node;
+      const clickedInsideMenu = mobileMenuRef.current?.contains(target);
+      const clickedHamburger = hamburgerRef.current?.contains(target);
+
+      if (!clickedInsideMenu && !clickedHamburger) {
         setMobileMenuOpen(false);
       }
     };
@@ -78,8 +80,8 @@ function PageHeader() {
 
   return (
     <>
-      {/* Header bar: full width on mobile, always compact + rounded + centered on desktop */}
-      <div className="sticky top-0 z-50 w-full px-4 md:mx-auto md:max-w-7xl md:px-6 md:rounded-3xl md:border md:border-gray-200 dark:md:border-gray-800 md:bg-white dark:md:bg-[#0a0a0a] md:shadow-sm border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]">
+      {/* Header bar: rounded inset bar on mobile (all corners), rounded + centered on desktop */}
+      <div className="sticky top-0 z-50 w-full mx-2 mt-2 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] md:mx-auto md:mt-0 md:max-w-7xl md:px-6 md:rounded-3xl md:border md:border-gray-200 dark:md:border-gray-800 md:bg-white dark:md:bg-[#0a0a0a] md:shadow-sm">
         {/* Desktop layout: Nav | Centered Logo | Auth */}
         <div className="hidden md:flex items-center justify-between py-2.5 relative">
           {/* Left: Navigation */}
@@ -147,7 +149,7 @@ function PageHeader() {
         </div>
 
         {/* Mobile layout: Logo left + Hamburger right (full width) */}
-        <div className="md:hidden flex items-center justify-between py-3">
+        <div className="md:hidden flex items-center justify-between py-3 px-4">
           {/* Logo */}
           <Link
             to="/"
@@ -158,32 +160,38 @@ function PageHeader() {
           </Link>
 
           {/* Mobile: hamburger */}
-          <div className="flex md:hidden items-center">
+          <div ref={hamburgerRef} className="flex md:hidden items-center">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex flex-col gap-[5px] w-5 h-5 justify-center items-end"
+              className="flex w-6 h-6 items-center justify-center"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
             >
-              <span
-                className={`block h-px bg-gray-700 dark:bg-gray-300 transition-all duration-300 ${
-                  mobileMenuOpen ? "w-5 rotate-45 translate-y-[6px]" : "w-5"
-                }`}
-              />
-              <span
-                className={`block h-px bg-gray-700 dark:bg-gray-300 transition-all duration-200 ${
-                  mobileMenuOpen ? "w-0 opacity-0" : "w-4"
-                }`}
-              />
-              <span
-                className={`block h-px bg-gray-700 dark:bg-gray-300 transition-all duration-300 ${
-                  mobileMenuOpen ? "w-5 -rotate-45 -translate-y-[6px]" : "w-3"
-                }`}
-              />
+              <div className="relative w-5 h-5">
+                <span
+                  className={`absolute left-0 block h-px bg-gray-700 dark:bg-gray-300 transition-all duration-300 ${
+                    mobileMenuOpen
+                      ? "top-1/2 w-5 -translate-y-1/2 rotate-45"
+                      : "top-[4px] w-5"
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-1/2 block h-px w-5 -translate-y-1/2 bg-gray-700 dark:bg-gray-300 transition-all duration-200 ${
+                    mobileMenuOpen ? "opacity-0" : ""
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 block h-px bg-gray-700 dark:bg-gray-300 transition-all duration-300 ${
+                    mobileMenuOpen
+                      ? "top-1/2 w-5 -translate-y-1/2 -rotate-45"
+                      : "bottom-[4px] w-4"
+                  }`}
+                />
+              </div>
             </button>
           </div>
         </div>
-      </div>{" "}
+      </div>
       {/* /header bar */}
       {/* Mobile dropdown panel (rectangular, terminal-aligned, no heavy rounding) */}
       <div
@@ -194,7 +202,7 @@ function PageHeader() {
             : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
-        <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-terminal overflow-hidden">
+        <div className="mx-2 border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111111] overflow-hidden shadow-lg dark:shadow-2xl rounded-2xl">
           <div className="flex flex-col py-1 text-sm font-terminal">
             <Link
               to="/meetings"

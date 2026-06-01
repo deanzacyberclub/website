@@ -71,20 +71,15 @@ function Officer() {
   const [togglingOfficer, setTogglingOfficer] = useState<string | null>(null);
   const [deletingRegistration, setDeletingRegistration] = useState<string | null>(null);
 
-  // Server-side officer verification as defense-in-depth
-  // This catches cases where client-side state was tampered with after ProtectedRoute rendered
+  // Server-side officer verification via RPC (consistent with useOfficerVerification hook)
   const [officerVerified, setOfficerVerified] = useState(false);
 
   useEffect(() => {
     async function verifyOfficer() {
       try {
-        const { data, error } = await supabase
-          .from("users")
-          .select("is_officer")
-          .eq("id", userProfile?.id)
-          .single();
+        const { data, error } = await supabase.rpc("verify_officer_status");
 
-        if (error || !data?.is_officer) {
+        if (error || !data) {
           navigate("/dashboard", { replace: true });
           return;
         }
@@ -105,15 +100,39 @@ function Officer() {
 
     async function fetchStats() {
       try {
+        // Preferred: one fast SECURITY DEFINER RPC that returns stats + recent registrations
+        // with embedded public user/meeting info. Also returns totalTeams: 0 (CTF teams removed).
+        const { data, error } = await supabase.rpc("get_officer_dashboard_stats");
+
+        if (!error && data?.stats) {
+          const s = data.stats;
+          setStats({
+            totalUsers: s.totalUsers || 0,
+            totalMeetings: s.totalMeetings || 0,
+            upcomingMeetings: s.upcomingMeetings || 0,
+            totalRegistrations: s.totalRegistrations || 0,
+            totalTeams: s.totalTeams || 0,
+            totalOfficers: s.totalOfficers || 0,
+          });
+
+          if (data.recentRegistrations) {
+            // Shape matches RecentRegistration (user + meeting already embedded)
+            setRecentRegistrations(data.recentRegistrations as RecentRegistration[]);
+          }
+
+          setLoadingStats(false);
+          setLoaded(true);
+          return;
+        }
+
+        // Fallback to the classic (slower) parallel + N+1 path
         const today = new Date().toISOString().split("T")[0];
 
-        // Fetch counts in parallel
         const [
           { count: usersCount },
           { count: meetingsCount },
           { count: upcomingCount },
           { count: registrationsCount },
-          { count: teamsCount },
           { count: officersCount },
         ] = await Promise.all([
           supabase.from("users").select("*", { count: "exact", head: true }),
@@ -126,9 +145,6 @@ function Officer() {
             .from("registrations")
             .select("*", { count: "exact", head: true }),
           supabase
-            .from("ctf_teams")
-            .select("*", { count: "exact", head: true }),
-          supabase
             .from("users")
             .select("*", { count: "exact", head: true })
             .eq("is_officer", true),
@@ -139,11 +155,11 @@ function Officer() {
           totalMeetings: meetingsCount || 0,
           upcomingMeetings: upcomingCount || 0,
           totalRegistrations: registrationsCount || 0,
-          totalTeams: teamsCount || 0,
+          totalTeams: 0, // CTF teams feature was removed in 2026
           totalOfficers: officersCount || 0,
         });
 
-        // Fetch recent registrations
+        // Fetch recent registrations (with small batch enrichment)
         const { data: registrations } = await supabase
           .from("registrations")
           .select("*")
@@ -151,7 +167,6 @@ function Officer() {
           .limit(10);
 
         if (registrations && registrations.length > 0) {
-          // Fetch user profiles and meetings
           const userIds = [...new Set(registrations.map((r) => r.user_id))];
           const meetingIds = [
             ...new Set(registrations.map((r) => r.meeting_id)),
@@ -174,11 +189,10 @@ function Officer() {
             meeting: meetings?.find((m) => m.id === reg.meeting_id),
           }));
 
-          setRecentRegistrations(registrationsWithData);
+          setRecentRegistrations(registrationsWithData as RecentRegistration[]);
         }
       } catch (err: any) {
         console.error("Error fetching stats:", err);
-        // If authorization error, redirect to dashboard
         if (err?.code === "PGRST301" || err?.status === 403) {
           navigate("/dashboard");
         }

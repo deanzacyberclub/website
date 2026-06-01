@@ -90,8 +90,19 @@ interface EditForm {
   resources: Resource[];
 }
 
-function MeetingDetails() {
-  const { slug } = useParams<{ slug: string }>();
+function MeetingDetails({
+  slug: propSlug,
+  embedded = false,
+  onClose,
+  onSelectMeeting,
+}: {
+  slug?: string;
+  embedded?: boolean;
+  onClose?: () => void;
+  onSelectMeeting?: (slug: string) => void;
+} = {}) {
+  const { slug: routeSlug } = useParams<{ slug: string }>();
+  const slug = propSlug || routeSlug;
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
   const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification();
@@ -137,126 +148,108 @@ function MeetingDetails() {
   // Use server-verified officer status instead of client-side state
   const isOfficer = isVerifiedOfficer ?? false;
 
+  // Fast path: Use the new consolidated RPC for the entire meeting page payload in one roundtrip.
+  // Falls back to the classic public + related queries if the RPC isn't available yet (dev / partial deploy).
+  // This collapses: meeting + related + my reg + counts + (past) attendees + officer secrets into 1 call.
   useEffect(() => {
-    async function fetchMeeting() {
+    async function fetchRichMeetingPageData() {
       if (!slug) return;
 
+      setLoading(true);
       try {
-        let data, error;
+        const { data, error } = await supabase.rpc("get_meeting_page_data", {
+          p_slug: slug,
+        });
 
-        if (isOfficer) {
-          // Officers use secure function to get meeting with secret code
-          const result = await supabase
-            .rpc('get_meeting_with_secrets', { meeting_slug: slug })
-            .single();
-          data = result.data;
-          error = result.error;
+        if (error) throw error;
+        if (data?.error === "not_found") {
+          setMeeting(null);
+          return;
+        }
+
+        // The RPC already returns the correct shape (secrets only for officers)
+        if (data?.meeting) {
+          setMeeting(data.meeting as Meeting);
+        }
+
+        // Embedded data from the single call
+        if (data?.my_registration) {
+          setUserRegistration(data.my_registration as Registration);
         } else {
-          // Regular users use public view
-          const result = await supabase
+          setUserRegistration(null);
+        }
+
+        setRegistrationCount(data?.registration_count ?? 0);
+        setWaitlistCount(data?.waitlist_count ?? 0);
+
+        if (data?.related_meetings) {
+          setRelatedMeetings(data.related_meetings as Meeting[]);
+        }
+
+        if (data?.attendees) {
+          // The RPC already joins public profile info into `user`
+          setPastEventAttendees(
+            (data.attendees as any[]).map((a) => ({
+              ...a,
+              user: a.user as UserProfile | undefined,
+            })) as RegistrationWithUser[],
+          );
+        } else {
+          setPastEventAttendees([]);
+        }
+      } catch (err) {
+        console.error(
+          "Rich meeting page RPC failed, falling back to classic queries:",
+          err,
+        );
+
+        // === FALLBACK: original behavior (multiple roundtrips) ===
+        try {
+          const { data, error } = await supabase
             .from("meetings_public")
             .select("*")
             .eq("slug", slug)
             .single();
-          data = result.data;
-          error = result.error;
+
+          if (error) throw error;
+          setMeeting(data);
+
+          if (data) {
+            const { data: related } = await supabase
+              .from("meetings_public")
+              .select("*")
+              .eq("type", data.type)
+              .neq("slug", slug)
+              .limit(3);
+            setRelatedMeetings(related || []);
+          }
+        } catch (fallbackErr) {
+          console.error("Fallback fetch failed:", fallbackErr);
+          setMeeting(null);
         }
-
-        if (error) throw error;
-        setMeeting(data);
-
-        // Fetch related meetings of the same type
-        if (data) {
-          const { data: related } = await supabase
-            .from("meetings_public")
-            .select("*")
-            .eq("type", data.type)
-            .neq("slug", slug)
-            .limit(3);
-
-          setRelatedMeetings(related || []);
-        }
-      } catch (err) {
-        console.error("Error fetching meeting:", err);
-        setMeeting(null);
       } finally {
         setLoading(false);
         setLoaded(true);
       }
     }
 
-    fetchMeeting();
-  }, [slug, isOfficer]);
+    fetchRichMeetingPageData();
+  }, [slug]);
 
-  // Fetch registration data
-  useEffect(() => {
-    async function fetchRegistrationData() {
-      if (!meeting || !user) return;
+  // NOTE: The registration + attendees data is now populated by the rich
+  // get_meeting_page_data() RPC in the effect above. These two effects are
+  // intentionally disabled for the initial load path (massive speedup).
+  //
+  // Post-mutation refresh (register/cancel/accept) still uses the small helpers
+  // in the action handlers — those are fine (user-initiated, small payload).
+  //
+  // If you need to re-enable the old behavior for any reason, just restore the bodies.
 
-      try {
-        // Fetch user's registration status
-        const registration = await getUserRegistration(meeting.id, user.id);
-        setUserRegistration(registration);
+  // (Disabled duplicate fetch effect — data comes from get_meeting_page_data)
+  // useEffect(() => { ...fetchRegistrationData... }, [meeting, user]);
 
-        // Fetch registration counts
-        const count = await getRegistrationCount(meeting.id);
-        setRegistrationCount(count);
-
-        const wCount = await getWaitlistCount(meeting.id);
-        setWaitlistCount(wCount);
-      } catch (err) {
-        console.error("Error fetching registration data:", err);
-      }
-    }
-
-    fetchRegistrationData();
-  }, [meeting, user]);
-
-  // Fetch attendees for past events
-  useEffect(() => {
-    async function fetchPastEventAttendees() {
-      if (!meeting || !isPast(meeting.date)) return;
-
-      setLoadingAttendees(true);
-      try {
-        // Fetch all registrations for this meeting with "attended" status
-        // (registrations table is publicly readable for "attended" status)
-        const { data: registrations } = await supabase
-          .from("registrations")
-          .select("*")
-          .eq("meeting_id", meeting.id)
-          .eq("status", "attended")
-          .order("registered_at", { ascending: false });
-
-        if (registrations && registrations.length > 0) {
-          // Fetch public profiles for all attendees
-          const userIds = registrations.map((r) => r.user_id);
-          const { data: profiles } = await supabase
-            .from("public_profiles")
-            .select("id, display_name, photo_url")
-            .in("id", userIds);
-
-          // Map profiles to registrations
-          const attendeesWithProfiles: RegistrationWithUser[] = registrations.map(
-            (reg) => ({
-              ...reg,
-              user: profiles?.find((p) => p.id === reg.user_id) as UserProfile | undefined,
-            })
-          );
-
-          setPastEventAttendees(attendeesWithProfiles);
-        } else {
-          setPastEventAttendees([]);
-        }
-      } catch (err) {
-        console.error("Error fetching past event attendees:", err);
-      } finally {
-        setLoadingAttendees(false);
-      }
-    }
-
-    fetchPastEventAttendees();
-  }, [meeting]);
+  // (Disabled duplicate fetch effect — attendees come from get_meeting_page_data)
+  // useEffect(() => { ...fetchPastEventAttendees... }, [meeting]);
 
   // ESC key to close fullscreen code
   useEffect(() => {
@@ -318,7 +311,8 @@ function MeetingDetails() {
 
   const handleRegister = async () => {
     if (!meeting || !user) {
-      navigate(`/auth?to=/meetings/${slug}`);
+      const returnTo = embedded ? `/meetings?meeting=${encodeURIComponent(slug || "")}` : `/meetings/${slug}`;
+      navigate(`/auth?to=${returnTo}`);
       return;
     }
 
@@ -593,9 +587,13 @@ function MeetingDetails() {
       const wCount = await getWaitlistCount(data.id);
       setWaitlistCount(wCount);
 
-      // If slug changed, navigate to new URL
+      // If slug changed, navigate to new URL (or update parent sheet)
       if (editForm.slug !== slug) {
-        navigate(`/meetings/${editForm.slug}`, { replace: true });
+        if (embedded && onSelectMeeting) {
+          onSelectMeeting(editForm.slug);
+        } else {
+          navigate(`/meetings/${editForm.slug}`, { replace: true });
+        }
       }
     } catch (err) {
       console.error("Error saving meeting:", err);
@@ -611,23 +609,16 @@ function MeetingDetails() {
     }
   };
 
-  if (loading) {
+  if (!meeting && !loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
-        <div className="text-center">
-          <div className="flex items-center gap-3 justify-center">
-            <Spinner className="animate-spin h-6 w-6 text-blue-600 dark:text-matrix" />
-            <span className="font-terminal text-lg">Loading meeting...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!meeting) {
-    return (
-      <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
-        <div className="relative max-w-4xl mx-auto px-6">
+      <div
+        className={
+          embedded
+            ? "bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix"
+            : "bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen"
+        }
+      >
+        <div className={embedded ? "px-4 py-4" : "relative max-w-4xl mx-auto px-6"}>
           <header className="mb-12">
             <div className="terminal-window">
               <div className="terminal-header">
@@ -649,7 +640,13 @@ function MeetingDetails() {
                   removed.
                 </p>
                 <button
-                  onClick={() => navigate("/meetings")}
+                  onClick={() => {
+                    if (embedded && onClose) {
+                      onClose();
+                    } else {
+                      navigate("/meetings");
+                    }
+                  }}
                   className="cli-btn-dashedpx-6 py-2"
                 >
                   Browse All Meetings
@@ -663,7 +660,13 @@ function MeetingDetails() {
   }
 
   return (
-    <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
+    <div
+      className={
+        embedded
+          ? "bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix"
+          : "bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen"
+      }
+    >
       {/* Cancel Registration Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showCancelDialog}
@@ -710,11 +713,9 @@ function MeetingDetails() {
         </div>
       )}
 
-      <div className="relative max-w-4xl mx-auto px-6">
-        {/* Header */}
-        <header
-          className={`mb-8 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
+      <div className={embedded ? "px-4 py-4" : "relative max-w-4xl mx-auto px-6"}>
+        {/* Header - always visible immediately for stable layout */}
+        <header className={`mb-8 ${embedded ? "hidden" : ""}`}>
           <div className="flex items-center gap-3 mb-6">
             <span className="text-blue-600 dark:text-matrix neon-text-subtle">$</span>
             <span className="text-gray-600 dark:text-gray-400 font-terminal">
@@ -733,11 +734,13 @@ function MeetingDetails() {
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
               <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
-                {isEditing
+                {loading
+                  ? "loading..."
+                  : isEditing
                   ? "edit_meeting.sh"
-                  : meeting.title.toLowerCase().replace(/\s+/g, "_")}
+                  : meeting!.title.toLowerCase().replace(/\s+/g, "_")}
               </span>
-              {isOfficer && !isEditing && (
+              {!loading && isOfficer && !isEditing && (
                 <button
                   onClick={startEditing}
                   className="ml-auto text-xs text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 font-terminal flex items-center gap-1 transition-colors"
@@ -748,7 +751,20 @@ function MeetingDetails() {
               )}
             </div>
             <div className="terminal-body">
-              {isEditing && editForm ? (
+              {loading ? (
+                /* Skeleton while loading - stable layout, no flash */
+                <div className="space-y-4 py-2">
+                  <div className="h-5 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                  <div className="h-8 w-3/4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                  <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                  <div className="h-4 w-5/6 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                    <div className="h-20 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 rounded animate-pulse" />
+                    <div className="h-20 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 rounded animate-pulse" />
+                    <div className="h-20 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 rounded animate-pulse md:col-span-2" />
+                  </div>
+                </div>
+              ) : isEditing && editForm ? (
                 /* Edit Mode */
                 <div className="space-y-6">
                   <div className="flex items-center justify-between mb-4">
@@ -1085,9 +1101,10 @@ function MeetingDetails() {
                       ) : (
                         <div className="space-y-2 max-h-64 overflow-y-auto">
                           {registeredUsers.map((registration) => (
-                            <div
+                            <Link
                               key={registration.id}
-                              className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
+                              to={`/@/${registration.user_id}`}
+                              className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700 hover:border-matrix/50 hover:bg-matrix/5 transition-all group"
                             >
                               {/* Profile Picture */}
                               <div className="shrink-0">
@@ -1095,10 +1112,10 @@ function MeetingDetails() {
                                   <img
                                     src={registration.user.photo_url}
                                     alt={registration.user.display_name}
-                                    className="w-10 h-10 object-cover border border-gray-300 dark:border-gray-600"
+                                    className="w-10 h-10 object-cover border border-gray-300 dark:border-gray-600 group-hover:border-matrix/40 transition-colors"
                                   />
                                 ) : (
-                                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 flex items-center justify-center border border-gray-400 dark:border-gray-600">
+                                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 flex items-center justify-center border border-gray-400 dark:border-gray-600 group-hover:border-matrix/40 transition-colors">
                                     <span className="text-gray-600 dark:text-gray-400 text-sm font-bold">
                                       {registration.user?.display_name
                                         .charAt(0)
@@ -1110,7 +1127,7 @@ function MeetingDetails() {
 
                               {/* User Info */}
                               <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-matrix transition-colors">
                                   {registration.user?.display_name ||
                                     "Unknown User"}
                                 </div>
@@ -1137,7 +1154,7 @@ function MeetingDetails() {
                                   {registration.status.toUpperCase()}
                                 </span>
                               </div>
-                            </div>
+                            </Link>
                           ))}
                         </div>
                       )}
@@ -1271,7 +1288,7 @@ function MeetingDetails() {
                     )}
                   </div>
                 </div>
-              ) : (
+              ) : meeting ? (
                 /* View Mode */
                 <>
                   {/* Status Badges */}
@@ -1489,18 +1506,19 @@ function MeetingDetails() {
                       {!loadingAttendees && pastEventAttendees.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                           {pastEventAttendees.map((attendee) => (
-                            <div
+                            <Link
                               key={attendee.id}
-                              className="flex items-center gap-2 p-2  bg-terminal-alt border border-gray-800"
+                              to={`/@/${attendee.user_id}`}
+                              className="flex items-center gap-2 p-2 bg-terminal-alt border border-gray-800 hover:border-matrix/50 hover:bg-matrix/5 transition-all group"
                             >
                               {attendee.user?.photo_url ? (
                                 <img
                                   src={attendee.user.photo_url}
                                   alt={attendee.user.display_name}
-                                  className="w-8 h-8  object-cover border border-gray-600"
+                                  className="w-8 h-8 object-cover border border-gray-600 group-hover:border-matrix/40 transition-colors"
                                 />
                               ) : (
-                                <div className="w-8 h-8  bg-gray-700 flex items-center justify-center border border-gray-600">
+                                <div className="w-8 h-8 bg-gray-700 flex items-center justify-center border border-gray-600 group-hover:border-matrix/40 transition-colors">
                                   <span className="text-gray-400 text-xs font-bold">
                                     {attendee.user?.display_name
                                       ?.charAt(0)
@@ -1508,10 +1526,10 @@ function MeetingDetails() {
                                   </span>
                                 </div>
                               )}
-                              <span className="text-sm text-gray-300 truncate">
+                              <span className="text-sm text-gray-300 truncate group-hover:text-matrix transition-colors">
                                 {attendee.user?.display_name || "Unknown"}
                               </span>
-                            </div>
+                            </Link>
                           ))}
                         </div>
                       )}
@@ -1728,25 +1746,34 @@ function MeetingDetails() {
                             >
                               Join Discord
                             </a>
-                            <Link
-                              to="/meetings"
-                              className="cli-btn-dashedpx-6 py-2 text-center text-sm flex-1"
-                            >
-                              View All Events
-                            </Link>
+                            {embedded && onClose ? (
+                              <button
+                                onClick={onClose}
+                                className="cli-btn-dashedpx-6 py-2 text-center text-sm flex-1"
+                              >
+                                Close
+                              </button>
+                            ) : (
+                              <Link
+                                to="/meetings"
+                                className="cli-btn-dashedpx-6 py-2 text-center text-sm flex-1"
+                              >
+                                View All Events
+                              </Link>
+                            )}
                           </div>
                         </div>
                       )}
                     </div>
                   )}
                 </>
-              )}
+              ) : null}
             </div>
           </div>
         </article>
 
         {/* Resources Section */}
-        {!isEditing && meeting.resources && meeting.resources.length > 0 && (
+        {!loading && !isEditing && meeting?.resources && meeting.resources.length > 0 && (
             <section
               className={`mb-12 transition-all duration-700 delay-150 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
             >
@@ -1837,7 +1864,7 @@ function MeetingDetails() {
           )}
 
         {/* Related Meetings */}
-        {relatedMeetings.length > 0 && (
+        {!loading && meeting && relatedMeetings.length > 0 && (
           <section
             className={`mb-16 transition-all duration-700 delay-200 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
           >
@@ -1855,7 +1882,15 @@ function MeetingDetails() {
               {relatedMeetings.map((related) => (
                 <Link
                   key={related.id}
-                  to={`/meetings/${related.slug}`}
+                  to={embedded && onSelectMeeting ? "#" : `/meetings/${related.slug}`}
+                  onClick={
+                    embedded && onSelectMeeting
+                      ? (e) => {
+                          e.preventDefault();
+                          onSelectMeeting(related.slug);
+                        }
+                      : undefined
+                  }
                   className={`card-hack p-4  group transition-all ${
                     isPast(related.date) ? "opacity-70" : ""
                   }`}
