@@ -1031,6 +1031,10 @@ function OfficerCard({
           <img
             src={photo}
             alt={name}
+            width={56}
+            height={56}
+            loading="lazy"
+            decoding="async"
             className={`w-14 h-14 flex-shrink-0 rounded-lg object-cover border border-white/15 transition-all ${isHovered ? "scale-105" : ""}`}
           />
         ) : (
@@ -1075,6 +1079,8 @@ function OfficerCard({
             <img
               src={photo}
               alt={name}
+              loading="lazy"
+              decoding="async"
               className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? "scale-105" : "scale-100"}`}
             />
           ) : (

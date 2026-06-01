@@ -7,8 +7,6 @@ import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import type {
   Meeting,
   MeetingType,
-  Announcement,
-  Photo,
   Resource,
   Registration,
   RegistrationType,
@@ -27,8 +25,6 @@ import {
   Eye,
   EyeOff,
   Fullscreen,
-  Megaphone,
-  Photo as PhotoIcon,
   Download,
   Link as LinkIcon,
   Slides,
@@ -46,6 +42,23 @@ import {
 } from "@/lib/registrations";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
+// Discord is the canonical place for announcements now.
+// We always ensure this resource exists on meetings.
+const DISCORD_RESOURCE: Resource = {
+  id: "discord-default",
+  title: "Join Discord",
+  url: "https://discord.gg/v5JWDrZVNp",
+  type: "link",
+};
+
+function ensureDiscordResource(resources: Resource[]): Resource[] {
+  const hasDiscord = resources.some((r) =>
+    r.url.includes("discord.gg/v5JWDrZVNp")
+  );
+  if (hasDiscord) return resources;
+  return [DISCORD_RESOURCE, ...resources];
+}
+
 interface UserProfile {
   id: string;
   display_name: string;
@@ -57,7 +70,7 @@ interface RegistrationWithUser extends Registration {
   user?: UserProfile;
 }
 
-type TabType = "announcements" | "photos" | "resources";
+type TabType = "resources";
 
 interface EditForm {
   slug: string;
@@ -74,8 +87,6 @@ interface EditForm {
   registration_capacity: number | null;
   invite_code: string;
   invite_form_url: string;
-  announcements: Announcement[];
-  photos: Photo[];
   resources: Resource[];
 }
 
@@ -85,7 +96,7 @@ function MeetingDetails() {
   const { user, userProfile } = useAuth();
   const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification();
   const [loaded, setLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>("announcements");
+  const [activeTab, setActiveTab] = useState<TabType>("resources");
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [relatedMeetings, setRelatedMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -258,7 +269,7 @@ function MeetingDetails() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [codeFullscreen]);
 
-  const tabs: TabType[] = ["announcements", "photos", "resources"];
+  const tabs: TabType[] = ["resources"];
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -433,9 +444,7 @@ function MeetingDetails() {
       registration_capacity: meeting.registration_capacity,
       invite_code: meeting.invite_code || "",
       invite_form_url: meeting.invite_form_url || "",
-      announcements: meeting.announcements ? [...meeting.announcements] : [],
-      photos: meeting.photos ? [...meeting.photos] : [],
-      resources: meeting.resources ? [...meeting.resources] : [],
+      resources: ensureDiscordResource(meeting.resources ? [...meeting.resources] : []),
     });
     setEditError("");
     setIsEditing(true);
@@ -476,72 +485,6 @@ function MeetingDetails() {
   };
 
   const generateId = () => crypto.randomUUID();
-
-  // Announcement handlers
-  const addAnnouncement = () => {
-    if (!editForm) return;
-    const newAnnouncement: Announcement = {
-      id: generateId(),
-      title: "",
-      content: "",
-      date: new Date().toISOString().split("T")[0],
-    };
-    setEditForm({
-      ...editForm,
-      announcements: [...editForm.announcements, newAnnouncement],
-    });
-  };
-
-  const updateAnnouncement = (
-    id: string,
-    field: keyof Announcement,
-    value: string,
-  ) => {
-    if (!editForm) return;
-    setEditForm({
-      ...editForm,
-      announcements: editForm.announcements.map((a) =>
-        a.id === id ? { ...a, [field]: value } : a,
-      ),
-    });
-  };
-
-  const deleteAnnouncement = (id: string) => {
-    if (!editForm) return;
-    setEditForm({
-      ...editForm,
-      announcements: editForm.announcements.filter((a) => a.id !== id),
-    });
-  };
-
-  // Photo handlers
-  const addPhoto = () => {
-    if (!editForm) return;
-    const newPhoto: Photo = {
-      id: generateId(),
-      url: "",
-      caption: "",
-    };
-    setEditForm({ ...editForm, photos: [...editForm.photos, newPhoto] });
-  };
-
-  const updatePhoto = (id: string, field: keyof Photo, value: string) => {
-    if (!editForm) return;
-    setEditForm({
-      ...editForm,
-      photos: editForm.photos.map((p) =>
-        p.id === id ? { ...p, [field]: value } : p,
-      ),
-    });
-  };
-
-  const deletePhoto = (id: string) => {
-    if (!editForm) return;
-    setEditForm({
-      ...editForm,
-      photos: editForm.photos.filter((p) => p.id !== id),
-    });
-  };
 
   // Resource handlers
   const addResource = () => {
@@ -611,12 +554,9 @@ function MeetingDetails() {
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
 
-      // Filter out empty announcements, photos, and resources
-      const validAnnouncements = editForm.announcements.filter(
-        (a) => a.title.trim() && a.content.trim(),
-      );
-      const validPhotos = editForm.photos.filter((p) => p.url.trim());
-      const validResources = editForm.resources.filter(
+      // Ensure Discord link is always present + filter empty resources
+      const resourcesWithDiscord = ensureDiscordResource(editForm.resources);
+      const validResources = resourcesWithDiscord.filter(
         (r) => r.title.trim() && r.url.trim(),
       );
 
@@ -637,8 +577,6 @@ function MeetingDetails() {
           p_registration_capacity: editForm.registration_capacity,
           p_invite_code: editForm.invite_code || null,
           p_invite_form_url: editForm.invite_form_url || null,
-          p_announcements: validAnnouncements,
-          p_photos: validPhotos,
           p_resources: validResources,
         })
         .single();
@@ -1250,157 +1188,6 @@ function MeetingDetails() {
                     </div>
                   </div>
 
-                  {/* Announcements Editor */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-matrix">
-                        Announcements
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={addAnnouncement}
-                        className="text-xs font-terminal text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 flex items-center gap-1"
-                      >
-                        <Plus className="w-4 h-4" />
-                        ADD
-                      </button>
-                    </div>
-                    {editForm.announcements.length === 0 ? (
-                      <p className="text-gray-600 dark:text-gray-500 text-sm">
-                        No announcements yet
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {editForm.announcements.map((announcement) => (
-                          <div
-                            key={announcement.id}
-                            className="p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <input
-                                type="text"
-                                value={announcement.title}
-                                onChange={(e) =>
-                                  updateAnnouncement(
-                                    announcement.id,
-                                    "title",
-                                    e.target.value,
-                                  )
-                                }
-                                className="input-hack flex-1  text-sm"
-                                placeholder="Announcement title"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  deleteAnnouncement(announcement.id)
-                                }
-                                className="ml-2 p-1 text-gray-600 dark:text-gray-500 hover:text-red-600 dark:hover:text-hack-red transition-colors"
-                              >
-                                <Trash className="w-5 h-5" />
-                              </button>
-                            </div>
-                            <textarea
-                              value={announcement.content}
-                              onChange={(e) =>
-                                updateAnnouncement(
-                                  announcement.id,
-                                  "content",
-                                  e.target.value,
-                                )
-                              }
-                              className="input-hack w-full  text-sm min-h-[60px] resize-y mb-2"
-                              placeholder="Announcement content"
-                            />
-                            <input
-                              type="date"
-                              value={announcement.date}
-                              onChange={(e) =>
-                                updateAnnouncement(
-                                  announcement.id,
-                                  "date",
-                                  e.target.value,
-                                )
-                              }
-                              className="input-hack  text-sm"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Photos Editor */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-cyan-600 dark:text-hack-cyan">
-                        Photos
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={addPhoto}
-                        className="text-xs font-terminal text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 flex items-center gap-1"
-                      >
-                        <Plus className="w-4 h-4" />
-                        ADD
-                      </button>
-                    </div>
-                    {editForm.photos.length === 0 ? (
-                      <p className="text-gray-600 dark:text-gray-500 text-sm">No photos yet</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {editForm.photos.map((photo) => (
-                          <div
-                            key={photo.id}
-                            className="p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <input
-                                type="url"
-                                value={photo.url}
-                                onChange={(e) =>
-                                  updatePhoto(photo.id, "url", e.target.value)
-                                }
-                                className="input-hack flex-1  text-sm"
-                                placeholder="https://example.com/image.jpg"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => deletePhoto(photo.id)}
-                                className="ml-2 p-1 text-gray-600 dark:text-gray-500 hover:text-red-600 dark:hover:text-hack-red transition-colors"
-                              >
-                                <Trash className="w-5 h-5" />
-                              </button>
-                            </div>
-                            <input
-                              type="text"
-                              value={photo.caption || ""}
-                              onChange={(e) =>
-                                updatePhoto(photo.id, "caption", e.target.value)
-                              }
-                              className="input-hack w-full text-sm"
-                              placeholder="Caption (optional)"
-                            />
-                            {photo.url && (
-                              <div className="mt-3">
-                                <img
-                                  src={photo.url}
-                                  alt="Preview"
-                                  className="max-h-32 border border-gray-200 dark:border-gray-700"
-                                  onError={(e) =>
-                                    ((
-                                      e.target as HTMLImageElement
-                                    ).style.display = "none")
-                                  }
-                                />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
                   {/* Resources Editor */}
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                     <div className="flex items-center justify-between mb-4">
@@ -1646,7 +1433,7 @@ function MeetingDetails() {
                             </h3>
                             <p className="text-gray-400 text-sm">
                               We hope you enjoyed the event! Check out the
-                              photos and resources below.
+                              resources below.
                             </p>
                           </div>
                         ) : (
@@ -1664,7 +1451,7 @@ function MeetingDetails() {
                             </h3>
                             <p className="text-gray-500 text-sm">
                               We hope you enjoyed the event! Check out the
-                              photos and resources below.
+                              resources below.
                             </p>
                           </div>
                         )}
@@ -1958,11 +1745,8 @@ function MeetingDetails() {
           </div>
         </article>
 
-        {/* Tabbed Content Section */}
-        {!isEditing &&
-          (meeting.announcements?.length > 0 ||
-            meeting.photos?.length > 0 ||
-            meeting.resources?.length > 0) && (
+        {/* Resources Section */}
+        {!isEditing && meeting.resources && meeting.resources.length > 0 && (
             <section
               className={`mb-12 transition-all duration-700 delay-150 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
             >
@@ -1973,69 +1757,10 @@ function MeetingDetails() {
                 </span>
               </div>
 
-              {/* Tab Navigation */}
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-                <button
-                  onClick={() => setActiveTab("announcements")}
-                  className={`px-4 py-2  text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
-                    activeTab === "announcements"
-                      ? "bg-matrix/20 text-matrix border border-matrix"
-                      : "bg-terminal-alt text-gray-400 border border-gray-700 hover:border-matrix/50"
-                  }`}
-                >
-                  <Megaphone className="w-4 h-4" />
-                  ANNOUNCEMENTS
-                  {meeting.announcements?.length ? (
-                    <span className="px-1.5 py-0.5text-xs bg-matrix/30">
-                      {meeting.announcements.length}
-                    </span>
-                  ) : null}
-                </button>
-                <button
-                  onClick={() => setActiveTab("photos")}
-                  className={`px-4 py-2  text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
-                    activeTab === "photos"
-                      ? "bg-hack-cyan/20 text-hack-cyan border border-hack-cyan"
-                      : "bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-cyan/50"
-                  }`}
-                >
-                  <PhotoIcon className="w-4 h-4" />
-                  PHOTOS
-                  {meeting.photos?.length ? (
-                    <span className="px-1.5 py-0.5text-xs bg-hack-cyan/30">
-                      {meeting.photos.length}
-                    </span>
-                  ) : null}
-                </button>
-                <button
-                  onClick={() => setActiveTab("resources")}
-                  className={`px-4 py-2  text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
-                    activeTab === "resources"
-                      ? "bg-hack-yellow/20 text-hack-yellow border border-hack-yellow"
-                      : "bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-yellow/50"
-                  }`}
-                >
-                  <Download className="w-4 h-4" />
-                  RESOURCES
-                  {meeting.resources?.length ? (
-                    <span className="px-1.5 py-0.5text-xs bg-hack-yellow/30">
-                      {meeting.resources.length}
-                    </span>
-                  ) : null}
-                </button>
-              </div>
+              {/* Resources header (simplified - only resources remain) */}
+              <div className="text-sm text-gray-400 mb-2 font-terminal">RESOURCES</div>
 
-              {/* Swipe indicator */}
-              <div className="flex justify-center gap-2 mb-4 md:hidden">
-                {tabs.map((tab) => (
-                  <div
-                    key={tab}
-                    className={`w-2 h-2  transition-all ${
-                      activeTab === tab ? "bg-matrix w-4" : "bg-gray-600"
-                    }`}
-                  />
-                ))}
-              </div>
+
 
               {/* Tab Content */}
               <div
@@ -2053,83 +1778,8 @@ function MeetingDetails() {
                     {activeTab}
                   </span>
                 </div>
-                <div className="terminal-body min-h-[200px]">
-                  {/* Announcements Tab */}
-                  {activeTab === "announcements" && (
-                    <div className="space-y-4">
-                      {meeting.announcements &&
-                      meeting.announcements.length > 0 ? (
-                        meeting.announcements.map((announcement) => (
-                          <div
-                            key={announcement.id}
-                            className="p-4  bg-terminal-alt border border-gray-800"
-                          >
-                            <div className="flex items-start justify-between gap-4 mb-2">
-                              <h4 className="font-semibold text-matrix">
-                                {announcement.title}
-                              </h4>
-                              <span className="text-xs text-gray-500 whitespace-nowrap">
-                                {new Date(announcement.date).toLocaleDateString(
-                                  "en-US",
-                                  { month: "short", day: "numeric" },
-                                )}
-                              </span>
-                            </div>
-                            <p className="text-gray-400 text-sm">
-                              {announcement.content}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8">
-                          <Megaphone className="w-12 h-12 mx-auto text-gray-600 mb-3" />
-                          <p className="text-gray-500 text-sm">
-                            No announcements yet
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Photos Tab */}
-                  {activeTab === "photos" && (
-                    <div>
-                      {meeting.photos && meeting.photos.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          {meeting.photos.map((photo) => (
-                            <div
-                              key={photo.id}
-                              className="group relative aspect-square  overflow-hidden bg-terminal-alt border border-gray-800"
-                            >
-                              <img
-                                src={photo.url}
-                                alt={photo.caption || "Event photo"}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src =
-                                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23374151" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-                                }}
-                              />
-                              {photo.caption && (
-                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <p className="text-white text-xs">
-                                    {photo.caption}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <PhotoIcon className="w-12 h-12 mx-auto text-gray-600 mb-3" />
-                          <p className="text-gray-500 text-sm">No photos yet</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Resources Tab */}
+                <div className="terminal-body min-h-[120px]">
+                  {/* Resources Tab (only remaining tab) */}
                   {activeTab === "resources" && (
                     <div className="space-y-3">
                       {meeting.resources && meeting.resources.length > 0 ? (

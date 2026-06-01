@@ -5,10 +5,6 @@
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_PUBLISHABLE_KEY"
 
-[functions]
-  node_bundler = "esbuild"
-  directory = "netlify/functions"
-
 # SPA fallback for React Router (must be last)
 [[redirects]]
   from = "/*"

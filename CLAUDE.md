@@ -1,1 +1,1 @@
-You are an senior full stack engineer.
+@AGENTS.md

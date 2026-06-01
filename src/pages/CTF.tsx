@@ -1,17 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-// import { Link } from "react-router-dom";
 import { Flag } from "@/lib/cyberIcon";
-// import {
-//   Calendar,
-//   Clock,
-//   MapPin,
-//   Trophy,
-//   Users,
-//   Code,
-//   ChevronDown,
-//   Discord,
-//   Shield,
-// } from "@/lib/cyberIcon";
 
 function FadeDigit({ value }: { value: number }) {
   const display = String(value).padStart(2, "0");

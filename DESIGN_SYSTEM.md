@@ -1,7 +1,7 @@
 # DACC Design System
 
-**Version:** 2.0
-**Last Updated:** February 8, 2026
+**Version:** 2.1
+**Last Updated:** June 1, 2026
 
 ## Overview
 
@@ -10,7 +10,7 @@ The De Anza Cybersecurity Club design system is inspired by **terminal CLI aesth
 **Design Philosophy:**
 - **Brutally functional** — every element serves a purpose
 - **High contrast** — #33ff00 (neon green) on #0a0a0a (near-black)
-- **Zero-radius corners** — no rounded edges anywhere
+- **Zero-radius corners** — no rounded edges anywhere, unless in `src/pages/App.tsx`
 - **Monospace supremacy** — every character uses monospace fonts
 - **Shell metaphors** — `>` prompts, status codes `[200]`, command-line interactions
 
@@ -53,13 +53,15 @@ The De Anza Cybersecurity Club design system is inspired by **terminal CLI aesth
 ## Typography
 
 ### Fonts
+Fonts are self-hosted from Google Fonts (only the weights we actually use) for best performance.
+
 ```css
---font-mono: "Fira Code", "Share Tech Mono", monospace
---font-terminal: "Share Tech Mono", monospace
+--font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace
+--font-terminal: "Share Tech Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace
 ```
 
-**Primary:** Fira Code (with ligatures disabled for authenticity)
-**Fallback:** Share Tech Mono
+**Primary:** Fira Code (weights 400–700, ligatures disabled)
+**Secondary:** Share Tech Mono (weight 400)
 
 ### Scale
 ```css

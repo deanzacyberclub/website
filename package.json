@@ -7,18 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "api": "node api-server.js",
-    "dev:full": "npm run api & npm run dev",
     "prepare": "husky"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
     "framer-motion": "^12.40.0",
-    "lucide-react": "^0.563.0",
     "ogl": "^1.0.11",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.0"
   },
   "devDependencies": {

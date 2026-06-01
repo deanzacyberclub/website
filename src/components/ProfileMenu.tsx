@@ -105,6 +105,8 @@ function ProfileMenu() {
   }
 
   // Signed in state
+  const isOfficer = userProfile.is_officer === true;
+
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -112,7 +114,13 @@ function ProfileMenu() {
         className="flex items-center gap-2 group"
       >
         {/* Avatar - square for CLI aesthetic */}
-        <div className="w-8 h-8 overflow-hidden border-2 border-green-300 dark:border-matrix/50 hover:border-green-500 dark:hover:border-matrix transition-colors focus:outline-none focus:ring-2 focus:ring-green-300 dark:focus:ring-matrix/50 shrink-0">
+        <div
+          className={`w-8 h-8 overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 shrink-0 ${
+            isOfficer
+              ? "border-purple-400 dark:border-hack-purple/70 hover:border-purple-500 dark:hover:border-hack-purple focus:ring-purple-300 dark:focus:ring-hack-purple/50"
+              : "border-green-300 dark:border-matrix/50 hover:border-green-500 dark:hover:border-matrix focus:ring-green-300 dark:focus:ring-matrix/50"
+          }`}
+        >
           {userProfile.photo_url ? (
             <img
               src={userProfile.photo_url}
@@ -120,13 +128,23 @@ function ProfileMenu() {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-green-100 dark:bg-matrix/20 flex items-center justify-center text-green-700 dark:text-matrix font-bold text-sm">
+            <div
+              className={`w-full h-full flex items-center justify-center font-bold text-sm ${
+                isOfficer
+                  ? "bg-purple-100 dark:bg-hack-purple/20 text-purple-700 dark:text-hack-purple"
+                  : "bg-green-100 dark:bg-matrix/20 text-green-700 dark:text-matrix"
+              }`}
+            >
               {userProfile.display_name.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
-        {/* Online indicator dot */}
-        <span className="hidden sm:block w-1.5 h-1.5 bg-green-500 dark:bg-matrix rounded-full animate-pulse" />
+        {/* Online indicator dot — purple for officers, green otherwise */}
+        <span
+          className={`hidden sm:block w-1.5 h-1.5 rounded-full animate-pulse ${
+            isOfficer ? "bg-purple-600 dark:bg-hack-purple" : "bg-green-500 dark:bg-matrix"
+          }`}
+        />
       </button>
 
       {showMenu && (
@@ -154,7 +172,13 @@ function ProfileMenu() {
                   {userProfile.photo_url ? (
                     <img src={userProfile.photo_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-green-100 dark:bg-matrix/20 flex items-center justify-center text-green-700 dark:text-matrix font-bold text-xs">
+                    <div
+                      className={`w-full h-full flex items-center justify-center font-bold text-xs ${
+                        isOfficer
+                          ? "bg-purple-100 dark:bg-hack-purple/20 text-purple-700 dark:text-hack-purple"
+                          : "bg-green-100 dark:bg-matrix/20 text-green-700 dark:text-matrix"
+                      }`}
+                    >
                       {userProfile.display_name.charAt(0).toUpperCase()}
                     </div>
                   )}

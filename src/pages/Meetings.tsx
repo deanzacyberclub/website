@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useOfficerVerification } from '@/hooks/useOfficerVerification'
-import type { Meeting, MeetingType } from '@/types/database.types'
+import type { Meeting, MeetingType, Resource } from '@/types/database.types'
 import { Spinner, Close, Plus, Calendar, Clock, MapPin, Star } from '@/lib/cyberIcon'
 
 type FilterType = 'all' | 'upcoming' | 'past'
@@ -22,6 +22,23 @@ export const TYPE_LABELS: Record<MeetingType, string> = {
   ctf: 'CTF',
   social: 'SOCIAL',
   general: 'GENERAL'
+}
+
+// Discord is the canonical announcement channel.
+// We always ensure this resource exists on every meeting.
+const DISCORD_RESOURCE: Resource = {
+  id: "discord-default",
+  title: "Join Discord",
+  url: "https://discord.gg/v5JWDrZVNp",
+  type: "link",
+};
+
+function ensureDiscordResource(resources: Resource[]): Resource[] {
+  const hasDiscord = resources.some((r) =>
+    r.url.includes("discord.gg/v5JWDrZVNp")
+  );
+  if (hasDiscord) return resources;
+  return [DISCORD_RESOURCE, ...resources];
 }
 
 interface CreateMeetingForm {
@@ -230,6 +247,9 @@ function Meetings() {
         .map(t => t.trim())
         .filter(t => t.length > 0)
 
+      // Always include the canonical Discord link as a resource
+      const resourcesWithDiscord = ensureDiscordResource([]);
+
       const { data, error } = await supabase
         .rpc('create_meeting_for_officers', {
           p_slug: slug,
@@ -242,9 +262,7 @@ function Meetings() {
           p_featured: createForm.featured,
           p_topics: topicsArray,
           p_secret_code: createForm.secret_code.trim() || null,
-          p_announcements: [],
-          p_photos: [],
-          p_resources: []
+          p_resources: resourcesWithDiscord
         })
 
       if (error) throw error

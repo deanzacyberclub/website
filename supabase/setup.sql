@@ -1,14 +1,17 @@
 -- ============================================================
--- DE ANZA CYBERSECURITY CLUB - DATABASE SETUP
+-- DE ANZA CYBERSECURITY CLUB - DATABASE SETUP (CONSOLIDATED)
 -- ============================================================
--- This file contains all database schema definitions including:
--- - Tables, columns, constraints
--- - Indexes
--- - Row Level Security policies
--- - Functions and triggers
--- - Views
+-- This file is the single source of truth for the complete database schema.
 --
--- Run this file first, then seed.sql for sample data.
+-- All historical migrations have been folded directly into this file.
+-- The supabase/migrations/ folder has been removed.
+--
+-- Run order for a fresh database:
+--   1. supabase/setup.sql
+--   2. supabase/seed.sql
+--   3. supabase/curriculum.sql
+--
+-- Last consolidated: 2026 (migrations up to 20260427 + notification + security lockdown)
 -- ============================================================
 
 -- ============================================================
@@ -29,7 +32,17 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own profile" ON public.users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can insert own profile" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON public.users FOR UPDATE USING (auth.uid() = id);
+
+-- Locked-down UPDATE policy: users cannot promote/demote themselves as officers
+-- (from 20260209_lockdown_meetings_security.sql)
+CREATE POLICY "Users can update own profile (not officer status)" ON public.users
+FOR UPDATE
+USING (auth.uid() = id)
+WITH CHECK (
+    auth.uid() = id AND
+    is_officer = (SELECT is_officer FROM public.users WHERE id = auth.uid())
+);
+
 CREATE POLICY "Users can delete own profile" ON public.users FOR DELETE USING (auth.uid() = id);
 
 -- ============================================================
@@ -45,7 +58,7 @@ CREATE POLICY "Users can update own profile picture" ON storage.objects FOR UPDA
 CREATE POLICY "Users can delete own profile picture" ON storage.objects FOR DELETE USING (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
 
 -- ============================================================
--- MEETINGS TABLE
+-- MEETINGS TABLE (with final locked-down security model)
 -- ============================================================
 CREATE TABLE public.meetings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -58,8 +71,6 @@ CREATE TABLE public.meetings (
     type TEXT NOT NULL CHECK (type IN ('workshop', 'lecture', 'ctf', 'social', 'general')),
     featured BOOLEAN DEFAULT false,
     topics TEXT[] DEFAULT '{}',
-    announcements JSONB DEFAULT '[]'::jsonb,
-    photos JSONB DEFAULT '[]'::jsonb,
     resources JSONB DEFAULT '[]'::jsonb,
     secret_code TEXT,
     registration_type TEXT NOT NULL DEFAULT 'open' CHECK (registration_type IN ('open', 'invite_only', 'closed')),
@@ -71,36 +82,55 @@ CREATE TABLE public.meetings (
 );
 
 CREATE INDEX meetings_slug_idx ON public.meetings(slug);
+CREATE INDEX IF NOT EXISTS meetings_secret_code_idx ON public.meetings(secret_code);
+
+-- Unique constraint on secret_code (from 20240203_unique_secret_code.sql)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'meetings_secret_code_unique' 
+          AND conrelid = 'public.meetings'::regclass
+    ) THEN
+        ALTER TABLE public.meetings
+        ADD CONSTRAINT meetings_secret_code_unique UNIQUE (secret_code);
+    END IF;
+END $$;
 
 ALTER TABLE public.meetings ENABLE ROW LEVEL SECURITY;
 
--- Only officers can query the meetings table directly (which contains secret_code).
--- Regular users must use the meetings_public view instead.
-CREATE POLICY "Officers can view meetings" ON public.meetings FOR SELECT USING (
+-- FINAL SECURITY MODEL (from 20260209_lockdown + 20260427):
+-- - Officers can only SELECT directly (no INSERT/UPDATE/DELETE on the table).
+-- - All modifications MUST go through SECURITY DEFINER RPC functions.
+-- - Public (anon) can read via limited column privileges (secret_code and invite_code hidden).
+
+-- Officers can view meetings (contains secret_code)
+CREATE POLICY "Officers can view meetings" ON public.meetings
+FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
 );
-CREATE POLICY "Officers can insert meetings" ON public.meetings FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
-CREATE POLICY "Officers can update meetings" ON public.meetings FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
-CREATE POLICY "Officers can delete meetings" ON public.meetings FOR DELETE USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
+
+-- Public read-only access (anon) — combined with column-level GRANT below to hide secrets
+CREATE POLICY "Public can view meetings" ON public.meetings
+FOR SELECT TO anon USING (true);
+
+-- Revoke broad SELECT from anon, then grant only safe columns (hides secret_code/invite_code)
+REVOKE SELECT ON public.meetings FROM anon;
+GRANT SELECT (
+    id, slug, title, description, date, "time", location, type,
+    featured, topics, announcements, photos, resources,
+    created_at, updated_at, registration_type, registration_capacity, invite_form_url
+) ON public.meetings TO anon;
 
 -- ============================================================
 -- MEETINGS PUBLIC VIEW (excludes secret_code and invite_code)
 -- ============================================================
--- security_invoker=false means this view runs as the view owner,
--- bypassing RLS on the meetings table. This is safe because the
--- view explicitly excludes sensitive columns (secret_code, invite_code).
 CREATE OR REPLACE VIEW public.meetings_public
 WITH (security_invoker = false)
 AS
 SELECT
     id, slug, title, description, date, "time", location, type,
-    featured, topics, announcements, photos, resources,
+    featured, topics, resources,
     created_at, updated_at, registration_type, registration_capacity, invite_form_url
 FROM public.meetings;
 
@@ -123,11 +153,15 @@ CREATE TABLE public.attendance (
 
 ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
 
+-- Final attendance policies (from 20260209_fix_attendance_permissions + APPLY_THIS_FIX)
 CREATE POLICY "Users can view own attendance" ON public.attendance FOR SELECT USING (auth.uid() = user_id);
+
 CREATE POLICY "Officers can view all attendance" ON public.attendance FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
 );
-CREATE POLICY "Users can insert own attendance" ON public.attendance FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Authenticated users can insert attendance" ON public.attendance FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 CREATE POLICY "Users can delete own attendance" ON public.attendance FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================================
@@ -161,7 +195,7 @@ CREATE POLICY "Users can delete own registrations" ON public.registrations FOR D
     auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
 );
 
--- Function to update updated_at timestamp
+-- Trigger to update updated_at
 CREATE OR REPLACE FUNCTION update_registrations_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -175,15 +209,15 @@ BEFORE UPDATE ON public.registrations
 FOR EACH ROW
 EXECUTE FUNCTION update_registrations_updated_at();
 
--- Function to mark registration as attended when attendance is recorded
+-- Trigger to mark registration attended when attendance is recorded
 CREATE OR REPLACE FUNCTION mark_registration_attended()
 RETURNS TRIGGER AS $$
 BEGIN
     UPDATE public.registrations
     SET status = 'attended', updated_at = NOW()
     WHERE meeting_id = NEW.meeting_id
-    AND user_id = NEW.user_id
-    AND status IN ('registered', 'waitlist', 'invited');
+      AND user_id = NEW.user_id
+      AND status IN ('registered', 'waitlist', 'invited');
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -192,207 +226,6 @@ CREATE TRIGGER attendance_marks_registration_attended
 AFTER INSERT ON public.attendance
 FOR EACH ROW
 EXECUTE FUNCTION mark_registration_attended();
-
--- ============================================================
--- LESSONS TABLE (for Security+ course)
--- ============================================================
-CREATE TABLE public.lessons (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    slug TEXT NOT NULL UNIQUE,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    type TEXT CHECK (type IN ('course', 'workshop', 'ctf', 'quiz', 'flashcard')) NOT NULL,
-    order_index INTEGER NOT NULL,
-    content JSONB,
-    meeting_id UUID REFERENCES public.meetings(id) ON DELETE SET NULL,
-    is_self_paced BOOLEAN DEFAULT true,
-    quiz_data JSONB,
-    flashcard_data JSONB,
-    estimated_minutes INTEGER,
-    difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard', 'beginner', 'intermediate', 'advanced')),
-    topics TEXT[],
-    resources JSONB,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_lessons_type ON public.lessons(type);
-CREATE INDEX idx_lessons_order ON public.lessons(order_index);
-
-ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Everyone can view lessons" ON public.lessons FOR SELECT USING (true);
-CREATE POLICY "Officers can manage lessons" ON public.lessons FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
-);
-
-CREATE OR REPLACE FUNCTION update_lessons_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER lessons_updated_at
-BEFORE UPDATE ON public.lessons
-FOR EACH ROW
-EXECUTE FUNCTION update_lessons_updated_at();
-
--- ============================================================
--- CTF TEAMS TABLE
--- ============================================================
-CREATE TABLE IF NOT EXISTS ctf_teams (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(50) NOT NULL,
-    invite_code VARCHAR(12) UNIQUE NOT NULL,
-    captain_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    invite_expires_at TIMESTAMPTZ DEFAULT NULL,
-    invite_max_uses INTEGER DEFAULT NULL,
-    invite_uses_count INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE ctf_teams ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Teams are viewable by everyone" ON ctf_teams FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can create teams" ON ctf_teams FOR INSERT WITH CHECK (auth.uid() = captain_id);
-CREATE POLICY "Captains can update their teams" ON ctf_teams FOR UPDATE USING (auth.uid() = captain_id);
-CREATE POLICY "Captains can delete their teams" ON ctf_teams FOR DELETE USING (auth.uid() = captain_id);
-
--- ============================================================
--- CTF TEAM MEMBERS TABLE
--- ============================================================
-CREATE TABLE IF NOT EXISTS ctf_team_members (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    team_id UUID NOT NULL REFERENCES ctf_teams(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    joined_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(team_id, user_id),
-    UNIQUE(user_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_ctf_team_members_team_id ON ctf_team_members(team_id);
-CREATE INDEX IF NOT EXISTS idx_ctf_team_members_user_id ON ctf_team_members(user_id);
-
-ALTER TABLE ctf_team_members ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Team members are viewable by everyone" ON ctf_team_members FOR SELECT USING (true);
-CREATE POLICY "Users can join teams" ON ctf_team_members FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can leave teams" ON ctf_team_members FOR DELETE USING (auth.uid() = user_id);
-
--- ============================================================
--- CTF SUBMISSIONS TABLE
--- ============================================================
-CREATE TABLE IF NOT EXISTS ctf_submissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    team_id UUID NOT NULL REFERENCES ctf_teams(id) ON DELETE CASCADE,
-    challenge_id VARCHAR(50) NOT NULL,
-    submitted_flag TEXT NOT NULL,
-    is_correct BOOLEAN NOT NULL DEFAULT FALSE,
-    points_awarded INTEGER NOT NULL DEFAULT 0,
-    submitted_at TIMESTAMPTZ DEFAULT NOW(),
-    submitted_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_ctf_submissions_team_id ON ctf_submissions(team_id);
-CREATE INDEX IF NOT EXISTS idx_ctf_submissions_challenge_id ON ctf_submissions(challenge_id);
-CREATE INDEX IF NOT EXISTS idx_ctf_submissions_is_correct ON ctf_submissions(is_correct);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_correct_submission ON ctf_submissions(team_id, challenge_id) WHERE is_correct = TRUE;
-
-ALTER TABLE ctf_submissions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Submissions are viewable by everyone" ON ctf_submissions FOR SELECT USING (true);
-CREATE POLICY "Team members can submit flags" ON ctf_submissions FOR INSERT WITH CHECK (
-    auth.uid() = submitted_by AND
-    EXISTS (SELECT 1 FROM ctf_team_members WHERE team_id = ctf_submissions.team_id AND user_id = auth.uid())
-);
-
--- Function to check team size before adding members
-CREATE OR REPLACE FUNCTION check_team_size()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF (SELECT COUNT(*) FROM ctf_team_members WHERE team_id = NEW.team_id) >= 4 THEN
-        RAISE EXCEPTION 'Team is already at maximum capacity (4 members)';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS enforce_team_size ON ctf_team_members;
-CREATE TRIGGER enforce_team_size
-BEFORE INSERT ON ctf_team_members
-FOR EACH ROW
-EXECUTE FUNCTION check_team_size();
-
--- Function to generate random invite code
-CREATE OR REPLACE FUNCTION generate_invite_code()
-RETURNS VARCHAR(12) AS $$
-DECLARE
-    chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    result VARCHAR(12) := '';
-    i INTEGER;
-BEGIN
-    FOR i IN 1..8 LOOP
-        result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
-    END LOOP;
-    RETURN result;
-END;
-$$ LANGUAGE plpgsql;
-
--- ============================================================
--- CTF SETTINGS TABLE
--- ============================================================
-CREATE TABLE IF NOT EXISTS ctf_settings (
-    key TEXT PRIMARY KEY,
-    value JSONB NOT NULL DEFAULT '{}',
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_by UUID REFERENCES users(id)
-);
-
-ALTER TABLE ctf_settings ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Anyone can read CTF settings" ON ctf_settings FOR SELECT USING (true);
-CREATE POLICY "Officers can update CTF settings" ON ctf_settings FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true)
-);
-CREATE POLICY "Officers can insert CTF settings" ON ctf_settings FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true)
-);
-
--- Insert default leaderboard_freeze setting
-INSERT INTO ctf_settings (key, value)
-VALUES ('leaderboard_freeze', '{"is_frozen": false, "frozen_at": null}'::jsonb)
-ON CONFLICT (key) DO NOTHING;
-
--- Function for officers to toggle leaderboard freeze
-CREATE OR REPLACE FUNCTION toggle_leaderboard_freeze(should_freeze BOOLEAN)
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-    new_value JSONB;
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
-        RAISE EXCEPTION 'Access denied: User is not an officer';
-    END IF;
-
-    IF should_freeze THEN
-        new_value := jsonb_build_object('is_frozen', true, 'frozen_at', NOW());
-    ELSE
-        new_value := jsonb_build_object('is_frozen', false, 'frozen_at', NULL);
-    END IF;
-
-    INSERT INTO ctf_settings (key, value, updated_at, updated_by)
-    VALUES ('leaderboard_freeze', new_value, NOW(), auth.uid())
-    ON CONFLICT (key) DO UPDATE
-    SET value = new_value, updated_at = NOW(), updated_by = auth.uid();
-
-    RETURN new_value;
-END;
-$$;
 
 -- ============================================================
 -- PUBLIC PROFILES VIEW
@@ -407,16 +240,207 @@ GRANT SELECT ON public.public_profiles TO authenticated;
 COMMENT ON VIEW public.public_profiles IS 'Public-facing user profile data for leaderboards and registration displays';
 
 -- ============================================================
--- OFFICER FUNCTIONS
+-- CTF CHALLENGES (from 20260205_ctf_challenges_rls.sql)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS ctf_challenges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    category TEXT NOT NULL,
+    difficulty TEXT NOT NULL,
+    points INTEGER NOT NULL DEFAULT 100,
+    hint TEXT,
+    flag TEXT NOT NULL,
+    solution TEXT,
+    author TEXT,
+    files JSONB DEFAULT '[]'::jsonb,
+    is_active BOOLEAN DEFAULT true,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE ctf_challenges ENABLE ROW LEVEL SECURITY;
+
+-- Officer-only RLS (challenges contain flags/solutions)
+CREATE POLICY "Officers can view all challenges" ON ctf_challenges FOR SELECT USING (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true)
+);
+CREATE POLICY "Officers can insert challenges" ON ctf_challenges FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true)
+);
+CREATE POLICY "Officers can update challenges" ON ctf_challenges FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true)
+);
+CREATE POLICY "Officers can delete challenges" ON ctf_challenges FOR DELETE USING (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true)
+);
+
+-- Public view that excludes sensitive fields
+DROP VIEW IF EXISTS ctf_challenges_public;
+CREATE VIEW ctf_challenges_public AS
+SELECT id, title, description, category, difficulty, points, hint, author, files, is_active, created_at, updated_at
+FROM ctf_challenges
+WHERE is_active = true;
+
+GRANT SELECT ON ctf_challenges_public TO anon, authenticated;
+
+CREATE INDEX IF NOT EXISTS idx_ctf_challenges_category ON ctf_challenges(category);
+CREATE INDEX IF NOT EXISTS idx_ctf_challenges_difficulty ON ctf_challenges(difficulty);
+CREATE INDEX IF NOT EXISTS idx_ctf_challenges_is_active ON ctf_challenges(is_active);
+
+-- ============================================================
+-- MEETING AUDIT LOG + TRIGGER (from 20260209_lockdown_meetings_security.sql)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS meeting_audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    meeting_id UUID REFERENCES meetings(id) ON DELETE SET NULL,
+    action TEXT NOT NULL CHECK (action IN ('created', 'updated', 'deleted')),
+    changed_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    changed_at TIMESTAMPTZ DEFAULT NOW(),
+    old_data JSONB,
+    new_data JSONB
+);
+
+ALTER TABLE meeting_audit_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Officers can view audit logs" ON meeting_audit_log FOR SELECT USING (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true)
+);
+
+CREATE OR REPLACE FUNCTION log_meeting_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO meeting_audit_log (meeting_id, action, changed_by, new_data)
+        VALUES (NEW.id, 'created', auth.uid(), to_jsonb(NEW));
+    ELSIF TG_OP = 'UPDATE' THEN
+        INSERT INTO meeting_audit_log (meeting_id, action, changed_by, old_data, new_data)
+        VALUES (NEW.id, 'updated', auth.uid(), to_jsonb(OLD), to_jsonb(NEW));
+    ELSIF TG_OP = 'DELETE' THEN
+        INSERT INTO meeting_audit_log (meeting_id, action, changed_by, old_data)
+        VALUES (OLD.id, 'deleted', auth.uid(), to_jsonb(OLD));
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS meeting_audit_trigger ON meetings;
+CREATE TRIGGER meeting_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON meetings
+FOR EACH ROW EXECUTE FUNCTION log_meeting_changes();
+
+-- ============================================================
+-- NOTIFICATIONS INFRASTRUCTURE (from 20260408 + 20260409 + 20260411)
 -- ============================================================
 
--- Function for officers to get user profiles with email
+-- device_tokens
+CREATE TABLE IF NOT EXISTS public.device_tokens (
+  id         UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id    UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  token      TEXT        NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, token)
+);
+
+ALTER TABLE public.device_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "device_tokens: users manage own" ON public.device_tokens FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "device_tokens: officers read all" ON public.device_tokens FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+
+-- notification_preferences
+CREATE TABLE IF NOT EXISTS public.notification_preferences (
+  id                     UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id                UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  any_events             BOOLEAN     NOT NULL DEFAULT false,
+  category_subscriptions TEXT[]      NOT NULL DEFAULT '{}',
+  keyword_subscriptions  TEXT[]      NOT NULL DEFAULT '{}',
+  event_announcements    BOOLEAN     NOT NULL DEFAULT true,
+  registration_updates   BOOLEAN     NOT NULL DEFAULT true,
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id)
+);
+
+ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "notification_preferences: users manage own" ON public.notification_preferences FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- notifications (inbox records)
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id         UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id    UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title      TEXT        NOT NULL,
+  body       TEXT        NOT NULL,
+  type       TEXT        NOT NULL DEFAULT 'new_meeting',
+  meeting_id UUID        REFERENCES public.meetings(id) ON DELETE SET NULL,
+  read       BOOLEAN     NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS notifications_user_id_idx  ON public.notifications (user_id);
+CREATE INDEX IF NOT EXISTS notifications_read_idx     ON public.notifications (user_id, read) WHERE read = false;
+
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "notifications: users read own"   ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "notifications: users mark read"  ON public.notifications FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "notifications: users delete own" ON public.notifications FOR DELETE USING (auth.uid() = user_id);
+
+-- Helper: updated_at trigger function (used by device_tokens + notification_preferences)
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS device_tokens_updated_at ON public.device_tokens;
+CREATE TRIGGER device_tokens_updated_at BEFORE UPDATE ON public.device_tokens FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+DROP TRIGGER IF EXISTS notification_preferences_updated_at ON public.notification_preferences;
+CREATE TRIGGER notification_preferences_updated_at BEFORE UPDATE ON public.notification_preferences FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- club_announcements
+CREATE TABLE public.club_announcements (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    title       TEXT        NOT NULL,
+    body        TEXT        NOT NULL,
+    severity    TEXT        NOT NULL DEFAULT 'info' CHECK (severity IN ('info', 'warning', 'critical')),
+    is_active   BOOLEAN     NOT NULL DEFAULT true,
+    created_by  UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at  TIMESTAMPTZ
+);
+
+CREATE INDEX idx_club_announcements_active  ON public.club_announcements(is_active);
+CREATE INDEX idx_club_announcements_created ON public.club_announcements(created_at DESC);
+
+ALTER TABLE public.club_announcements ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view active announcements" ON public.club_announcements FOR SELECT TO anon, authenticated USING (
+    is_active = true AND (expires_at IS NULL OR expires_at > NOW())
+);
+
+CREATE POLICY "Officers can manage announcements" ON public.club_announcements FOR ALL TO authenticated USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+) WITH CHECK (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_officer = true)
+);
+
+GRANT SELECT ON public.club_announcements TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.club_announcements TO authenticated;
+
+-- ============================================================
+-- OFFICER RPC FUNCTIONS (consolidated from original + migrations)
+-- ============================================================
+
+-- Core officer lookup functions (already present, kept for completeness)
 CREATE OR REPLACE FUNCTION get_user_profiles_for_officers(user_ids UUID[])
 RETURNS TABLE (id UUID, display_name TEXT, photo_url TEXT, email TEXT)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
@@ -425,13 +449,9 @@ BEGIN
 END;
 $$;
 
--- Function for officers to get all users
 CREATE OR REPLACE FUNCTION get_all_users_for_officers()
 RETURNS TABLE (id UUID, display_name TEXT, email TEXT, photo_url TEXT, is_officer BOOLEAN, created_at TIMESTAMPTZ)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
@@ -440,13 +460,9 @@ BEGIN
 END;
 $$;
 
--- Function for officers to toggle another user's officer status
 CREATE OR REPLACE FUNCTION toggle_officer_status(target_user_id UUID, new_status BOOLEAN)
 RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
@@ -458,13 +474,9 @@ BEGIN
 END;
 $$;
 
--- Function for officers to get detailed user info
 CREATE OR REPLACE FUNCTION get_user_details_for_officers(target_user_id UUID)
 RETURNS TABLE (id UUID, display_name TEXT, email TEXT, photo_url TEXT, student_id TEXT, is_officer BOOLEAN, created_at TIMESTAMPTZ)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
@@ -473,83 +485,181 @@ BEGIN
 END;
 $$;
 
--- Simple function to verify if current user is an officer
 CREATE OR REPLACE FUNCTION verify_officer_status()
 RETURNS BOOLEAN
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
     RETURN EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true);
 END;
 $$;
 
--- ============================================================
--- MEETING FUNCTIONS
--- ============================================================
-
--- Function for officers to get all meetings including secret_code
+-- Meeting RPCs (from 20260209 migrations + 20260427)
 CREATE OR REPLACE FUNCTION get_all_meetings_for_officers()
 RETURNS TABLE (
     id UUID, slug TEXT, title TEXT, description TEXT, date DATE,
     "time" TEXT, location TEXT, type TEXT, featured BOOLEAN,
-    topics TEXT[], announcements JSONB, photos JSONB, resources JSONB,
+    topics TEXT[], resources JSONB,
     secret_code TEXT, invite_code TEXT,
     created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ,
     registration_type TEXT, registration_capacity INTEGER, invite_form_url TEXT
 )
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
     RETURN QUERY
     SELECT m.id, m.slug, m.title, m.description, m.date, m.time, m.location,
-           m.type, m.featured, m.topics, m.announcements, m.photos, m.resources,
+           m.type, m.featured, m.topics, m.resources,
            m.secret_code, m.invite_code, m.created_at, m.updated_at,
            m.registration_type, m.registration_capacity, m.invite_form_url
     FROM meetings m ORDER BY m.date DESC;
 END;
 $$;
 
--- Function for officers to get a single meeting including secret_code
 CREATE OR REPLACE FUNCTION get_meeting_with_secrets(meeting_slug TEXT)
 RETURNS TABLE (
     id UUID, slug TEXT, title TEXT, description TEXT, date DATE,
     "time" TEXT, location TEXT, type TEXT, featured BOOLEAN,
-    topics TEXT[], announcements JSONB, photos JSONB, resources JSONB,
+    topics TEXT[], resources JSONB,
     secret_code TEXT, invite_code TEXT,
     created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ,
     registration_type TEXT, registration_capacity INTEGER, invite_form_url TEXT
 )
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
     RETURN QUERY
     SELECT m.id, m.slug, m.title, m.description, m.date, m.time, m.location,
-           m.type, m.featured, m.topics, m.announcements, m.photos, m.resources,
+           m.type, m.featured, m.topics, m.resources,
            m.secret_code, m.invite_code, m.created_at, m.updated_at,
            m.registration_type, m.registration_capacity, m.invite_form_url
     FROM meetings m WHERE m.slug = meeting_slug;
 END;
 $$;
 
--- Function for attendance check-in: verifies a secret code without exposing it
+-- Actively used create function (called from Meetings.tsx)
+CREATE OR REPLACE FUNCTION create_meeting_for_officers(
+    p_slug TEXT,
+    p_title TEXT,
+    p_description TEXT,
+    p_date DATE,
+    p_time TEXT,
+    p_location TEXT,
+    p_type TEXT,
+    p_featured BOOLEAN,
+    p_topics TEXT[],
+    p_secret_code TEXT,
+    p_resources JSONB DEFAULT '[]'::jsonb,
+    p_registration_type TEXT DEFAULT 'open',
+    p_registration_capacity INTEGER DEFAULT NULL,
+    p_invite_code TEXT DEFAULT NULL,
+    p_invite_form_url TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+    id UUID, slug TEXT, title TEXT, description TEXT, date DATE,
+    "time" TEXT, location TEXT, type TEXT, featured BOOLEAN,
+    topics TEXT[], resources JSONB,
+    secret_code TEXT, invite_code TEXT,
+    created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ,
+    registration_type TEXT, registration_capacity INTEGER, invite_form_url TEXT
+)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+        RAISE EXCEPTION 'Access denied: User is not an officer';
+    END IF;
+
+    RETURN QUERY
+    INSERT INTO meetings (
+        slug, title, description, date, time, location, type, featured,
+        topics, secret_code, resources,
+        registration_type, registration_capacity, invite_code, invite_form_url
+    )
+    VALUES (
+        p_slug, p_title, p_description, p_date, p_time, p_location, p_type, p_featured,
+        p_topics, p_secret_code, p_resources,
+        p_registration_type, p_registration_capacity, p_invite_code, p_invite_form_url
+    )
+    RETURNING
+        meetings.id, meetings.slug, meetings.title, meetings.description, meetings.date,
+        meetings.time, meetings.location, meetings.type, meetings.featured,
+        meetings.topics, meetings.resources,
+        meetings.secret_code, meetings.invite_code,
+        meetings.created_at, meetings.updated_at,
+        meetings.registration_type, meetings.registration_capacity, meetings.invite_form_url;
+END;
+$$;
+
+-- Actively used update function (called from MeetingDetails.tsx as officer_update_meeting)
+CREATE OR REPLACE FUNCTION officer_update_meeting(
+  meeting_id uuid,
+  p_slug text,
+  p_title text,
+  p_description text,
+  p_date text,
+  p_time text,
+  p_location text,
+  p_type text,
+  p_featured boolean,
+  p_topics text[],
+  p_secret_code text,
+  p_registration_type text,
+  p_registration_capacity integer,
+  p_invite_code text,
+  p_invite_form_url text,
+  p_resources jsonb
+)
+RETURNS SETOF meetings
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+    RAISE EXCEPTION 'Access denied: User is not an officer';
+  END IF;
+
+  RETURN QUERY
+  UPDATE meetings SET
+    slug = p_slug,
+    title = p_title,
+    description = p_description,
+    date = p_date::date,
+    time = p_time,
+    location = p_location,
+    type = p_type,
+    featured = p_featured,
+    topics = p_topics,
+    secret_code = p_secret_code,
+    registration_type = p_registration_type,
+    registration_capacity = p_registration_capacity,
+    invite_code = p_invite_code,
+    invite_form_url = p_invite_form_url,
+    resources = p_resources,
+    updated_at = now()
+  WHERE id = meeting_id
+  RETURNING *;
+END;
+$$;
+
+-- Secure delete (from lockdown migration)
+CREATE OR REPLACE FUNCTION delete_meeting_for_officers(p_meeting_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+        RAISE EXCEPTION 'Access denied: User is not an officer';
+    END IF;
+
+    DELETE FROM meetings WHERE id = p_meeting_id;
+    RETURN FOUND;
+END;
+$$;
+
+-- Attendance secret code verifier (used by check-in flow)
 CREATE OR REPLACE FUNCTION verify_meeting_secret_code(secret_code_input TEXT)
 RETURNS TABLE (meeting_id UUID, meeting_title TEXT, meeting_date DATE, meeting_time TEXT, meeting_location TEXT)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
     RETURN QUERY
     SELECT id, title, date, time, location
@@ -559,3 +669,136 @@ BEGIN
     LIMIT 1;
 END;
 $$;
+
+-- ============================================================
+-- NOTIFICATION TRIGGER FUNCTIONS + INVOKER (from 20260408)
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.invoke_send_push_notification(
+  p_user_ids UUID[],
+  p_title    TEXT,
+  p_body     TEXT,
+  p_data     JSONB DEFAULT '{}'
+)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_service_key TEXT;
+  v_url         TEXT := 'https://yhwpaclstjhylrphdrae.supabase.co/functions/v1/send-push-notification';
+BEGIN
+  IF array_length(p_user_ids, 1) IS NULL THEN RETURN; END IF;
+
+  SELECT decrypted_secret INTO v_service_key
+  FROM vault.decrypted_secrets
+  WHERE name = 'supabase_service_role_key'
+  LIMIT 1;
+
+  IF v_service_key IS NULL THEN RETURN; END IF;
+
+  PERFORM net.http_post(
+    url     := v_url,
+    headers := jsonb_build_object(
+      'Content-Type',  'application/json',
+      'Authorization', 'Bearer ' || v_service_key
+    ),
+    body    := jsonb_build_object(
+      'userIds', to_jsonb(p_user_ids),
+      'title',   p_title,
+      'body',    p_body,
+      'data',    p_data
+    )
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.on_new_meeting()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_recipients UUID[];
+BEGIN
+  SELECT array_agg(DISTINCT np.user_id) INTO v_recipients
+  FROM public.notification_preferences np
+  WHERE
+    np.any_events = true
+    OR NEW.type = ANY(np.category_subscriptions)
+    OR EXISTS (
+      SELECT 1 FROM unnest(np.keyword_subscriptions) AS kw
+      WHERE NEW.title ILIKE '%' || kw || '%'
+         OR NEW.description ILIKE '%' || kw || '%'
+         OR EXISTS (SELECT 1 FROM unnest(NEW.topics) AS topic WHERE topic ILIKE '%' || kw || '%')
+    );
+
+  IF v_recipients IS NOT NULL THEN
+    PERFORM public.invoke_send_push_notification(
+      v_recipients,
+      'New ' || initcap(NEW.type) || ': ' || NEW.title,
+      NEW.date || ' · ' || NEW.location,
+      jsonb_build_object('meetingId', NEW.id::text, 'type', 'new_meeting')
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS notify_new_meeting ON public.meetings;
+CREATE TRIGGER notify_new_meeting AFTER INSERT ON public.meetings FOR EACH ROW EXECUTE FUNCTION public.on_new_meeting();
+
+CREATE OR REPLACE FUNCTION public.on_registration_status_change()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_meeting public.meetings%ROWTYPE; v_prefs public.notification_preferences%ROWTYPE; v_title TEXT; v_body TEXT;
+BEGIN
+  IF OLD.status = NEW.status THEN RETURN NEW; END IF;
+  IF NEW.status NOT IN ('registered', 'invited') THEN RETURN NEW; END IF;
+
+  SELECT * INTO v_prefs FROM public.notification_preferences WHERE user_id = NEW.user_id;
+  IF NOT FOUND OR NOT v_prefs.registration_updates THEN RETURN NEW; END IF;
+
+  SELECT * INTO v_meeting FROM public.meetings WHERE id = NEW.meeting_id;
+  IF NOT FOUND THEN RETURN NEW; END IF;
+
+  IF NEW.status = 'registered' AND OLD.status = 'waitlist' THEN
+    v_title := 'You''re in! 🎉';
+    v_body  := 'Your waitlist spot for "' || v_meeting.title || '" is now confirmed.';
+  ELSIF NEW.status = 'invited' THEN
+    v_title := 'You''ve been invited!';
+    v_body  := 'You received a special invite to "' || v_meeting.title || '".';
+  ELSE
+    RETURN NEW;
+  END IF;
+
+  PERFORM public.invoke_send_push_notification(
+    ARRAY[NEW.user_id],
+    v_title, v_body,
+    jsonb_build_object('meetingId', NEW.meeting_id::text, 'type', 'registration_update')
+  );
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS notify_registration_status ON public.registrations;
+CREATE TRIGGER notify_registration_status AFTER UPDATE OF status ON public.registrations FOR EACH ROW EXECUTE FUNCTION public.on_registration_status_change();
+
+-- ============================================================
+-- FINAL GRANTS FOR RPC FUNCTIONS
+-- ============================================================
+-- These allow the frontend (authenticated users + anon where appropriate) to call the functions.
+-- Authorization logic lives inside each SECURITY DEFINER function.
+
+GRANT EXECUTE ON FUNCTION verify_meeting_secret_code(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION verify_meeting_secret_code(TEXT) TO anon;
+
+GRANT EXECUTE ON FUNCTION verify_officer_status() TO authenticated;
+
+GRANT EXECUTE ON FUNCTION get_user_details_for_officers(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_all_users_for_officers() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_user_profiles_for_officers(UUID[]) TO authenticated;
+GRANT EXECUTE ON FUNCTION toggle_officer_status(UUID, BOOLEAN) TO authenticated;
+
+GRANT EXECUTE ON FUNCTION get_all_meetings_for_officers() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_meeting_with_secrets(TEXT) TO authenticated;
+
+GRANT EXECUTE ON FUNCTION create_meeting_for_officers(TEXT, TEXT, TEXT, DATE, TEXT, TEXT, TEXT, BOOLEAN, TEXT[], TEXT, JSONB, TEXT, INTEGER, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION officer_update_meeting(UUID, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TEXT[], TEXT, TEXT, INTEGER, TEXT, TEXT, JSONB) TO authenticated;
+GRANT EXECUTE ON FUNCTION delete_meeting_for_officers(UUID) TO authenticated;
+
+-- ============================================================
+-- END OF CONSOLIDATED SETUP
+-- ============================================================
