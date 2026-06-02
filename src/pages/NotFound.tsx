@@ -42,7 +42,7 @@ function NotFound() {
                 GO HOME
               </Link>
               <Link
-                to="/meetings"
+                to="/dashboard"
                 className="btn-hack px-6 py-3 rounded-lg inline-flex items-center justify-center gap-2"
               >
                 <Calendar className="w-4 h-4" />

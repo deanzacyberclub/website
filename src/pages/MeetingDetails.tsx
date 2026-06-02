@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
+import { TYPE_COLORS, TYPE_LABELS } from "@/lib/meetingUtils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import type {
@@ -95,11 +95,13 @@ function MeetingDetails({
   embedded = false,
   onClose,
   onSelectMeeting,
+  availableTopics,
 }: {
   slug?: string;
   embedded?: boolean;
   onClose?: () => void;
   onSelectMeeting?: (slug: string) => void;
+  availableTopics?: string[];
 } = {}) {
   const { slug: routeSlug } = useParams<{ slug: string }>();
   const slug = propSlug || routeSlug;
@@ -311,7 +313,8 @@ function MeetingDetails({
 
   const handleRegister = async () => {
     if (!meeting || !user) {
-      const returnTo = embedded ? `/meetings?meeting=${encodeURIComponent(slug || "")}` : `/meetings/${slug}`;
+      // After login, come back to the dashboard with the meeting sheet open
+      const returnTo = `/dashboard?meeting=${encodeURIComponent(slug || "")}`;
       navigate(`/auth?to=${returnTo}`);
       return;
     }
@@ -592,7 +595,7 @@ function MeetingDetails({
         if (embedded && onSelectMeeting) {
           onSelectMeeting(editForm.slug);
         } else {
-          navigate(`/meetings/${editForm.slug}`, { replace: true });
+          navigate(`/dashboard?meeting=${editForm.slug}`, { replace: true });
         }
       }
     } catch (err) {
@@ -644,7 +647,7 @@ function MeetingDetails({
                     if (embedded && onClose) {
                       onClose();
                     } else {
-                      navigate("/meetings");
+                      navigate("/dashboard");
                     }
                   }}
                   className="cli-btn-dashedpx-6 py-2"
@@ -1291,56 +1294,165 @@ function MeetingDetails({
               ) : meeting ? (
                 /* View Mode */
                 <>
-                  {/* Status Badges */}
-                  <div className="flex flex-wrap items-center gap-3 mb-6">
-                    <span
-                      className={`inline-block px-3 py-1text-sm font-terminal border ${TYPE_COLORS[meeting.type]}`}
+                  {/* ========== LUMA REDESIGN (the version you liked) ========== */}
+                  {/* Host pill */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#111] border border-[#222] text-sm">
+                      <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-bold text-black">C</div>
+                      <span className="text-white/90 font-medium">De Anza Cyber Security Club</span>
+                      <span className="text-white/40">›</span>
+                    </div>
+                    {meeting.featured && <span className="text-[10px] px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/30">FEATURED</span>}
+                    {/* Clickable type tag — filters in Dashboard instead of old /meetings page */}
+                    <Link
+                      to={`/dashboard?type=${meeting.type}`}
+                      className={`text-[10px] px-2 py-0.5 rounded border ${TYPE_COLORS[meeting.type]} hover:opacity-80 transition-opacity`}
                     >
                       {TYPE_LABELS[meeting.type]}
-                    </span>
-                    {meeting.featured && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1text-sm font-terminal bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix/50">
-                        <Star className="w-4 h-4" />
-                        FEATURED
-                      </span>
-                    )}
-                    {isPast(meeting.date) && (
-                      <span className="inline-block px-3 py-1text-sm font-terminal border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-500">
-                        COMPLETED
-                      </span>
-                    )}
+                    </Link>
                   </div>
 
-                  {/* Title */}
-                  <h1
-                    className={`text-3xl md:text-4xl font-bold mb-4 ${isPast(meeting.date) ? "text-gray-600 dark:text-gray-400" : "text-blue-600 dark:text-matrix neon-text"}`}
-                  >
+                  {/* Big Title */}
+                  <h1 className="text-[28px] md:text-[34px] leading-tight font-semibold tracking-[-0.5px] text-white mb-4">
                     {meeting.title}
                   </h1>
 
-                  {/* Description */}
-                  <p className="text-gray-600 dark:text-gray-400 text-lg mb-8 leading-relaxed">
-                    {meeting.description}
-                  </p>
+                  {/* Date + Time */}
+                  <div className="flex items-center gap-2 text-white/90 mb-5 text-[15px]">
+                    <Calendar className="w-4 h-4 text-white/60" />
+                    <span>{(() => {
+                      const d = parseLocalDate(meeting.date);
+                      return d.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                      });
+                    })()}</span>
+                    <span className="text-white/40">•</span>
+                    <span className="font-mono text-sm text-white/70">{meeting.time}</span>
+                  </div>
 
-                  {/* Details Grid */}
-                  <div className="grid md:grid-cols-2 gap-6 mb-8">
-                    {/* Date */}
-                    <div className="flex items-start gap-4 p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800">
-                      <div className="p-2 bg-blue-50 dark:bg-matrix/10 text-blue-600 dark:text-matrix">
-                        <Calendar className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-600 dark:text-gray-500 uppercase font-terminal mb-1">
-                          Date
-                        </div>
-                        <div
-                          className={`font-semibold ${isPast(meeting.date) ? "text-gray-600 dark:text-gray-400" : "text-blue-600 dark:text-matrix"}`}
-                        >
-                          {formatDate(meeting.date)}
+                  {/* Location Card with your Apple Maps link */}
+                  <div 
+                    onClick={() => window.open('https://maps.apple/p/VvLMJzG~DAkT7d', '_blank')}
+                    className="mb-6 rounded-2xl overflow-hidden border border-[#222] bg-[#0a0a0a] cursor-pointer active:scale-[0.985] transition-all"
+                  >
+                    <div className="relative h-[130px] bg-[#0f1f2e] flex items-center justify-center">
+                      <div className="absolute inset-0 bg-[radial-gradient(#1a2a3a_0.6px,transparent_1px)] bg-[length:3px_3px]" />
+                      <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-9 h-9 rounded-full bg-[#ff3b5c] shadow-[0_0_0_8px_rgba(255,59,92,0.25)] flex items-center justify-center">
+                          <MapPin className="w-5 h-5 text-white" />
                         </div>
                       </div>
                     </div>
+                    <div className="px-4 py-3 bg-[#111] flex justify-between items-center">
+                      <div>
+                        <div className="font-semibold text-white">{meeting.location}</div>
+                        <div className="text-xs text-white/50">Cupertino, California</div>
+                      </div>
+                      <div className="text-xs px-3 py-1 rounded-md bg-white/5 text-white/70">OPEN IN MAPS</div>
+                    </div>
+                  </div>
+
+                  {/* You're In / Register card */}
+                  {!isPast(meeting.date) && (
+                    <div className="mb-8 rounded-2xl border border-[#222] bg-[#111] p-5">
+                      {userRegistration && userRegistration.status !== "cancelled" ? (
+                        <div>
+                          <div className="text-emerald-400 text-sm font-medium tracking-wider mb-1">YOU'RE IN</div>
+                          <div className="flex gap-2 mt-3">
+                            <button onClick={() => window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(meeting.title)}`, '_blank')} className="flex-1 py-2 text-sm rounded-xl bg-white/5 hover:bg-white/10">Add to Calendar</button>
+                            <button onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); }} className="flex-1 py-2 text-sm rounded-xl bg-white/5 hover:bg-white/10">Copy Link</button>
+                          </div>
+                          <button onClick={() => setShowCancelDialog(true)} className="mt-3 text-xs text-pink-400 hover:text-pink-300 w-full text-center">Cancel registration</button>
+                        </div>
+                      ) : (
+                        <button onClick={handleRegister} disabled={registering} className="w-full py-3 text-lg font-medium rounded-2xl bg-white text-black active:bg-white/90 disabled:opacity-60">
+                          {registering ? "Processing..." : "Register for Event"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Blasts */}
+                  <div className="mb-8">
+                    <div className="text-sm font-medium text-white/80 mb-3">Blasts</div>
+                    <div className="space-y-3">
+                      <div className="rounded-2xl bg-[#111] border border-[#222] p-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-6 h-6 rounded-full bg-emerald-500/80 flex items-center justify-center text-[10px] font-bold">C</div>
+                          <span className="text-white/90 text-sm">De Anza Cyber Security Club</span>
+                        </div>
+                        <a href="https://discord.gg/v5JWDrZVNp" target="_blank" className="text-[#ff7aa8] text-sm">Join the Discord for live updates →</a>
+                      </div>
+                      {meeting.resources?.filter(r => !r.url.includes('discord')).slice(0,2).map((r,i) => (
+                        <div key={i} className="rounded-2xl bg-[#111] border border-[#222] p-4">
+                          <div className="text-white/90 text-sm mb-1">{r.title}</div>
+                          <a href={r.url} target="_blank" className="text-[#ff7aa8] text-sm break-all">{r.url}</a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Guests with hover names */}
+                  {(registrationCount > 0 || pastEventAttendees.length > 0) && (
+                    <div className="mb-8">
+                      <div className="text-sm font-medium text-white/80 mb-3">Guests <span className="text-white/50">({registrationCount || pastEventAttendees.length})</span></div>
+                      <div className="flex flex-wrap gap-3 rounded-2xl border border-[#222] bg-[#111] p-4">
+                        {pastEventAttendees.slice(0, 20).map((a, i) => (
+                          <div key={i} className="group relative w-10 h-10 rounded-full overflow-hidden border-2 border-[#222] bg-[#0a0a0a]" title={a.user?.display_name || 'Guest'}>
+                            {a.user?.photo_url ? <img src={a.user.photo_url} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-matrix/20 flex items-center justify-center text-xs text-matrix">{(a.user?.display_name||'G')[0]}</div>}
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs bg-black text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-50 border border-white/10">{a.user?.display_name}</div>
+                          </div>
+                        ))}
+                        {(registrationCount > pastEventAttendees.length) && <div className="w-10 h-10 rounded-full border-2 border-[#222] bg-[#1a1a1a] flex items-center justify-center text-xs text-white/60">+{registrationCount - pastEventAttendees.length}</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* About */}
+                  <div className="mb-8 text-[15px] text-white/85 leading-relaxed">
+                    <div className="uppercase text-xs tracking-[1px] text-white/50 mb-2">About Event</div>
+                    <p>{meeting.description}</p>
+                  </div>
+
+                  {/* Hide the immediate duplicate old sections so the Luma hero leads cleanly */}
+                  <div className="hidden">
+                    {/* Status Badges */}
+                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                      <span className={`inline-block px-3 py-1 text-sm font-terminal border ${TYPE_COLORS[meeting.type]}`}>
+                        {TYPE_LABELS[meeting.type]}
+                      </span>
+                      {meeting.featured && <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-terminal bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix/50"><Star className="w-4 h-4" /> FEATURED</span>}
+                      {isPast(meeting.date) && <span className="inline-block px-3 py-1 text-sm font-terminal border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-500">COMPLETED</span>}
+                    </div>
+
+                    {/* Title (duplicate) */}
+                    <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${isPast(meeting.date) ? "text-gray-600 dark:text-gray-400" : "text-blue-600 dark:text-matrix neon-text"}`}>
+                      {meeting.title}
+                    </h1>
+
+                    {/* Description (duplicate) */}
+                    <p className="text-gray-600 dark:text-gray-400 text-lg mb-8 leading-relaxed">
+                      {meeting.description}
+                    </p>
+
+                    {/* Details Grid (duplicate) */}
+                    <div className="grid md:grid-cols-2 gap-6 mb-8">
+                      {/* Date */}
+                      <div className="flex items-start gap-4 p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800">
+                        <div className="p-2 bg-blue-50 dark:bg-matrix/10 text-blue-600 dark:text-matrix">
+                          <Calendar className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-600 dark:text-gray-500 uppercase font-terminal mb-1">
+                            Date
+                          </div>
+                          <div className={`font-semibold ${isPast(meeting.date) ? "text-gray-600 dark:text-gray-400" : "text-blue-600 dark:text-matrix"}`}>
+                            {formatDate(meeting.date)}
+                          </div>
+                        </div>
+                      </div>
 
                     {/* Time */}
                     <div className="flex items-start gap-4 p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800">
@@ -1371,8 +1483,9 @@ function MeetingDetails({
                         </div>
                       </div>
                     </div>
+                  </div>   {/* close the hidden div for duplicate old sections */}
 
-                    {/* Secret Attendance Code - Officers Only */}
+                  {/* Secret Attendance Code - Officers Only */}
                     {isOfficer && meeting.secret_code && (
                       <div className="relative flex items-start gap-4 p-4  bg-hack-purple/10 border border-hack-purple/50 md:col-span-2">
                         <div className="p-2  bg-hack-purple/20 text-hack-purple">
@@ -1425,7 +1538,7 @@ function MeetingDetails({
                         {meeting.topics.map((topic) => (
                           <Link
                             key={topic}
-                            to={`/meetings?q=${encodeURIComponent(topic)}`}
+                            to={`/dashboard?q=${encodeURIComponent(topic)}`}
                             className="px-3 py-1.5 text-sm bg-terminal-alt border border-gray-700 text-gray-300 hover:border-matrix/50 hover:text-matrix transition-colors cursor-pointer"
                           >
                             {topic}
@@ -1882,7 +1995,7 @@ function MeetingDetails({
               {relatedMeetings.map((related) => (
                 <Link
                   key={related.id}
-                  to={embedded && onSelectMeeting ? "#" : `/meetings/${related.slug}`}
+                  to={embedded && onSelectMeeting ? "#" : `/dashboard?meeting=${related.slug}`}
                   onClick={
                     embedded && onSelectMeeting
                       ? (e) => {

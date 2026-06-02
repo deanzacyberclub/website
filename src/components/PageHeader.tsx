@@ -5,7 +5,6 @@ import ProfileMenu from "./ProfileMenu";
 import { Login, Logout, ChevronRight } from "@/lib/cyberIcon";
 import ConfirmDialog from "./ConfirmDialog";
 import {
-  preloadMeetings,
   preloadLive,
   preloadDashboard,
   preloadSettings,
@@ -21,7 +20,7 @@ function PageHeader() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
 
-  const isEventsActive = location.pathname.startsWith("/meetings");
+  const isHomeActive = location.pathname === "/dashboard";
   const isCheckInActive = location.pathname === "/live";
   const isDashboardActive = location.pathname === "/dashboard";
   const isSettingsActive = location.pathname === "/settings";
@@ -87,17 +86,17 @@ function PageHeader() {
           {/* Left: Navigation */}
           <nav className="flex items-center gap-6 text-sm font-terminal font-bold">
             <Link
-              to="/meetings"
-              onMouseEnter={preloadMeetings}
-              onFocus={preloadMeetings}
+              to="/dashboard"
+              onMouseEnter={preloadDashboard}
+              onFocus={preloadDashboard}
               className={`flex items-center gap-1.5 transition-colors font-medium ${
-                isEventsActive
+                isHomeActive
                   ? "text-matrix"
                   : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              {isEventsActive && <span className="text-matrix">&gt;</span>}
-              events
+              {isHomeActive && <span className="text-matrix">&gt;</span>}
+              home
             </Link>
             <Link
               to="/live"
@@ -205,27 +204,27 @@ function PageHeader() {
         <div className="mx-2 border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111111] overflow-hidden shadow-lg dark:shadow-2xl rounded-2xl">
           <div className="flex flex-col py-1 text-sm font-terminal">
             <Link
-              to="/meetings"
+              to="/dashboard"
               onClick={closeMobileMenu}
-              onMouseEnter={preloadMeetings}
-              onFocus={preloadMeetings}
+              onMouseEnter={preloadDashboard}
+              onFocus={preloadDashboard}
               className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
-                isEventsActive
+                isHomeActive
                   ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
                   : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
               }`}
             >
               <span
                 className={
-                  isEventsActive
+                  isHomeActive
                     ? "text-matrix"
                     : "text-gray-400 dark:text-gray-600"
                 }
               >
                 &gt;
               </span>
-              events
-              {isEventsActive && (
+              home
+              {isHomeActive && (
                 <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />
               )}
             </Link>

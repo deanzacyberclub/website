@@ -1,20 +1,29 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import { supabase } from "@/lib/supabase";
-import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
-import type { Meeting, Registration } from "@/types/database.types";
+import {
+  TYPE_COLORS,
+  TYPE_LABELS,
+  defaultCreateForm,
+  formatTimeRange,
+  getCurrentTopicsList,
+  getLastTopicPartial,
+  parseLocalDate,
+} from "@/lib/meetingUtils";
+import type { CreateMeetingForm } from "@/lib/meetingUtils";
+import type { Meeting, MeetingType, Registration } from "@/types/database.types";
+import MeetingDetailSheet from "@/components/MeetingDetailSheet";
 import {
   CheckCircle,
   ChevronRight,
   MapPin,
   Calendar,
   Shield,
-  ExternalLink,
-  Copy,
-  Check,
   Clock,
+  Plus,
+  Close,
 } from "@/lib/cyberIcon";
 import { Tabs } from "@/components/Tabs";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -25,12 +34,6 @@ import { useInView } from "@/hooks/useInView";
 interface MeetingWithRegistration extends Meeting {
   userRegistration?: Registration;
 }
-
-// Parse date string as local timezone (not UTC)
-const parseLocalDate = (dateStr: string) => {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
 
 // ─── Action Card ─────────────────────────────────────
 function ActionCard({
@@ -112,15 +115,72 @@ function Dashboard() {
   const [dataLoading, setDataLoading] = useState(true);
   const [meetings, setMeetings] = useState<MeetingWithRegistration[]>([]);
   const [attendanceCount, setAttendanceCount] = useState(0);
-  const [activeTab, setActiveTab] = useState<"upcoming" | "attended">(
+  const [activeTab, setActiveTab] = useState<"upcoming" | "past">(
     "upcoming",
   );
   const { user, userProfile } = useAuth();
   const { isVerifiedOfficer } = useOfficerVerification();
 
+  // Sheet / detail drawer state (ported from Meetings.tsx) driven by ?meeting=slug
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedSlug = searchParams.get("meeting");
+
+  const openMeeting = (slug: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("meeting", slug);
+    setSearchParams(params, { replace: false });
+  };
+
+  const closeMeeting = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete("meeting");
+    setSearchParams(params, { replace: true });
+  };
+
+  // Search + Type filter (expandable search + pills), synced with URL for deep linking from tags in MeetingDetails
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") || "");
+  const [typeFilter, setTypeFilter] = useState<"all" | MeetingType>(() => (searchParams.get("type") as any) || "all");
+  const [isSearchExpanded, setIsSearchExpanded] = useState(!!searchParams.get("q"));
+
+  const updateFilterUrl = (q?: string, t?: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (q !== undefined) {
+      if (q.trim()) params.set("q", q.trim()); else params.delete("q");
+    }
+    if (t !== undefined) {
+      if (t && t !== "all") params.set("type", t); else params.delete("type");
+    }
+    setSearchParams(params, { replace: true });
+  };
+
+  // Officer create meeting flow (exact same as Meetings.tsx)
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateMeetingForm>(defaultCreateForm);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [showCreateTopicSuggestions, setShowCreateTopicSuggestions] = useState(false);
+
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100);
   }, []);
+
+  // Sync search + type filters from URL (so clicks on "Topics Covered" / type tags
+  // from MeetingDetails — even when the sheet is open — actually filter the list).
+  // Using functional setters avoids stale closures and feedback loops.
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    const t = (searchParams.get("type") as MeetingType | null) || "all";
+
+    setSearchQuery((curr) => (curr !== q ? q : curr));
+    setTypeFilter((curr) => (curr !== t ? t : curr));
+
+    if (q) {
+      setIsSearchExpanded(true);
+    } else {
+      // Collapse search UI only when URL no longer carries a query
+      setIsSearchExpanded((exp) => (searchParams.get("q") ? exp : false));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function fetchData() {
@@ -215,14 +275,10 @@ function Dashboard() {
       );
   }, [meetings, today]);
 
-  // Only events the user has actually attended (used for the "Attended" tab + personal history)
-  const attendedMeetings = useMemo(() => {
+  // All past meetings (for the "Past" tab — show every past event regardless of personal attendance)
+  const pastMeetings = useMemo(() => {
     return meetings
-      .filter((m) => {
-        const isPast = parseLocalDate(m.date) < today;
-        const hasAttended = m.userRegistration?.status === "attended";
-        return isPast && hasAttended;
-      })
+      .filter((m) => parseLocalDate(m.date) < today)
       .sort(
         (a, b) =>
           parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime(),
@@ -234,8 +290,47 @@ function Dashboard() {
     return meetings.filter((m) => parseLocalDate(m.date) < today);
   }, [meetings, today]);
 
-  const displayedMeetings =
-    activeTab === "upcoming" ? upcomingMeetings : attendedMeetings;
+  const baseDisplayed =
+    activeTab === "upcoming" ? upcomingMeetings : pastMeetings;
+
+  // Apply search + type filter (client-side on whatever the tab gives us)
+  const displayedMeetings = useMemo(() => {
+    let list = baseDisplayed;
+
+    if (typeFilter !== "all") {
+      list = list.filter((m) => m.type === typeFilter);
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((m) =>
+        m.title.toLowerCase().includes(q) ||
+        (m.description || "").toLowerCase().includes(q) ||
+        (m.location || "").toLowerCase().includes(q) ||
+        m.topics?.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [baseDisplayed, searchQuery, typeFilter]);
+
+  const allTopics = useMemo(() => {
+    const set = new Set<string>();
+    meetings.forEach((m) => m.topics?.forEach((t) => set.add(t)));
+    return Array.from(set).sort();
+  }, [meetings]);
+
+  // Same autocomplete suggestions logic as Meetings.tsx for the create form
+  const createTopicSuggestions = useMemo(() => {
+    const partial = getLastTopicPartial(createForm.topics);
+    const current = getCurrentTopicsList(createForm.topics);
+    if (!partial) return [];
+    return allTopics
+      .filter((t) =>
+        t.toLowerCase().includes(partial) &&
+        !current.some((c) => c.toLowerCase() === t.toLowerCase())
+      )
+      .slice(0, 8);
+  }, [createForm.topics, allTopics]);
 
   const getStatusBadge = (registration?: Registration, isPastEvent = false) => {
     if (!registration || registration.status === "cancelled") {
@@ -294,8 +389,104 @@ function Dashboard() {
     return statusConfig[registration.status] || null;
   };
 
+  // Exact same create logic as Meetings.tsx (rich form with topics autocomplete, slug, proper time formatting, etc.)
+  const createMeeting = async () => {
+    if (!createForm.title.trim()) {
+      setCreateError("Title is required");
+      return;
+    }
+    if (!createForm.date) {
+      setCreateError("Date is required");
+      return;
+    }
+    if (!createForm.startTime || !createForm.endTime) {
+      setCreateError("Start and end times are required");
+      return;
+    }
+
+    const slug = createForm.slug.trim() || createForm.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 30);
+
+    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    if (!slugRegex.test(slug)) {
+      setCreateError("Invalid slug format. Use lowercase letters, numbers, and hyphens only.");
+      return;
+    }
+
+    setCreating(true);
+    setCreateError("");
+
+    try {
+      const topicsArray = createForm.topics
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+
+      const resourcesWithDiscord = [
+        { id: "discord-default", title: "Join Discord", url: "https://discord.gg/v5JWDrZVNp", type: "link" as const },
+      ];
+
+      const timeStr = formatTimeRange(createForm.startTime, createForm.endTime);
+
+      const { data, error } = await supabase.rpc("create_meeting_for_officers", {
+        p_slug: slug,
+        p_title: createForm.title.trim(),
+        p_description: createForm.description.trim() || "No description provided.",
+        p_date: createForm.date,
+        p_time: timeStr,
+        p_location: createForm.location.trim() || "ATC 205",
+        p_type: createForm.type,
+        p_featured: createForm.featured,
+        p_topics: topicsArray,
+        p_secret_code: createForm.secret_code.trim() || null,
+        p_resources: resourcesWithDiscord,
+      });
+
+      if (error) throw error;
+
+      const newMeeting = Array.isArray(data) ? data[0] : data;
+
+      setShowCreateModal(false);
+      setCreateForm(defaultCreateForm);
+      setShowCreateTopicSuggestions(false);
+
+      // Refresh dashboard data + open the new meeting in the sheet
+      // (simple & reliable given the personalized RPC)
+      if (newMeeting?.slug) {
+        // Optimistic: add to local list so it appears without full reload
+        const optimistic: MeetingWithRegistration = {
+          ...(newMeeting as Meeting),
+          userRegistration: undefined,
+        };
+        setMeetings((prev) => [optimistic, ...prev]);
+
+        // Open it in the sheet
+        const params = new URLSearchParams(searchParams);
+        params.set("meeting", newMeeting.slug);
+        params.delete("q"); // clear search so the new one is visible
+        setSearchParams(params, { replace: false });
+      } else {
+        window.location.reload();
+      }
+    } catch (err: any) {
+      console.error("Error creating meeting:", err);
+      if (err?.message?.includes("duplicate")) {
+        setCreateError("A meeting with this slug already exists. Please choose a different one.");
+      } else {
+        setCreateError("Failed to create meeting. Please try again.");
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
+    <>
+      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
       <div className="crt-overlay" />
 
       <div className="relative z-10">
@@ -373,23 +564,117 @@ function Dashboard() {
                 />
               </ScrollReveal>
             )}
+
+            {/* New Meeting button — only for verified officers (ported from Meetings.tsx) */}
+            {isVerifiedOfficer === true && (
+              <ScrollReveal delay={60}>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="cli-btn-filled px-4 py-2 flex items-center gap-2 text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  New Meeting
+                </button>
+              </ScrollReveal>
+            )}
           </div>
 
           {/* Events */}
           <ScrollReveal delay={0}>
             <section className="mb-12">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                <SectionHeader index="01" title="My Events" />
-                <Tabs
-                  tabs={[
-                    { id: "upcoming", label: "Upcoming" },
-                    { id: "attended", label: "Attended" },
-                  ]}
-                  activeTab={activeTab}
-                  onTabChange={(tab) =>
-                    setActiveTab(tab as "upcoming" | "attended")
-                  }
-                />
+                <SectionHeader index="01" title="Events" />
+
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Tabs
+                    tabs={[
+                      { id: "upcoming", label: "Upcoming" },
+                      { id: "past", label: "Past" },
+                    ]}
+                    activeTab={activeTab}
+                    onTabChange={(tab) =>
+                      setActiveTab(tab as "upcoming" | "past")
+                    }
+                  />
+
+                  {/* Expandable search button (per request) */}
+                  <div className="flex items-center gap-2">
+                    {!isSearchExpanded ? (
+                      <button
+                        onClick={() => setIsSearchExpanded(true)}
+                        className="p-2 border border-gray-300 dark:border-gray-700 hover:border-green-500 dark:hover:border-matrix/60 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-matrix transition-colors rounded"
+                        aria-label="Search events"
+                        title="Search events"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <div className="relative w-48 sm:w-64">
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            updateFilterUrl(e.target.value, undefined);
+                          }}
+                          placeholder="Search by name, topic, location..."
+                          className="input-hack w-full pr-8 text-sm"
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => {
+                            setSearchQuery("");
+                            setIsSearchExpanded(false);
+                            updateFilterUrl("", undefined);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          aria-label="Close search"
+                        >
+                          <Close className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Type filter pills (always visible, works with search + tabs) */}
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <span className="text-[10px] font-terminal text-gray-500 dark:text-gray-600 uppercase tracking-wider mr-1">Filter</span>
+                {(["all", "workshop", "lecture", "ctf", "social", "general"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => {
+                      const next = t === "all" ? "all" : t;
+                      setTypeFilter(next as any);
+                      updateFilterUrl(undefined, next);
+                    }}
+                    className={`px-2.5 py-0.5 text-xs font-terminal border transition-all ${
+                      typeFilter === t
+                        ? t === "all"
+                          ? "bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border-blue-300 dark:border-matrix"
+                          : `bg-opacity-15 dark:bg-opacity-15 ${TYPE_COLORS[t]}`
+                        : "bg-gray-100 dark:bg-terminal-alt text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700 hover:border-gray-400"
+                    }`}
+                  >
+                    {t === "all" ? "ALL" : TYPE_LABELS[t]}
+                  </button>
+                ))}
+                {(searchQuery || typeFilter !== "all") && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setTypeFilter("all");
+                      setIsSearchExpanded(false);
+                      updateFilterUrl("", "all");
+                    }}
+                    className="ml-2 text-xs font-terminal text-hack-red hover:text-red-400"
+                  >
+                    CLEAR
+                  </button>
+                )}
               </div>
 
               {dataLoading ? (
@@ -433,10 +718,18 @@ function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Event card */}
-                      <Link
-                        to={`/meetings/${meeting.slug}`}
-                        className="flex-1 border border-gray-200 dark:border-matrix/20 p-4 hover:border-green-500 dark:hover:border-matrix/40 hover:bg-green-50/30 dark:hover:bg-matrix/[0.03] hover:translate-x-1 transition-all duration-300 mb-4 relative overflow-hidden group/card"
+                      {/* Event card — click opens the same MeetingDetailSheet as in the old /meetings */}
+                      <div
+                        onClick={() => openMeeting(meeting.slug)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openMeeting(meeting.slug);
+                          }
+                        }}
+                        className="flex-1 border border-gray-200 dark:border-matrix/20 p-4 hover:border-green-500 dark:hover:border-matrix/40 hover:bg-green-50/30 dark:hover:bg-matrix/[0.03] hover:translate-x-1 transition-all duration-300 mb-4 relative overflow-hidden group/card cursor-pointer"
                       >
                         <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-500 dark:bg-matrix scale-y-0 group-hover/card:scale-y-100 transition-transform duration-300 origin-top" />
                         <div className="flex items-start justify-between gap-4">
@@ -463,33 +756,37 @@ function Dashboard() {
                             </div>
 
                             <div className="flex items-center gap-2">
-                              {meeting.userRegistration &&
-                              getStatusBadge(
-                                meeting.userRegistration,
-                                activeTab === "attended",
-                              ) ? (
-                                <span
-                                  className={`inline-block px-2 py-0.5 text-xs font-terminal border ${getStatusBadge(meeting.userRegistration, activeTab === "attended")!.color}`}
-                                >
-                                  {
-                                    getStatusBadge(
-                                      meeting.userRegistration,
-                                      activeTab === "attended",
-                                    )!.label
-                                  }
-                                </span>
-                              ) : (
-                                activeTab === "upcoming" && (
-                                  <span className="inline-block px-2 py-0.5 text-xs font-terminal border bg-blue-50 dark:bg-hack-cyan/5 text-blue-700 dark:text-hack-cyan border-blue-200 dark:border-hack-cyan/20">
-                                    Invited
+                              {activeTab === "past" ? (
+                                // Past tab: show Attended (green) or Not Attended (red) for every past event
+                                meeting.userRegistration?.status === "attended" ? (
+                                  <span className="inline-block px-2 py-0.5 text-xs font-terminal border bg-green-100 dark:bg-matrix/20 text-green-800 dark:text-matrix border-green-300 dark:border-matrix/40">
+                                    Attended
+                                  </span>
+                                ) : (
+                                  <span className="inline-block px-2 py-0.5 text-xs font-terminal border bg-red-100 dark:bg-hack-red/10 text-red-700 dark:text-hack-red border-red-300 dark:border-hack-red/40">
+                                    Not Attended
                                   </span>
                                 )
+                              ) : meeting.userRegistration &&
+                                getStatusBadge(
+                                  meeting.userRegistration,
+                                  false,
+                                ) ? (
+                                <span
+                                  className={`inline-block px-2 py-0.5 text-xs font-terminal border ${getStatusBadge(meeting.userRegistration, false)!.color}`}
+                                >
+                                  {getStatusBadge(meeting.userRegistration, false)!.label}
+                                </span>
+                              ) : (
+                                <span className="inline-block px-2 py-0.5 text-xs font-terminal border bg-blue-50 dark:bg-hack-cyan/5 text-blue-700 dark:text-hack-cyan border-blue-200 dark:border-hack-cyan/20">
+                                  Invited
+                                </span>
                               )}
                             </div>
                           </div>
                           <ChevronRight className="w-5 h-5 text-gray-400 dark:text-matrix/30 group-hover/card:text-green-600 dark:group-hover/card:text-matrix group-hover/card:translate-x-0.5 transition-all shrink-0 mt-1" />
                         </div>
-                      </Link>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -506,24 +803,40 @@ function Dashboard() {
                         <Calendar className="w-8 h-8 text-gray-400 dark:text-gray-600" />
                       </div>
                       <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">
-                        {activeTab === "upcoming"
-                          ? "No upcoming events yet"
-                          : "No attended events yet"}
+                        {searchQuery || typeFilter !== "all"
+                          ? "No matches for your filters"
+                          : activeTab === "upcoming"
+                            ? "No upcoming events yet"
+                            : "No past events yet"}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-500 text-sm mb-6">
-                        {activeTab === "upcoming"
-                          ? "Check out our meetings page to discover and register for upcoming events and workshops."
-                          : "Events you check into will appear here. Your attendance history helps track your engagement over time."}
+                        {searchQuery || typeFilter !== "all"
+                          ? "Try a different search term or clear the type filter."
+                          : activeTab === "upcoming"
+                            ? "Check out our meetings page to discover and register for upcoming events and workshops."
+                            : "All past club events appear here. Events you attended are marked green; others show as Not Attended."}
                       </p>
-                      <Link
-                        to="/meetings"
-                        className="cli-btn-filled px-6 py-2.5 inline-flex items-center gap-2 text-sm"
-                      >
-                        <Calendar className="w-4 h-4" />
-                        {activeTab === "upcoming"
-                          ? "Browse All Events"
-                          : "Browse Events"}
-                      </Link>
+                      {searchQuery || typeFilter !== "all" ? (
+                        <button
+                          onClick={() => {
+                            setSearchQuery("");
+                            setTypeFilter("all");
+                            setIsSearchExpanded(false);
+                            updateFilterUrl("", "all");
+                          }}
+                          className="cli-btn-filled px-6 py-2.5 inline-flex items-center gap-2 text-sm"
+                        >
+                          Clear Filters
+                        </button>
+                      ) : (
+                        <Link
+                          to="/dashboard"
+                          className="cli-btn-filled px-6 py-2.5 inline-flex items-center gap-2 text-sm"
+                        >
+                          <Calendar className="w-4 h-4" />
+                          {activeTab === "upcoming" ? "Browse All Events" : "Browse Events"}
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -709,7 +1022,6 @@ function Dashboard() {
                 <OverviewCard
                   meetings={meetings}
                   upcomingMeetings={upcomingMeetings}
-                  attendedMeetings={attendedMeetings}
                   studentId={userProfile?.student_id}
                 />
               </div>
@@ -821,7 +1133,7 @@ function Dashboard() {
           {/* Browse All Events CTA */}
           <ScrollReveal delay={0}>
             <Link
-              to="/meetings"
+              to="/dashboard"
               className="block border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 hover:bg-green-50/30 dark:hover:bg-matrix/[0.03] hover:translate-x-1 transition-all duration-300 group text-center relative overflow-hidden"
             >
               <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-500 dark:bg-matrix scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
@@ -837,19 +1149,270 @@ function Dashboard() {
         </div>
       </div>
     </div>
-  );
+
+    {/* Meeting detail sheet (sidebar on desktop, bottom sheet on mobile) — exact same component as used in Meetings.tsx */}
+    <MeetingDetailSheet
+      slug={selectedSlug}
+      onClose={closeMeeting}
+      availableTopics={allTopics}
+      onSelectMeeting={(newSlug) => {
+        const params = new URLSearchParams(searchParams);
+        params.set("meeting", newSlug);
+        setSearchParams(params, { replace: true });
+      }}
+    />
+
+    {/* Officer-only Create New Meeting modal — EXACT same rich form as in Meetings.tsx (topics autocomplete, slug preview, type select, featured toggle, proper time range, etc.) */}
+    {showCreateModal && isVerifiedOfficer === true && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80">
+        <div className="terminal-window w-full max-w-2xl max-h-[90vh] flex flex-col">
+          <div className="terminal-header flex-shrink-0">
+            <div className="terminal-dot red" />
+            <div className="terminal-dot yellow" />
+            <div className="terminal-dot green" />
+            <span className="ml-4 text-xs text-gray-500 font-terminal">create_meeting.sh</span>
+            <button
+              onClick={() => {
+                setShowCreateModal(false);
+                setCreateForm(defaultCreateForm);
+                setCreateError("");
+                setShowCreateTopicSuggestions(false);
+              }}
+              className="ml-auto text-gray-500 hover:text-white transition-colors"
+            >
+              <Close className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="terminal-body space-y-6 overflow-y-auto flex-1">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-matrix">Create New Meeting</h2>
+            </div>
+
+            {createError && (
+              <div className="p-3 bg-red-50 dark:bg-hack-red/10 border border-red-300 dark:border-hack-red/50 text-red-700 dark:text-hack-red text-sm">
+                {createError}
+              </div>
+            )}
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Title */}
+              <div className="md:col-span-2">
+                <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">TITLE *</label>
+                <input
+                  type="text"
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                  className="input-hack w-full"
+                  placeholder="Introduction to Ethical Hacking"
+                />
+              </div>
+
+              {/* Slug */}
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">URL SLUG</label>
+                <input
+                  type="text"
+                  value={createForm.slug}
+                  onChange={(e) => setCreateForm({ ...createForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
+                  className="input-hack w-full"
+                  placeholder="auto-generated-from-title"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">/dashboard?meeting={createForm.slug || createForm.title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").slice(0, 30) || "slug"}</p>
+              </div>
+
+              {/* Type */}
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">TYPE</label>
+                <select
+                  value={createForm.type}
+                  onChange={(e) => setCreateForm({ ...createForm, type: e.target.value as any })}
+                  className="input-hack w-full"
+                >
+                  <option value="general">General</option>
+                  <option value="workshop">Workshop</option>
+                  <option value="lecture">Lecture</option>
+                  <option value="ctf">CTF</option>
+                  <option value="social">Social</option>
+                </select>
+              </div>
+
+              {/* Date + Time Range */}
+              <div className="md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">DATE *</label>
+                    <input
+                      type="date"
+                      value={createForm.date}
+                      onChange={(e) => setCreateForm({ ...createForm, date: e.target.value })}
+                      className="input-hack w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">START TIME *</label>
+                    <input
+                      type="time"
+                      value={createForm.startTime}
+                      onChange={(e) => setCreateForm({ ...createForm, startTime: e.target.value })}
+                      className="input-hack w-full"
+                      step="900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">END TIME *</label>
+                    <input
+                      type="time"
+                      value={createForm.endTime}
+                      onChange={(e) => setCreateForm({ ...createForm, endTime: e.target.value })}
+                      className="input-hack w-full"
+                      step="900"
+                    />
+                  </div>
+                </div>
+                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-600 font-mono">
+                  Stored as: {formatTimeRange(createForm.startTime, createForm.endTime)}
+                </p>
+              </div>
+
+              {/* Location */}
+              <div className="md:col-span-2">
+                <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">LOCATION</label>
+                <input
+                  type="text"
+                  value={createForm.location}
+                  onChange={(e) => setCreateForm({ ...createForm, location: e.target.value })}
+                  className="input-hack w-full"
+                  placeholder="ATC 205"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="md:col-span-2">
+                <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">DESCRIPTION</label>
+                <textarea
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  className="input-hack w-full min-h-[80px] resize-y"
+                  placeholder="Describe the meeting..."
+                />
+              </div>
+
+              {/* Topics with autocomplete (exact same as Meetings.tsx) */}
+              <div className="md:col-span-2">
+                <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">TOPICS (comma-separated)</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={createForm.topics}
+                    onChange={(e) => {
+                      setCreateForm({ ...createForm, topics: e.target.value });
+                      if (!showCreateTopicSuggestions) setShowCreateTopicSuggestions(true);
+                    }}
+                    onFocus={() => {
+                      if (allTopics.length > 0) setShowCreateTopicSuggestions(true);
+                    }}
+                    onBlur={() => setTimeout(() => setShowCreateTopicSuggestions(false), 150)}
+                    className="input-hack w-full"
+                    placeholder="Security, Hacking, CTF"
+                  />
+                  {showCreateTopicSuggestions && createTopicSuggestions.length > 0 && (
+                    <div className="absolute z-[60] mt-1 w-full max-h-44 overflow-auto rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-terminal-bg shadow-lg">
+                      <div className="px-2 py-1 text-[10px] text-gray-500 dark:text-gray-600 font-terminal border-b border-gray-200 dark:border-gray-800">Suggestions from existing tags</div>
+                      {createTopicSuggestions.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            const partial = getLastTopicPartial(createForm.topics);
+                            const currentList = getCurrentTopicsList(createForm.topics);
+                            let next: string;
+                            if (partial && tag.toLowerCase().startsWith(partial)) {
+                              const parts = createForm.topics.split(",");
+                              parts[parts.length - 1] = " " + tag;
+                              next = parts.join(",").trim();
+                            } else if (!currentList.some((c) => c.toLowerCase() === tag.toLowerCase())) {
+                              next = createForm.topics.trim() ? createForm.topics.trim() + ", " + tag : tag;
+                            } else {
+                              next = createForm.topics;
+                            }
+                            setCreateForm({ ...createForm, topics: next });
+                          }}
+                          className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-terminal-alt font-mono border-b border-gray-100 dark:border-gray-800 last:border-b-0"
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-500 dark:text-gray-600 mt-1">Type to search existing topics. Click to add (supports multiple).</p>
+              </div>
+
+              {/* Secret Code */}
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">ATTENDANCE CODE</label>
+                <input
+                  type="text"
+                  value={createForm.secret_code}
+                  onChange={(e) => setCreateForm({ ...createForm, secret_code: e.target.value.toUpperCase() })}
+                  className="input-hack w-full font-mono"
+                  placeholder="SECRETCODE"
+                />
+              </div>
+
+              {/* Featured toggle */}
+              <div className="flex items-center gap-3 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setCreateForm({ ...createForm, featured: !createForm.featured })}
+                  className={`relative w-12 h-6 transition-colors border ${createForm.featured ? "bg-blue-600 dark:bg-matrix border-blue-600 dark:border-matrix" : "bg-gray-300 dark:bg-gray-600 border-gray-300 dark:border-gray-600"}`}
+                >
+                  <span className={`absolute top-1 w-4 h-4 bg-white transition-transform ${createForm.featured ? "left-7" : "left-1"}`} />
+                </button>
+                <label className="text-sm text-gray-700 dark:text-gray-400">Featured meeting</label>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setCreateForm(defaultCreateForm);
+                  setCreateError("");
+                  setShowCreateTopicSuggestions(false);
+                }}
+                disabled={creating}
+                className="cli-btn-dashed disabled:opacity-50"
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={createMeeting}
+                disabled={creating}
+                className="cli-btn-filled disabled:opacity-50 flex items-center gap-2"
+              >
+                {creating && <span className="animate-spin h-4 w-4 inline-block">⏳</span>}
+                {creating ? "CREATING..." : "CREATE MEETING"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
+);
 }
 
 // ─── Overview Card (extracted to use useInView) ──────
 function OverviewCard({
   meetings,
   upcomingMeetings,
-  attendedMeetings,
   studentId,
 }: {
   meetings: MeetingWithRegistration[];
   upcomingMeetings: MeetingWithRegistration[];
-  attendedMeetings: MeetingWithRegistration[];
   studentId: string | null | undefined;
 }) {
   const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.3 });

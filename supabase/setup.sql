@@ -437,12 +437,45 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.club_announcements TO authenticat
 -- OFFICER RPC FUNCTIONS (consolidated from original + migrations)
 -- ============================================================
 
+-- ============================================================
+-- CENTRALIZED OFFICER AUTHORIZATION (single source of truth)
+-- ============================================================
+
+-- This is the ONE function that should be used everywhere to check officer status.
+-- All other officer-gated functions should call this.
+CREATE OR REPLACE FUNCTION public.is_officer(p_user_id uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+BEGIN
+  -- No authenticated user → definitely not an officer
+  IF p_user_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1 
+    FROM public.users 
+    WHERE id = p_user_id 
+      AND is_officer IS TRUE   -- explicit IS TRUE to handle NULL safely
+  );
+END;
+$$;
+
+COMMENT ON FUNCTION public.is_officer(uuid) IS 
+  'Canonical officer check. Returns true only if the user has is_officer = true in public.users. Used by verify_officer_status() and all officer RPCs.';
+
+GRANT EXECUTE ON FUNCTION public.is_officer(uuid) TO authenticated;
+
 -- Core officer lookup functions (already present, kept for completeness)
 CREATE OR REPLACE FUNCTION get_user_profiles_for_officers(user_ids UUID[])
 RETURNS TABLE (id UUID, display_name TEXT, photo_url TEXT, email TEXT)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+    IF NOT public.is_officer() THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
     RETURN QUERY SELECT u.id, u.display_name, u.photo_url, u.email FROM users u WHERE u.id = ANY(user_ids);
@@ -453,7 +486,7 @@ CREATE OR REPLACE FUNCTION get_all_users_for_officers()
 RETURNS TABLE (id UUID, display_name TEXT, email TEXT, photo_url TEXT, is_officer BOOLEAN, created_at TIMESTAMPTZ)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+    IF NOT public.is_officer() THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
     RETURN QUERY SELECT u.id, u.display_name, u.email, u.photo_url, u.is_officer, u.created_at FROM users u ORDER BY u.created_at DESC;
@@ -464,7 +497,7 @@ CREATE OR REPLACE FUNCTION toggle_officer_status(target_user_id UUID, new_status
 RETURNS VOID
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+    IF NOT public.is_officer() THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
     IF target_user_id = auth.uid() AND new_status = false THEN
@@ -478,7 +511,7 @@ CREATE OR REPLACE FUNCTION get_user_details_for_officers(target_user_id UUID)
 RETURNS TABLE (id UUID, display_name TEXT, email TEXT, photo_url TEXT, student_id TEXT, is_officer BOOLEAN, created_at TIMESTAMPTZ)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+    IF NOT public.is_officer() THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
     RETURN QUERY SELECT u.id, u.display_name, u.email, u.photo_url, u.student_id, u.is_officer, u.created_at FROM users u WHERE u.id = target_user_id;
@@ -489,7 +522,8 @@ CREATE OR REPLACE FUNCTION verify_officer_status()
 RETURNS BOOLEAN
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    RETURN EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true);
+    -- Delegates to the single source of truth
+    RETURN public.is_officer();
 END;
 $$;
 
@@ -505,7 +539,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+    IF NOT public.is_officer() THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
     RETURN QUERY
@@ -528,7 +562,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+    IF NOT public.is_officer() THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
     RETURN QUERY
@@ -568,7 +602,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+    IF NOT public.is_officer() THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
 
@@ -615,7 +649,7 @@ CREATE OR REPLACE FUNCTION officer_update_meeting(
 RETURNS SETOF meetings
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+  IF NOT public.is_officer() THEN
     RAISE EXCEPTION 'Access denied: User is not an officer';
   END IF;
 
@@ -647,7 +681,7 @@ CREATE OR REPLACE FUNCTION delete_meeting_for_officers(p_meeting_id UUID)
 RETURNS BOOLEAN
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_officer = true) THEN
+    IF NOT public.is_officer() THEN
         RAISE EXCEPTION 'Access denied: User is not an officer';
     END IF;
 
@@ -786,6 +820,7 @@ GRANT EXECUTE ON FUNCTION verify_meeting_secret_code(TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION verify_meeting_secret_code(TEXT) TO anon;
 
 GRANT EXECUTE ON FUNCTION verify_officer_status() TO authenticated;
+GRANT EXECUTE ON FUNCTION is_officer(uuid) TO authenticated;
 
 GRANT EXECUTE ON FUNCTION get_user_details_for_officers(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_all_users_for_officers() TO authenticated;

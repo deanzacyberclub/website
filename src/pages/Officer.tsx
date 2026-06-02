@@ -448,7 +448,7 @@ function Officer() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
-              to="/meetings"
+              to="/dashboard"
               className="p-4  bg-gray-50 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 hover:border-hack-cyan/50 transition-all group"
             >
               <div className="flex items-center justify-between">
@@ -676,7 +676,7 @@ function Officer() {
                           </span>
                           {reg.meeting ? (
                             <Link
-                              to={`/meetings/${reg.meeting.slug}`}
+                              to={`/dashboard?meeting=${reg.meeting.slug}`}
                               className="text-hack-cyan hover:underline"
                             >
                               {reg.meeting.title}

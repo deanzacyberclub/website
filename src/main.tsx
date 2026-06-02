@@ -12,8 +12,7 @@ import "./index.css";
 const About = lazy(() => import("@/pages/About"));
 const Attendance = lazy(() => import("@/pages/Attendance"));
 const Legal = lazy(() => import("@/pages/Legal"));
-const Meetings = lazy(() => import("@/pages/Meetings"));
-const MeetingDetails = lazy(() => import("@/pages/MeetingDetails"));
+
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
@@ -35,8 +34,6 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               {/* Public routes */}
               <Route path="/" element={<App />} />
               <Route path="/about" element={<About />} />
-              <Route path="/meetings" element={<Meetings />} />
-              <Route path="/meetings/:slug" element={<MeetingDetails />} />
               <Route path="/ctf" element={<CTF />} />
               <Route path="/app" element={<AppPromo />} />
               <Route path="/legal" element={<Legal />} />

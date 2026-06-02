@@ -3,7 +3,6 @@
  * Call these on hover/focus of navigation links to load the chunk early.
  */
 
-export const preloadMeetings = () => import("@/pages/Meetings");
 export const preloadMeetingDetails = () => import("@/pages/MeetingDetails");
 export const preloadLive = () => import("@/pages/Attendance");
 export const preloadDashboard = () => import("@/pages/Dashboard");

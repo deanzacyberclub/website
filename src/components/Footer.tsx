@@ -62,10 +62,10 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
             <ul className="space-y-3 font-mono text-[11px] uppercase tracking-wider">
               <li>
                 <Link
-                  to="/meetings"
+                  to="/dashboard"
                   className="text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
                 >
-                  Events
+                  Home
                 </Link>
               </li>
               <li>
@@ -111,10 +111,10 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
               </li>
               <li>
                 <Link
-                  to="/meetings"
+                  to="/dashboard"
                   className="text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
                 >
-                  Meetings
+                  Home
                 </Link>
               </li>
             </ul>

@@ -425,7 +425,7 @@ function UserProfile() {
                     </div>
                     {att.meeting ? (
                       <Link
-                        to={`/meetings/${att.meeting.slug}`}
+                        to={`/dashboard?meeting=${att.meeting.slug}`}
                         className="text-gray-200 hover:text-hack-cyan transition-colors"
                       >
                         {att.meeting.title}
@@ -474,7 +474,7 @@ function UserProfile() {
                   <div className="flex items-center gap-3">
                     {reg.meeting ? (
                       <Link
-                        to={`/meetings/${reg.meeting.slug}`}
+                        to={`/dashboard?meeting=${reg.meeting.slug}`}
                         className="text-gray-200 hover:text-hack-cyan transition-colors"
                       >
                         {reg.meeting.title}

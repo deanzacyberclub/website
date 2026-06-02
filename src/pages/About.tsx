@@ -283,7 +283,7 @@ function About() {
                     </div>
                   )}
                   <Link
-                    to="/meetings"
+                    to="/dashboard"
                     className="flex items-center gap-1.5 font-mono text-xs text-gray-500 dark:text-matrix/50 hover:text-green-700 dark:hover:text-matrix transition-colors group"
                   >
                     <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
@@ -422,7 +422,7 @@ function About() {
               Join Discord
             </a>
             <Link
-              to="/meetings"
+              to="/dashboard"
               className="cli-btn-dashed font-mono text-sm justify-center"
             >
               [ View schedule ]

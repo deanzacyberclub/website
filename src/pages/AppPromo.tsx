@@ -380,7 +380,7 @@ export default function AppPromo() {
                 Join TestFlight
               </a>
               <a
-                href="/meetings"
+                href="/dashboard"
                 className="inline-flex items-center justify-center gap-2 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white/60 font-mono text-sm px-6 py-3 hover:border-green-500 dark:hover:border-white/30 hover:text-green-700 dark:hover:text-white/80 transition-colors"
               >
                 [ View events ]

@@ -114,11 +114,9 @@ DECLARE
   v_attendees jsonb := '[]'::jsonb;
   v_meeting_date date;
 BEGIN
-  -- Determine officer status once (used to decide whether to expose secrets)
+  -- Determine officer status once using the canonical helper (used to decide whether to expose secrets)
   IF v_user_id IS NOT NULL THEN
-    SELECT EXISTS (
-      SELECT 1 FROM users WHERE id = v_user_id AND is_officer = true
-    ) INTO v_is_officer;
+    SELECT public.is_officer(v_user_id) INTO v_is_officer;
   END IF;
 
   -- Load the core meeting row (officers get secrets via the full meetings table path)

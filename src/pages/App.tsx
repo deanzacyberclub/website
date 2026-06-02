@@ -24,7 +24,7 @@ const CircularGallery = lazy(() =>
     default: mod.default as React.ComponentType<any>,
   }))
 );
-import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
+import { TYPE_COLORS, TYPE_LABELS } from "@/lib/meetingUtils";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -33,7 +33,7 @@ import type { OfficerData } from "@/constants";
 import { useInView } from "@/hooks/useInView";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
-const prefetchMeetings = () => import("./Meetings");
+
 const prefetchLive = () => import("./Attendance");
 
 // ─── Typewriter for hero heading ─────────────────────
@@ -399,18 +399,114 @@ function RecentEvents({ meetings }: { meetings: Meeting[] }) {
     return new Date(year, month - 1, day);
   };
 
+  const now = new Date();
+
+  const isMeetingLive = (meeting: Meeting): boolean => {
+    const eventDate = parseLocalDate(meeting.date);
+
+    // Same calendar day check (robust)
+    if (
+      eventDate.getFullYear() !== now.getFullYear() ||
+      eventDate.getMonth() !== now.getMonth() ||
+      eventDate.getDate() !== now.getDate()
+    ) {
+      return false;
+    }
+
+    const timeStr = (meeting.time || "").trim();
+    if (!timeStr) return false;
+
+    // Normalize: remove extra spaces, handle common dash variants
+    const normalized = timeStr.replace(/\s*[-–—]\s*/g, " - ").replace(/\s+/g, " ");
+
+    // Try to extract two time tokens
+    const parts = normalized.split(" - ");
+    if (parts.length !== 2) return false;
+
+    const parseTimeToMinutes = (t: string): number | null => {
+      let str = t.trim();
+
+      // Handle common cases like "2:30PM" by inserting space before AM/PM if missing
+      str = str.replace(/(\d)(AM|PM)$/i, "$1 $2");
+
+      const m = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+      if (!m) return null;
+
+      let hh = parseInt(m[1], 10);
+      const mm = parseInt(m[2], 10);
+      const per = m[3]?.toUpperCase();
+
+      if (per === "PM" && hh < 12) hh += 12;
+      if (per === "AM" && hh === 12) hh = 0;
+
+      return hh * 60 + mm;
+    };
+
+    const startMin = parseTimeToMinutes(parts[0]);
+    const endMin = parseTimeToMinutes(parts[1]);
+
+    if (startMin === null || endMin === null) return false;
+
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+
+    // Small grace period after end
+    return nowMin >= startMin && nowMin <= endMin + 10;
+  };
+
+  const isMeetingPast = (meeting: Meeting): boolean => {
+    const eventDate = parseLocalDate(meeting.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (eventDate < today) return true;
+    if (eventDate > today) return false;
+
+    // Same day: check if we're past the event's end time
+    const timeStr = (meeting.time || "").trim();
+    if (!timeStr) return false;
+
+    const normalized = timeStr.replace(/\s*[-–—]\s*/g, " - ").replace(/\s+/g, " ");
+    const parts = normalized.split(" - ");
+    if (parts.length !== 2) return false;
+
+    const parseTimeToMinutes = (t: string): number | null => {
+      let str = t.trim();
+      str = str.replace(/(\d)(AM|PM)$/i, "$1 $2");
+      const m = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+      if (!m) return null;
+      let hh = parseInt(m[1], 10);
+      const mm = parseInt(m[2], 10);
+      const per = m[3]?.toUpperCase();
+      if (per === "PM" && hh < 12) hh += 12;
+      if (per === "AM" && hh === 12) hh = 0;
+      return hh * 60 + mm;
+    };
+
+    const endMin = parseTimeToMinutes(parts[1]);
+    if (endMin === null) return false;
+
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+
+    return nowMin > endMin + 10;  // grace after end
+  };
+
   if (meetings.length === 0) return null;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {meetings.map((meeting, idx) => (
-        <EventCard
-          key={meeting.id}
-          meeting={meeting}
-          isNew={idx === 0}
-          parseLocalDate={parseLocalDate}
-        />
-      ))}
+      {meetings.map((meeting, idx) => {
+        const isLive = isMeetingLive(meeting);
+        const isPast = isMeetingPast(meeting);
+        return (
+          <EventCard
+            key={meeting.id}
+            meeting={meeting}
+            isNew={!isLive && !isPast && idx === 0}
+            isLive={isLive}
+            parseLocalDate={parseLocalDate}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -418,10 +514,12 @@ function RecentEvents({ meetings }: { meetings: Meeting[] }) {
 function EventCard({
   meeting,
   isNew,
+  isLive = false,
   parseLocalDate,
 }: {
   meeting: Meeting;
   isNew: boolean;
+  isLive?: boolean;
   parseLocalDate: (dateStr: string) => Date;
 }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -431,7 +529,7 @@ function EventCard({
 
   return (
     <Link
-      to={`/meetings/${meeting.slug}`}
+      to={`/dashboard?meeting=${meeting.slug}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-xl transition-all duration-300 hover:border-white/25 hover:shadow-2xl"
@@ -449,9 +547,11 @@ function EventCard({
             <span className={`inline-block px-1.5 py-0 text-[9px] font-mono uppercase border ${TYPE_COLORS[meeting.type]}`}>
               {TYPE_LABELS[meeting.type]}
             </span>
-            {isNew && (
+            {isLive ? (
+              <span className="text-[9px] font-mono uppercase text-red-400 animate-pulse">● LIVE</span>
+            ) : isNew ? (
               <span className="text-[9px] font-mono uppercase text-emerald-400 animate-pulse">● NEW</span>
-            )}
+            ) : null}
           </div>
           <h3 className="text-white font-mono font-semibold text-sm truncate">{meeting.title}</h3>
           <div className="flex items-center gap-2 mt-0.5 text-white/60 font-mono text-[10px]">
@@ -482,9 +582,11 @@ function EventCard({
                 <span className={`inline-block px-2 py-0.5 text-[10px] font-mono uppercase border ${TYPE_COLORS[meeting.type]}`}>
                   {TYPE_LABELS[meeting.type]}
                 </span>
-                {isNew && (
+                {isLive ? (
+                  <span className="text-[10px] font-mono uppercase text-red-400 animate-pulse">● LIVE</span>
+                ) : isNew ? (
                   <span className="text-[10px] font-mono uppercase text-emerald-400 animate-pulse">● NEW</span>
-                )}
+                ) : null}
               </div>
               <h3 className="text-white font-mono font-semibold text-base leading-tight">{meeting.title}</h3>
             </div>
@@ -1440,10 +1542,8 @@ function App() {
             <div className="flex flex-col sm:flex-row gap-4 mb-10">
               <DiscordButton />
               <Link
-                to="/meetings"
+                to="/dashboard"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 px-6 py-3 text-sm font-medium text-gray-800 dark:text-white/80 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-all w-full sm:w-auto"
-                onMouseEnter={prefetchMeetings}
-                onFocus={prefetchMeetings}
               >
                 View events
               </Link>
@@ -1484,10 +1584,8 @@ function App() {
               <RecentEvents meetings={recentMeetings} />
               <div className="mt-6 text-center">
                 <Link
-                  to="/meetings"
+                  to="/dashboard"
                   className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-all group"
-                  onMouseEnter={prefetchMeetings}
-                  onFocus={prefetchMeetings}
                 >
                   VIEW ALL EVENTS
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
