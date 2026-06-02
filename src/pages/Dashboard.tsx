@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOfficerVerification } from "@/hooks/useOfficerVerification";
@@ -11,6 +11,7 @@ import {
   getCurrentTopicsList,
   getLastTopicPartial,
   parseLocalDate,
+  isMeetingLive,
 } from "@/lib/meetingUtils";
 import type { CreateMeetingForm } from "@/lib/meetingUtils";
 import type { Meeting, MeetingType, Registration } from "@/types/database.types";
@@ -22,14 +23,11 @@ import {
   Calendar,
   Shield,
   Clock,
-  Plus,
   Close,
 } from "@/lib/cyberIcon";
 import { Tabs } from "@/components/Tabs";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { AnimatedCounter } from "@/components/AnimatedCounter";
-import { useInView } from "@/hooks/useInView";
 
 interface MeetingWithRegistration extends Meeting {
   userRegistration?: Registration;
@@ -182,83 +180,98 @@ function Dashboard() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    async function fetchData() {
-      setDataLoading(true);
+  const fetchDashboardData = useCallback(async () => {
+    setDataLoading(true);
+    try {
+      // Single roundtrip via optimized SECURITY DEFINER RPC.
+      // Returns meetings (public fields) + embedded my_registration + attendance_count.
+      const { data, error } = await supabase.rpc("get_my_dashboard_data");
+
+      if (error) throw error;
+
+      const meetingsRaw = (data?.meetings || []) as any[];
+      const mapped: MeetingWithRegistration[] = meetingsRaw.map((m) => ({
+        ...(m as Meeting),
+        userRegistration: m.my_registration
+          ? ({
+              id: m.my_registration.id,
+              meeting_id: m.id,
+              user_id: user?.id,
+              status: m.my_registration.status,
+              registered_at: m.my_registration.registered_at,
+            } as Registration)
+          : undefined,
+      }));
+
+      setMeetings(mapped);
+      setAttendanceCount((data as any)?.attendance_count || 0);
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      // Fallback to the old (slower) path if the new RPC isn't deployed yet
       try {
-        // Single roundtrip via optimized SECURITY DEFINER RPC.
-        // Returns meetings (public fields) + embedded my_registration + attendance_count.
-        const { data, error } = await supabase.rpc("get_my_dashboard_data");
+        const { data: meetingsData } = await supabase
+          .from("meetings_public")
+          .select("*")
+          .order("date", { ascending: true });
 
-        if (error) throw error;
-
-        const meetingsRaw = (data?.meetings || []) as any[];
-        const mapped: MeetingWithRegistration[] = meetingsRaw.map((m) => ({
-          ...(m as Meeting),
-          userRegistration: m.my_registration
-            ? ({
-                id: m.my_registration.id,
-                meeting_id: m.id,
-                user_id: user?.id,
-                status: m.my_registration.status,
-                registered_at: m.my_registration.registered_at,
-              } as Registration)
-            : undefined,
-        }));
-
-        setMeetings(mapped);
-        setAttendanceCount(data?.attendance_count || 0);
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        // Fallback to the old (slower) path if the new RPC isn't deployed yet
-        try {
-          const { data: meetingsData } = await supabase
-            .from("meetings_public")
+        if (meetingsData && user) {
+          const { data: registrationsData } = await supabase
+            .from("registrations")
             .select("*")
-            .order("date", { ascending: true });
+            .eq("user_id", user.id);
 
-          if (meetingsData && user) {
-            const { data: registrationsData } = await supabase
-              .from("registrations")
-              .select("*")
-              .eq("user_id", user.id);
-
-            const meetingsWithRegistrations: MeetingWithRegistration[] =
-              meetingsData.map((meeting) => {
-                const registration = registrationsData?.find(
-                  (r) => r.meeting_id === meeting.id,
-                );
-                return {
-                  ...(meeting as Meeting),
-                  userRegistration: registration,
-                };
-              });
-            setMeetings(meetingsWithRegistrations);
-          } else if (meetingsData) {
-            setMeetings(meetingsData as Meeting[]);
-          }
-
-          if (user) {
-            const { count } = await supabase
-              .from("attendance")
-              .select("*", { count: "exact", head: true })
-              .eq("user_id", user.id);
-            setAttendanceCount(count || 0);
-          }
-        } catch (fallbackErr) {
-          console.error("Fallback fetch also failed:", fallbackErr);
+          const meetingsWithRegistrations: MeetingWithRegistration[] =
+            meetingsData.map((meeting) => {
+              const registration = registrationsData?.find(
+                (r) => r.meeting_id === meeting.id,
+              );
+              return {
+                ...(meeting as Meeting),
+                userRegistration: registration,
+              };
+            });
+          setMeetings(meetingsWithRegistrations);
+          setAttendanceCount(
+            meetingsWithRegistrations.filter((m) => m.userRegistration?.status === "attended").length
+          );
+        } else if (meetingsData) {
+          setMeetings(meetingsData as Meeting[]);
+          setAttendanceCount(0);
         }
-      } finally {
-        setDataLoading(false);
+      } catch (fallbackErr) {
+        console.error("Fallback fetch also failed:", fallbackErr);
       }
-    }
-
-    if (user) {
-      fetchData();
-    } else {
+    } finally {
       setDataLoading(false);
     }
   }, [user]);
+
+  // Initial load
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    } else {
+      setDataLoading(false);
+    }
+  }, [user, fetchDashboardData]);
+
+  // Refetch when tab/window regains focus/visibility — ensures "Attended" status from /live check-in appears immediately
+  useEffect(() => {
+    const refetchIfVisible = () => {
+      if (document.visibilityState === "visible" && user) {
+        fetchDashboardData();
+      }
+    };
+    const onFocus = () => {
+      if (user) fetchDashboardData();
+    };
+    document.addEventListener("visibilitychange", refetchIfVisible);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", refetchIfVisible);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [user, fetchDashboardData]);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -285,13 +298,13 @@ function Dashboard() {
       );
   }, [meetings, today]);
 
-  // All past meetings the user *could* have attended (for accurate rate calculations)
-  const eligiblePastMeetings = useMemo(() => {
-    return meetings.filter((m) => parseLocalDate(m.date) < today);
-  }, [meetings, today]);
-
   const baseDisplayed =
     activeTab === "upcoming" ? upcomingMeetings : pastMeetings;
+
+  // Live meeting detection for highlighting attendance opportunity (re-uses shared util)
+  const liveMeeting = useMemo(() => {
+    return upcomingMeetings.find((m) => isMeetingLive(m));
+  }, [upcomingMeetings]);
 
   // Apply search + type filter (client-side on whatever the tab gives us)
   const displayedMeetings = useMemo(() => {
@@ -524,7 +537,7 @@ function Dashboard() {
                 <span className="text-green-700 dark:text-matrix">
                   [{userProfile?.student_id || "NO_ID"}]
                 </span>{" "}
-                · Session active
+                · {attendanceCount} attended · Session active
               </p>
             </div>
           </div>
@@ -534,18 +547,33 @@ function Dashboard() {
           {/* Action Cards */}
           <div className="space-y-4 mb-12">
             <ScrollReveal delay={0}>
-              <ActionCard
-                to="/live"
-                icon={CheckCircle}
-                title="Mark Attendance"
-                description="At a meeting? Enter the secret code to check in and record your attendance."
-                headerFile="attendance_check_in.sh"
-                headerTag="READY"
-                tagColor="text-cyan-600 dark:text-hack-cyan animate-pulse"
-                iconBg="bg-blue-50 dark:bg-matrix/10"
-                iconBorder="border-blue-200 dark:border-matrix/30"
-                iconColor="text-blue-600 dark:text-matrix"
-              />
+              {liveMeeting && liveMeeting.userRegistration?.status !== "attended" ? (
+                <ActionCard
+                  to="/live"
+                  icon={CheckCircle}
+                  title="Check In Now"
+                  description={`At the live session? Use the secret code for "${liveMeeting.title.length > 42 ? liveMeeting.title.slice(0, 39) + "..." : liveMeeting.title}".`}
+                  headerFile="attendance_check_in.sh"
+                  headerTag="LIVE"
+                  tagColor="text-red-600 dark:text-hack-red animate-pulse"
+                  iconBg="bg-red-50 dark:bg-hack-red/10"
+                  iconBorder="border-red-200 dark:border-hack-red/30"
+                  iconColor="text-red-600 dark:text-hack-red"
+                />
+              ) : (
+                <ActionCard
+                  to="/live"
+                  icon={CheckCircle}
+                  title="Mark Attendance"
+                  description="At a meeting? Enter the secret code to check in and record your attendance."
+                  headerFile="attendance_check_in.sh"
+                  headerTag="READY"
+                  tagColor="text-cyan-600 dark:text-hack-cyan animate-pulse"
+                  iconBg="bg-blue-50 dark:bg-matrix/10"
+                  iconBorder="border-blue-200 dark:border-matrix/30"
+                  iconColor="text-blue-600 dark:text-matrix"
+                />
+              )}
             </ScrollReveal>
 
             {isVerifiedOfficer === true && (
@@ -565,16 +593,20 @@ function Dashboard() {
               </ScrollReveal>
             )}
 
-            {/* New Meeting button — only for verified officers (ported from Meetings.tsx) */}
             {isVerifiedOfficer === true && (
               <ScrollReveal delay={60}>
-                <button
+                <ActionCard
                   onClick={() => setShowCreateModal(true)}
-                  className="cli-btn-filled px-4 py-2 flex items-center gap-2 text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  New Meeting
-                </button>
+                  icon={Calendar}
+                  title="New Meeting"
+                  description="Schedule a new workshop, lecture, CTF, or social and set the secret attendance code."
+                  headerFile="create_meeting.sh"
+                  headerTag="CREATE"
+                  tagColor="text-blue-600 dark:text-hack-cyan"
+                  iconBg="bg-blue-50 dark:bg-matrix/10"
+                  iconBorder="border-blue-200 dark:border-matrix/30"
+                  iconColor="text-blue-600 dark:text-matrix"
+                />
               </ScrollReveal>
             )}
           </div>
@@ -596,6 +628,19 @@ function Dashboard() {
                       setActiveTab(tab as "upcoming" | "past")
                     }
                   />
+
+                  {/* Manual refresh — useful after check-in on /live to pull latest attendance status */}
+                  <button
+                    onClick={fetchDashboardData}
+                    disabled={dataLoading}
+                    className="p-2 border border-gray-300 dark:border-gray-700 hover:border-green-500 dark:hover:border-matrix/60 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-matrix transition-colors rounded disabled:opacity-50"
+                    aria-label="Refresh events and attendance"
+                    title="Refresh (pulls latest attendance from check-ins)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${dataLoading ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.058 11H1M12 3v2m0 16v2m9-9H15m-6 0a8 8 0 01-.937-1.073M12 21a8 8 0 01-8-8" />
+                    </svg>
+                  </button>
 
                   {/* Expandable search button (per request) */}
                   <div className="flex items-center gap-2">
@@ -739,6 +784,9 @@ function Dashboard() {
                                 <Clock className="w-3 h-3" />
                                 {meeting.time}
                               </span>
+                              {isMeetingLive(meeting) && (
+                                <span className="ml-1 text-[9px] font-mono px-1.5 py-px rounded border bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 animate-pulse">LIVE</span>
+                              )}
                             </div>
                             <h3 className="text-gray-900 dark:text-matrix font-semibold text-base mb-2 group-hover/card:tracking-wider transition-all duration-300">
                               {meeting.title}
@@ -757,16 +805,18 @@ function Dashboard() {
 
                             <div className="flex items-center gap-2">
                               {activeTab === "past" ? (
-                                // Past tab: show Attended (green) or Not Attended (red) for every past event
+                                // Past tab: Attended only if verified via secret code (or officer).
+                                // If had a registration but no "attended" status: "Missed".
+                                // Otherwise (no interaction with this event): no personal badge.
                                 meeting.userRegistration?.status === "attended" ? (
                                   <span className="inline-block px-2 py-0.5 text-xs font-terminal border bg-green-100 dark:bg-matrix/20 text-green-800 dark:text-matrix border-green-300 dark:border-matrix/40">
                                     Attended
                                   </span>
-                                ) : (
+                                ) : meeting.userRegistration && meeting.userRegistration.status !== "cancelled" ? (
                                   <span className="inline-block px-2 py-0.5 text-xs font-terminal border bg-red-100 dark:bg-hack-red/10 text-red-700 dark:text-hack-red border-red-300 dark:border-hack-red/40">
-                                    Not Attended
+                                    Missed
                                   </span>
-                                )
+                                ) : null
                               ) : meeting.userRegistration &&
                                 getStatusBadge(
                                   meeting.userRegistration,
@@ -814,7 +864,7 @@ function Dashboard() {
                           ? "Try a different search term or clear the type filter."
                           : activeTab === "upcoming"
                             ? "Check out our meetings page to discover and register for upcoming events and workshops."
-                            : "All past club events appear here. Events you attended are marked green; others show as Not Attended."}
+                            : "All past club events appear here. Use the secret code on the check-in page to mark attendance. \"Attended\" = verified with code. \"Missed\" = registered/invited but no check-in recorded."}
                       </p>
                       {searchQuery || typeFilter !== "all" ? (
                         <button
@@ -842,309 +892,6 @@ function Dashboard() {
                 </div>
               )}
             </section>
-          </ScrollReveal>
-
-          {/* My Stats */}
-          <ScrollReveal delay={0}>
-            <section className="mb-12">
-              <SectionHeader index="02" title="My Stats" />
-
-              <div className="grid md:grid-cols-3 gap-4">
-                {/* Attendance Ring */}
-                <div className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors">
-                  <div className="flex items-center gap-5">
-                    <div className="relative w-24 h-24 shrink-0">
-                      <svg
-                        className="w-24 h-24 transform -rotate-90"
-                        viewBox="0 0 100 100"
-                      >
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="6"
-                          className="text-gray-200 dark:text-gray-800"
-                        />
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="6"
-                          strokeLinecap="round"
-                          className="text-green-600 dark:text-matrix"
-                          strokeDasharray={`${(attendanceCount / Math.max(eligiblePastMeetings.length, 1)) * 251.2} 251.2`}
-                          style={{ transition: "stroke-dasharray 1s ease-out" }}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-green-700 dark:text-matrix">
-                          {attendanceCount}
-                        </span>
-                        <span className="text-[10px] text-gray-500 dark:text-gray-600 font-terminal">
-                          ATTENDED
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-matrix mb-3">
-                        Attendance
-                      </h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between font-mono text-xs">
-                          <span className="text-gray-500 dark:text-gray-500">
-                            Events Attended
-                          </span>
-                          <span className="text-green-700 dark:text-matrix">
-                            {attendanceCount}
-                          </span>
-                        </div>
-                        <div className="flex justify-between font-mono text-xs">
-                          <span className="text-gray-500 dark:text-gray-500">
-                            Total Events
-                          </span>
-                          <span className="text-gray-700 dark:text-gray-400">
-                            {meetings.length}
-                          </span>
-                        </div>
-                        <div className="flex justify-between font-mono text-xs">
-                          <span className="text-gray-500 dark:text-gray-500">
-                            Attendance Rate
-                          </span>
-                          <span className="text-green-700 dark:text-matrix">
-                            {eligiblePastMeetings.length > 0
-                              ? Math.round(
-                                  (attendanceCount /
-                                    eligiblePastMeetings.length) *
-                                    100,
-                                )
-                              : 0}
-                            %
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Event Types Breakdown */}
-                <div className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors">
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-matrix mb-4">
-                    Events by Type
-                  </h3>
-                  <div className="space-y-3">
-                    {(() => {
-                      const typeStats = meetings.reduce(
-                        (acc, m) => {
-                          if (!acc[m.type]) {
-                            acc[m.type] = { total: 0, attended: 0 };
-                          }
-                          acc[m.type].total += 1;
-                          if (m.userRegistration?.status === "attended") {
-                            acc[m.type].attended += 1;
-                          }
-                          return acc;
-                        },
-                        {} as Record<
-                          string,
-                          { total: number; attended: number }
-                        >,
-                      );
-                      const maxCount = Math.max(
-                        ...Object.values(typeStats).map((s) => s.total),
-                        1,
-                      );
-
-                      return Object.entries(typeStats).map(([type, stats]) => (
-                        <div key={type}>
-                          <div className="flex justify-between text-xs mb-1 font-mono">
-                            <span
-                              className={`${TYPE_COLORS[type as keyof typeof TYPE_COLORS]?.split(" ")[1] || "text-gray-400"}`}
-                            >
-                              {TYPE_LABELS[type as keyof typeof TYPE_LABELS] ||
-                                type}
-                            </span>
-                            <span className="text-gray-500 dark:text-gray-500">
-                              <span className="text-green-700 dark:text-matrix">
-                                {stats.attended}
-                              </span>
-                              /{stats.total}
-                            </span>
-                          </div>
-                          <div className="h-1.5 bg-gray-200 dark:bg-gray-800 overflow-hidden flex">
-                            <div
-                              className={`h-full transition-all duration-700 ${
-                                type === "workshop"
-                                  ? "bg-green-500 dark:bg-matrix"
-                                  : type === "ctf"
-                                    ? "bg-cyan-500 dark:bg-hack-cyan"
-                                    : type === "social"
-                                      ? "bg-purple-500 dark:bg-hack-purple"
-                                      : type === "competition"
-                                        ? "bg-orange-500 dark:bg-hack-orange"
-                                        : "bg-gray-500 dark:bg-gray-400"
-                              }`}
-                              style={{
-                                width: `${(stats.attended / maxCount) * 100}%`,
-                              }}
-                            />
-                            <div
-                              className="h-full bg-gray-300 dark:bg-gray-600 transition-all duration-700"
-                              style={{
-                                width: `${((stats.total - stats.attended) / maxCount) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ));
-                    })()}
-                    {Object.keys(
-                      meetings.reduce(
-                        (acc, m) => {
-                          acc[m.type] = true;
-                          return acc;
-                        },
-                        {} as Record<string, boolean>,
-                      ),
-                    ).length === 0 && (
-                      <p className="text-gray-500 dark:text-gray-500 text-sm text-center py-4 font-mono">
-                        No events yet
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Activity Overview */}
-                <OverviewCard
-                  meetings={meetings}
-                  upcomingMeetings={upcomingMeetings}
-                  studentId={userProfile?.student_id}
-                />
-              </div>
-
-              {/* Monthly Activity Chart */}
-              <div className="border border-gray-200 dark:border-matrix/20 p-5 mt-4 hover:border-green-500 dark:hover:border-matrix/40 transition-colors">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-matrix mb-4">
-                  Monthly Activity
-                </h3>
-                <div className="flex items-end gap-2 h-28">
-                  {(() => {
-                    const now = new Date();
-                    const months: {
-                      label: string;
-                      total: number;
-                      attended: number;
-                    }[] = [];
-
-                    for (let i = 5; i >= 0; i--) {
-                      const date = new Date(
-                        now.getFullYear(),
-                        now.getMonth() - i,
-                        1,
-                      );
-                      const monthMeetings = meetings.filter((m) => {
-                        const mDate = parseLocalDate(m.date);
-                        return (
-                          mDate.getMonth() === date.getMonth() &&
-                          mDate.getFullYear() === date.getFullYear()
-                        );
-                      });
-                      const attendedMeetings = monthMeetings.filter(
-                        (m) => m.userRegistration?.status === "attended",
-                      );
-                      months.push({
-                        label: date.toLocaleDateString("en-US", {
-                          month: "short",
-                        }),
-                        total: monthMeetings.length,
-                        attended: attendedMeetings.length,
-                      });
-                    }
-
-                    const maxEvents = Math.max(
-                      ...months.map((m) => m.total),
-                      1,
-                    );
-
-                    return months.map((month, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 flex flex-col items-center gap-2"
-                      >
-                        <div className="w-full flex flex-col items-center justify-end h-20">
-                          <div
-                            className="w-full max-w-6 bg-gray-300 dark:bg-gray-600 transition-all duration-500"
-                            style={{
-                              height:
-                                month.total > 0
-                                  ? `${Math.max(((month.total - month.attended) / maxEvents) * 100, 0)}%`
-                                  : "0",
-                            }}
-                          />
-                          <div
-                            className={`w-full max-w-6 transition-all duration-500 ${
-                              month.attended > 0
-                                ? "bg-green-500 dark:bg-matrix"
-                                : "bg-gray-200 dark:bg-gray-800"
-                            }`}
-                            style={{
-                              height:
-                                month.attended > 0
-                                  ? `${Math.max((month.attended / maxEvents) * 100, 10)}%`
-                                  : month.total === 0
-                                    ? "4px"
-                                    : "0",
-                            }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-gray-500 dark:text-gray-600 font-terminal">
-                          {month.label}
-                        </span>
-                      </div>
-                    ));
-                  })()}
-                </div>
-                <div className="flex justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-500 dark:text-gray-500 font-mono">
-                  <div className="flex items-center gap-4">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 bg-green-600 dark:bg-matrix" />
-                      Attended
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 bg-gray-300 dark:bg-gray-600" />
-                      Not attended
-                    </span>
-                  </div>
-                  <span>
-                    <span className="text-green-700 dark:text-matrix">
-                      {attendanceCount}
-                    </span>
-                    /{eligiblePastMeetings.length} past events
-                  </span>
-                </div>
-              </div>
-            </section>
-          </ScrollReveal>
-
-          {/* Browse All Events CTA */}
-          <ScrollReveal delay={0}>
-            <Link
-              to="/dashboard"
-              className="block border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 hover:bg-green-50/30 dark:hover:bg-matrix/[0.03] hover:translate-x-1 transition-all duration-300 group text-center relative overflow-hidden"
-            >
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-500 dark:bg-matrix scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
-              <div className="flex items-center justify-center gap-3">
-                <Calendar className="w-5 h-5 text-green-700 dark:text-matrix" />
-                <span className="text-gray-900 dark:text-matrix font-semibold">
-                  Browse All Events & Meetings
-                </span>
-                <ChevronRight className="w-5 h-5 text-gray-400 dark:text-matrix/30 group-hover:text-green-600 dark:group-hover:text-matrix group-hover:translate-x-1 transition-all" />
-              </div>
-            </Link>
           </ScrollReveal>
         </div>
       </div>
@@ -1403,88 +1150,6 @@ function Dashboard() {
     )}
   </>
 );
-}
-
-// ─── Overview Card (extracted to use useInView) ──────
-function OverviewCard({
-  meetings,
-  upcomingMeetings,
-  studentId,
-}: {
-  meetings: MeetingWithRegistration[];
-  upcomingMeetings: MeetingWithRegistration[];
-  studentId: string | null | undefined;
-}) {
-  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.3 });
-
-  return (
-    <div
-      ref={ref}
-      className="border border-gray-200 dark:border-matrix/20 p-5 hover:border-green-500 dark:hover:border-matrix/40 transition-colors"
-    >
-      <h3 className="text-base font-semibold text-gray-900 dark:text-matrix mb-4">
-        Quick Overview
-      </h3>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="text-center p-3 bg-green-50 dark:bg-matrix/5 border border-green-200 dark:border-matrix/20">
-          <div className="text-2xl font-bold text-green-700 dark:text-matrix">
-            <AnimatedCounter value={upcomingMeetings.length} inView={inView} />
-          </div>
-          <div className="text-[10px] text-gray-500 dark:text-gray-500 font-terminal uppercase mt-1">
-            Upcoming
-          </div>
-        </div>
-        <div className="text-center p-3 bg-cyan-50 dark:bg-hack-cyan/5 border border-cyan-200 dark:border-hack-cyan/20">
-          <div className="text-2xl font-bold text-cyan-700 dark:text-hack-cyan">
-            <AnimatedCounter
-              value={
-                meetings.filter(
-                  (m) =>
-                    m.userRegistration &&
-                    m.userRegistration.status !== "cancelled",
-                ).length
-              }
-              inView={inView}
-            />
-          </div>
-          <div className="text-[10px] text-gray-500 dark:text-gray-500 font-terminal uppercase mt-1">
-            Registered
-          </div>
-        </div>
-        <div className="text-center p-3 bg-purple-50 dark:bg-hack-purple/5 border border-purple-200 dark:border-hack-purple/20">
-          <div className="text-2xl font-bold text-purple-700 dark:text-hack-purple">
-            <AnimatedCounter
-              value={upcomingMeetings.filter((m) => m.userRegistration).length}
-              inView={inView}
-            />
-          </div>
-          <div className="text-[10px] text-gray-500 dark:text-gray-500 font-terminal uppercase mt-1">
-            RSVPs
-          </div>
-        </div>
-        <div
-          className={`text-center p-3 border ${
-            studentId
-              ? "bg-green-50 dark:bg-matrix/5 border-green-200 dark:border-matrix/20"
-              : "bg-yellow-50 dark:bg-hack-yellow/5 border-yellow-200 dark:border-hack-yellow/20"
-          }`}
-        >
-          <div
-            className={`text-lg font-bold ${
-              studentId
-                ? "text-green-700 dark:text-matrix"
-                : "text-yellow-700 dark:text-hack-yellow"
-            }`}
-          >
-            {studentId ? "OK" : "??"}
-          </div>
-          <div className="text-[10px] text-gray-500 dark:text-gray-500 font-terminal uppercase mt-1">
-            ID Status
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export default Dashboard;

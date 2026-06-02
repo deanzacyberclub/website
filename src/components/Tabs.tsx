@@ -35,7 +35,7 @@ export function Tabs({
 
   return (
     <div
-      className={`relative flex gap-2 bg-gray-100 dark:bg-gray-900/50 p-1 border border-gray-200 dark:border-gray-800 ${className}`}
+      className={`relative flex gap-2 bg-gray-100 dark:bg-gray-900/50 p-1 border border-gray-200 dark:border-gray-800 rounded-full ${className}`}
     >
       {/* Sliding indicator */}
       <div

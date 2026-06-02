@@ -24,7 +24,7 @@ const CircularGallery = lazy(() =>
     default: mod.default as React.ComponentType<any>,
   }))
 );
-import { TYPE_COLORS, TYPE_LABELS } from "@/lib/meetingUtils";
+import { TYPE_COLORS, TYPE_LABELS, parseLocalDate, isMeetingLive, isMeetingPast } from "@/lib/meetingUtils";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -394,101 +394,6 @@ function StatsBar({ loaded }: { loaded: boolean }) {
 
 // ─── Recent Events Section (redesigned) ───────────────────────────
 function RecentEvents({ meetings }: { meetings: Meeting[] }) {
-  const parseLocalDate = (dateStr: string) => {
-    const [year, month, day] = dateStr.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  };
-
-  const now = new Date();
-
-  const isMeetingLive = (meeting: Meeting): boolean => {
-    const eventDate = parseLocalDate(meeting.date);
-
-    // Same calendar day check (robust)
-    if (
-      eventDate.getFullYear() !== now.getFullYear() ||
-      eventDate.getMonth() !== now.getMonth() ||
-      eventDate.getDate() !== now.getDate()
-    ) {
-      return false;
-    }
-
-    const timeStr = (meeting.time || "").trim();
-    if (!timeStr) return false;
-
-    // Normalize: remove extra spaces, handle common dash variants
-    const normalized = timeStr.replace(/\s*[-–—]\s*/g, " - ").replace(/\s+/g, " ");
-
-    // Try to extract two time tokens
-    const parts = normalized.split(" - ");
-    if (parts.length !== 2) return false;
-
-    const parseTimeToMinutes = (t: string): number | null => {
-      let str = t.trim();
-
-      // Handle common cases like "2:30PM" by inserting space before AM/PM if missing
-      str = str.replace(/(\d)(AM|PM)$/i, "$1 $2");
-
-      const m = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
-      if (!m) return null;
-
-      let hh = parseInt(m[1], 10);
-      const mm = parseInt(m[2], 10);
-      const per = m[3]?.toUpperCase();
-
-      if (per === "PM" && hh < 12) hh += 12;
-      if (per === "AM" && hh === 12) hh = 0;
-
-      return hh * 60 + mm;
-    };
-
-    const startMin = parseTimeToMinutes(parts[0]);
-    const endMin = parseTimeToMinutes(parts[1]);
-
-    if (startMin === null || endMin === null) return false;
-
-    const nowMin = now.getHours() * 60 + now.getMinutes();
-
-    // Small grace period after end
-    return nowMin >= startMin && nowMin <= endMin + 10;
-  };
-
-  const isMeetingPast = (meeting: Meeting): boolean => {
-    const eventDate = parseLocalDate(meeting.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (eventDate < today) return true;
-    if (eventDate > today) return false;
-
-    // Same day: check if we're past the event's end time
-    const timeStr = (meeting.time || "").trim();
-    if (!timeStr) return false;
-
-    const normalized = timeStr.replace(/\s*[-–—]\s*/g, " - ").replace(/\s+/g, " ");
-    const parts = normalized.split(" - ");
-    if (parts.length !== 2) return false;
-
-    const parseTimeToMinutes = (t: string): number | null => {
-      let str = t.trim();
-      str = str.replace(/(\d)(AM|PM)$/i, "$1 $2");
-      const m = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
-      if (!m) return null;
-      let hh = parseInt(m[1], 10);
-      const mm = parseInt(m[2], 10);
-      const per = m[3]?.toUpperCase();
-      if (per === "PM" && hh < 12) hh += 12;
-      if (per === "AM" && hh === 12) hh = 0;
-      return hh * 60 + mm;
-    };
-
-    const endMin = parseTimeToMinutes(parts[1]);
-    if (endMin === null) return false;
-
-    const nowMin = now.getHours() * 60 + now.getMinutes();
-
-    return nowMin > endMin + 10;  // grace after end
-  };
 
   if (meetings.length === 0) return null;
 
@@ -503,7 +408,6 @@ function RecentEvents({ meetings }: { meetings: Meeting[] }) {
             meeting={meeting}
             isNew={!isLive && !isPast && idx === 0}
             isLive={isLive}
-            parseLocalDate={parseLocalDate}
           />
         );
       })}
@@ -515,12 +419,10 @@ function EventCard({
   meeting,
   isNew,
   isLive = false,
-  parseLocalDate,
 }: {
   meeting: Meeting;
   isNew: boolean;
   isLive?: boolean;
-  parseLocalDate: (dateStr: string) => Date;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const date = parseLocalDate(meeting.date);

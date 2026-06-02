@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import {
   Spinner,
   ChevronLeft,
@@ -60,7 +59,6 @@ function UserProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, userProfile, loading: authLoading } = useAuth();
-  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification();
   const [loaded, setLoaded] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [registrations, setRegistrations] = useState<UserRegistration[]>([]);
@@ -70,27 +68,12 @@ function UserProfile() {
   const [error, setError] = useState<string | null>(null);
   const [deletingAttendance, setDeletingAttendance] = useState<string | null>(null);
 
-  // Use server-verified officer status instead of client-side state
-  const isOfficer = isVerifiedOfficer ?? false;
+  // Note: The entire route is already protected by <ProtectedRoute requireOfficer> in main.tsx.
+  // That component performs the server-side verify_officer_status() RPC and will redirect
+  // non-officers (or show loading) before this component ever mounts.
+  // We still have a 403 catch inside fetch for belt-and-suspenders defense.
 
-  // Redirect non-authenticated users or non-officers
-  useEffect(() => {
-    if (!authLoading && (!user || !isOfficer)) {
-      console.warn('[UserProfile] Redirecting to /dashboard because officer check failed', {
-        hasUser: !!user,
-        isOfficer,
-        isVerifiedOfficer,
-        verifyingOfficer,
-        targetUserId: id,
-      });
-      navigate("/dashboard");
-    }
-  }, [authLoading, user, isOfficer, isVerifiedOfficer, verifyingOfficer, id, navigate]);
-
-  // Note: Authorization is also enforced by ProtectedRoute wrapper (requireOfficer)
-  // and server-side RLS policies on all Supabase operations
-
-  // Fetch user details
+  // Fetch user details (guarded by the route wrapper + server-side checks inside the officer RPCs)
   useEffect(() => {
     async function fetchUserDetails() {
       if (!id) return;
@@ -438,15 +421,14 @@ function UserProfile() {
                     <span className="text-xs text-gray-500">
                       {formatDateTime(att.checked_in_at)}
                     </span>
-                    {isOfficer && (
-                      <button
-                        onClick={() => deleteAttendanceRecord(att.id)}
-                        disabled={deletingAttendance === att.id}
-                        className="px-2 py-1 text-xs rounded text-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors disabled:opacity-50"
-                      >
-                        {deletingAttendance === att.id ? "..." : "Remove"}
-                      </button>
-                    )}
+                    {/* Only officers can reach this page (enforced by ProtectedRoute + server RPCs), so always show delete control */}
+                    <button
+                      onClick={() => deleteAttendanceRecord(att.id)}
+                      disabled={deletingAttendance === att.id}
+                      className="px-2 py-1 text-xs rounded text-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors disabled:opacity-50"
+                    >
+                      {deletingAttendance === att.id ? "..." : "Remove"}
+                    </button>
                   </div>
                 </div>
               ))}

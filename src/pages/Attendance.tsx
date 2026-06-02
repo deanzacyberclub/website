@@ -3,10 +3,20 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Spinner, Check, Plus, ArrowLeft } from "@/lib/cyberIcon";
+import { parseLocalDate } from "@/lib/meetingUtils";
 
 interface AttendanceForm {
   secretCode: string;
   studentId: string;
+}
+
+interface CheckedInMeeting {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  slug?: string | null;
 }
 
 function Attendance() {
@@ -14,6 +24,7 @@ function Attendance() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [checkedInMeeting, setCheckedInMeeting] = useState<CheckedInMeeting | null>(null);
 
   const { user, userProfile } = useAuth();
 
@@ -161,6 +172,27 @@ function Attendance() {
         }
       }
 
+      // Fetch slug (verify RPC doesn't return it) so we can deep-link the success screen to the event detail
+      let slug: string | null = null;
+      try {
+        const { data: m } = await supabase
+          .from("meetings")
+          .select("slug")
+          .eq("id", meeting.id)
+          .single();
+        slug = m?.slug ?? null;
+      } catch {
+        // non-fatal; deep link optional
+      }
+
+      setCheckedInMeeting({
+        id: meeting.id,
+        title: meeting.title,
+        date: meeting.date,
+        time: meeting.time,
+        location: meeting.location,
+        slug,
+      });
       setSubmitted(true);
       setForm({
         secretCode: "",
@@ -175,6 +207,9 @@ function Attendance() {
   };
 
   if (submitted) {
+    const m = checkedInMeeting;
+    const detailTo = m?.slug ? `/dashboard?meeting=${encodeURIComponent(m.slug)}` : "/dashboard";
+
     return (
       <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center p-6">
         <div className="crt-overlay dark:opacity-100 opacity-0" />
@@ -185,33 +220,50 @@ function Attendance() {
           </div>
 
           {/* Success Message */}
-          <h1 className="font-mono font-bold text-green-700 dark:text-matrix text-4xl md:text-5xl mb-4 uppercase">
+          <h1 className="font-mono font-bold text-green-700 dark:text-matrix text-4xl md:text-5xl mb-2 uppercase">
             CHECK-IN COMPLETE
           </h1>
 
+          {m ? (
+            <div className="mb-6">
+              <div className="font-mono text-matrix text-lg md:text-xl font-semibold tracking-wide">
+                {m.title}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {parseLocalDate(m.date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} · {m.time} · {m.location}
+              </div>
+            </div>
+          ) : null}
+
           <div className="border-l-2 border-green-300 dark:border-matrix/30 pl-5 mb-8 text-left max-w-lg mx-auto">
             <p className="font-mono text-gray-600 dark:text-gray-400 text-sm">
-              Your attendance has been verified and logged in the system.
+              Attendance verified and logged. Your dashboard will reflect this on next view.
             </p>
           </div>
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => setSubmitted(false)}
+              onClick={() => {
+                setSubmitted(false);
+                setCheckedInMeeting(null);
+              }}
               className="cli-btn-dashed font-mono inline-flex items-center justify-center gap-2 uppercase"
             >
               <Plus className="w-4 h-4" />
               CHECK IN AGAIN
             </button>
             <Link
-              to="/dashboard"
+              to={detailTo}
               className="cli-btn-filled font-mono inline-flex items-center justify-center gap-2 uppercase"
             >
               <ArrowLeft className="w-4 h-4" />
-              DASHBOARD
+              {m?.slug ? "VIEW EVENT" : "DASHBOARD"}
             </Link>
           </div>
+          {!m?.slug && (
+            <p className="mt-3 text-[10px] text-gray-500 dark:text-gray-600 font-mono">Open the event from your dashboard list to see resources &amp; details.</p>
+          )}
         </div>
       </div>
     );
