@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import ProfileMenu from "./ProfileMenu";
 import { Login, Logout, ChevronRight } from "@/lib/cyberIcon";
@@ -24,6 +25,7 @@ function PageHeader() {
   const isCheckInActive = location.pathname === "/live";
   const isDashboardActive = location.pathname === "/dashboard";
   const isSettingsActive = location.pathname === "/settings";
+  const isSignInActive = location.pathname === "/auth";
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -95,7 +97,15 @@ function PageHeader() {
                   : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              {isHomeActive && <span className="text-matrix">&gt;</span>}
+              <motion.span
+                initial={{ opacity: isHomeActive ? 1 : 0 }}
+                animate={{ opacity: isHomeActive ? 1 : 0 }}
+                transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+                className="text-matrix"
+                aria-hidden="true"
+              >
+                &gt;
+              </motion.span>
               home
             </Link>
             <Link
@@ -108,7 +118,15 @@ function PageHeader() {
                   : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              {isCheckInActive && <span className="text-matrix">&gt;</span>}
+              <motion.span
+                initial={{ opacity: isCheckInActive ? 1 : 0 }}
+                animate={{ opacity: isCheckInActive ? 1 : 0 }}
+                transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+                className="text-matrix"
+                aria-hidden="true"
+              >
+                &gt;
+              </motion.span>
               check-in
             </Link>
           </nav>
@@ -138,9 +156,40 @@ function PageHeader() {
             ) : (
               <Link
                 to={authRedirect}
-                className="flex items-center gap-1.5 font-terminal text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-green-700 dark:hover:text-matrix transition-colors group"
+                className={`flex items-center gap-1.5 font-terminal text-sm font-bold transition-colors group ${
+                  isSignInActive
+                    ? "text-matrix"
+                    : "text-gray-700 dark:text-gray-300 hover:text-green-700 dark:hover:text-matrix"
+                }`}
               >
-                <Login className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                <span className="relative w-3.5 h-3.5 flex-shrink-0">
+                  <AnimatePresence>
+                    {isSignInActive ? (
+                      <motion.span
+                        key="caret"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.12, ease: [0.25, 0.1, 0.25, 1] }}
+                        className="absolute inset-0 flex items-center justify-center text-matrix text-[13px] leading-none"
+                        aria-hidden="true"
+                      >
+                        &gt;
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="icon"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.12, ease: [0.25, 0.1, 0.25, 1] }}
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <Login className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </span>
                 sign in
               </Link>
             )}
@@ -215,11 +264,11 @@ function PageHeader() {
               }`}
             >
               <span
-                className={
+                className={`transition-colors duration-150 ${
                   isHomeActive
                     ? "text-matrix"
                     : "text-gray-400 dark:text-gray-600"
-                }
+                }`}
               >
                 &gt;
               </span>
@@ -241,11 +290,11 @@ function PageHeader() {
               }`}
             >
               <span
-                className={
+                className={`transition-colors duration-150 ${
                   isCheckInActive
                     ? "text-matrix"
                     : "text-gray-400 dark:text-gray-600"
-                }
+                }`}
               >
                 &gt;
               </span>
@@ -270,11 +319,11 @@ function PageHeader() {
                   }`}
                 >
                   <span
-                    className={
+                    className={`transition-colors duration-150 ${
                       isDashboardActive
                         ? "text-matrix"
                         : "text-gray-400 dark:text-gray-600"
-                    }
+                    }`}
                   >
                     &gt;
                   </span>
@@ -293,11 +342,11 @@ function PageHeader() {
                   }`}
                 >
                   <span
-                    className={
+                    className={`transition-colors duration-150 ${
                       isSettingsActive
                         ? "text-matrix"
                         : "text-gray-400 dark:text-gray-600"
-                    }
+                    }`}
                   >
                     &gt;
                   </span>
@@ -325,11 +374,19 @@ function PageHeader() {
               <Link
                 to={authRedirect}
                 onClick={closeMobileMenu}
-                className="flex items-center gap-2 px-5 py-3 text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group font-medium"
+                className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
+                  isSignInActive
+                    ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
+                    : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
+                }`}
               >
                 <Login className="w-3.5 h-3.5" />
-                <span>&gt; sign in</span>
-                <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className={`transition-colors duration-150 ${isSignInActive ? "text-matrix" : ""}`}>&gt; sign in</span>
+                {isSignInActive ? (
+                  <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />
+                ) : (
+                  <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
               </Link>
             )}
           </div>
