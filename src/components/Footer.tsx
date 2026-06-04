@@ -1,18 +1,17 @@
-import { forwardRef } from "react";
+import { forwardRef, useState, useRef, useEffect, type CSSProperties } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Tabs } from "./Tabs";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Theme } from "@/contexts/ThemeContext";
-import type { CSSProperties } from "react";
+import { ChevronDown } from "@/lib/cyberIcon";
 
 interface FooterProps {
   className?: string;
 }
 
-const THEME_TABS = [
-  { id: "light", label: "☀️ Light" },
-  { id: "dark", label: "🌙 Dark" },
-  { id: "system", label: "💻 Auto" },
+const THEME_OPTIONS: { id: Theme; icon: string; label: string }[] = [
+  { id: "light", icon: "☀️", label: "LIGHT" },
+  { id: "dark", icon: "🌙", label: "DARK" },
+  { id: "system", icon: "💻", label: "AUTO" },
 ];
 
 const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
@@ -22,6 +21,28 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
   const location = useLocation();
   const currentYear = new Date().getFullYear();
   const { theme, setTheme, resolvedTheme } = useTheme();
+
+  // Dropdown state for theme selector
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const currentTheme = THEME_OPTIONS.find((t) => t.id === theme)!;
 
   // TODO: keep transparent for now, eventually remove
   const footerStyle: CSSProperties = {
@@ -180,30 +201,43 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
             CUPERTINO, CALIFORNIA
           </p>
 
-          {/* Theme control: full Tabs on md+, compact cycle button on mobile */}
-          <div className="flex items-center">
-            <div className="hidden md:block">
-              <Tabs
-                tabs={THEME_TABS}
-                activeTab={theme}
-                onTabChange={(id) => setTheme(id as Theme)}
-              />
-            </div>
-
+          {/* Theme selector dropdown button */}
+          <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => {
-                const order: Theme[] = ["light", "dark", "system"];
-                const idx = order.indexOf(theme);
-                const next = order[(idx + 1) % order.length];
-                setTheme(next);
-              }}
-              className="md:hidden font-mono text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-matrix border border-gray-200 dark:border-gray-800 px-2 py-0.5 transition-colors active:scale-[0.985]"
-              aria-label={`Current theme: ${theme}. Tap to cycle to next theme.`}
+              onClick={() => setIsOpen(!isOpen)}
+              className="font-mono text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-matrix border border-gray-200 dark:border-gray-800 px-2 py-0.5 transition-colors active:scale-[0.985] flex items-center gap-1"
+              aria-label={`Current theme: ${currentTheme.label}. Click to select theme.`}
+              aria-expanded={isOpen}
             >
-              {theme === "light" && "☀️ LIGHT"}
-              {theme === "dark" && "🌙 DARK"}
-              {theme === "system" && "💻 AUTO"}
+              <span>{currentTheme.icon}</span>
+              <span>{currentTheme.label}</span>
+              <ChevronDown
+                className={`w-2.5 h-2.5 ml-0.5 transition-transform ${isOpen ? "-rotate-180" : ""}`}
+              />
             </button>
+
+            {isOpen && (
+              <div className="absolute bottom-full right-0 mb-1 min-w-[100px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] shadow-md z-50 overflow-hidden">
+                {THEME_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => {
+                      setTheme(opt.id);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest flex items-center gap-1.5 transition-colors ${
+                      theme === opt.id
+                        ? "bg-gray-100 dark:bg-matrix/10 text-blue-600 dark:text-matrix"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900/70 hover:text-gray-700 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    <span>{opt.icon}</span>
+                    <span className="flex-1">{opt.label}</span>
+                    {theme === opt.id && <span className="ml-auto text-[8px] opacity-60">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

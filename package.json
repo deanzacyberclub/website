@@ -10,7 +10,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.106.2",
+    "@supabase/supabase-js": "^2.107.0",
     "framer-motion": "^12.40.0",
     "ogl": "^1.0.11",
     "react": "^19.2.7",
