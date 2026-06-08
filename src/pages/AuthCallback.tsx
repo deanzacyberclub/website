@@ -1,124 +1,139 @@
-import { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { supabase } from '@/lib/supabase'
-import { isAppDeepLink, redirectToApp } from '@/lib/authRedirect'
-import { Spinner } from '@/lib/cyberIcon'
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { isAppDeepLink, redirectToApp } from "@/lib/authRedirect";
+import { Spinner } from "@/lib/cyberIcon";
 
 function AuthCallback() {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const handleCallback = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession()
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('Auth callback error:', error)
-        navigate('/auth?error=callback_failed')
-        return
+        console.error("Auth callback error:", error);
+        navigate("/auth?error=callback_failed");
+        return;
       }
 
       // Check if we were linking an account
-      const linkingProvider = sessionStorage.getItem('linking_provider')
+      const linkingProvider = sessionStorage.getItem("linking_provider");
       if (linkingProvider) {
-        sessionStorage.removeItem('linking_provider')
+        sessionStorage.removeItem("linking_provider");
 
         // Check for linking errors in URL (Supabase returns errors as hash params)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1))
-        const errorDescription = hashParams.get('error_description')
+        const hashParams = new URLSearchParams(
+          window.location.hash.substring(1),
+        );
+        const errorDescription = hashParams.get("error_description");
 
         if (errorDescription) {
           // Identity is already linked to another account
-          if (errorDescription.includes('already linked') ||
-              errorDescription.includes('Identity is already linked')) {
-            navigate('/settings?error=already_linked')
+          if (
+            errorDescription.includes("already linked") ||
+            errorDescription.includes("Identity is already linked")
+          ) {
+            navigate("/settings?error=already_linked");
           } else {
-            navigate(`/settings?error=${encodeURIComponent(errorDescription)}`)
+            navigate(`/settings?error=${encodeURIComponent(errorDescription)}`);
           }
-          return
+          return;
         }
 
         if (!session) {
-          navigate('/settings?error=linking_failed')
-          return
+          navigate("/settings?error=linking_failed");
+          return;
         }
 
         // Sync the new identity to the database before redirecting
         const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
+          .from("users")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
 
         if (profile && session.user.identities) {
           const existingProviders = new Set(
-            (profile.linked_accounts || []).map((a: { provider: string }) => a.provider)
-          )
+            (profile.linked_accounts || []).map(
+              (a: { provider: string }) => a.provider,
+            ),
+          );
           const hasNewIdentity = session.user.identities.some(
-            i => !existingProviders.has(i.provider)
-          )
+            (i) => !existingProviders.has(i.provider),
+          );
 
           if (hasNewIdentity) {
             // Build updated linked accounts from all identities
-            const newLinkedAccounts = session.user.identities.map(identity => {
-              const identityData = identity.identity_data || {}
-              const existing = (profile.linked_accounts || []).find(
-                (a: { provider: string }) => a.provider === identity.provider
-              )
-              return {
-                provider: identity.provider,
-                provider_account_id: identity.id,
-                provider_email: (identityData.email as string) || null,
-                provider_username: (identityData.user_name as string) ||
-                  (identityData.preferred_username as string) ||
-                  (identityData.name as string) || null,
-                provider_avatar_url: (identityData.avatar_url as string) ||
-                  (identityData.picture as string) || null,
-                linked_at: existing?.linked_at || new Date().toISOString()
-              }
-            })
+            const newLinkedAccounts = session.user.identities.map(
+              (identity) => {
+                const identityData = identity.identity_data || {};
+                const existing = (profile.linked_accounts || []).find(
+                  (a: { provider: string }) => a.provider === identity.provider,
+                );
+                return {
+                  provider: identity.provider,
+                  provider_account_id: identity.id,
+                  provider_email: (identityData.email as string) || null,
+                  provider_username:
+                    (identityData.user_name as string) ||
+                    (identityData.preferred_username as string) ||
+                    (identityData.name as string) ||
+                    null,
+                  provider_avatar_url:
+                    (identityData.avatar_url as string) ||
+                    (identityData.picture as string) ||
+                    null,
+                  linked_at: existing?.linked_at || new Date().toISOString(),
+                };
+              },
+            );
 
             await supabase
-              .from('users')
+              .from("users")
               .update({ linked_accounts: newLinkedAccounts })
-              .eq('id', session.user.id)
+              .eq("id", session.user.id);
           }
         }
 
-        navigate('/settings')
-        return
+        navigate("/settings");
+        return;
       }
 
       if (session) {
         // sessionStorage takes priority — used when returnTo is an app deep link
         // (we avoid putting dacc:// in the Supabase redirectTo allowlist).
-        const storedReturnTo = sessionStorage.getItem('auth_return_to')
-        if (storedReturnTo) sessionStorage.removeItem('auth_return_to')
-        const returnTo = storedReturnTo || searchParams.get('to') || '/dashboard'
+        const storedReturnTo = sessionStorage.getItem("auth_return_to");
+        if (storedReturnTo) sessionStorage.removeItem("auth_return_to");
+        const returnTo = storedReturnTo || searchParams.get("to") || "/home";
 
         // Check if user profile exists
         const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
+          .from("users")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
 
         if (!profile) {
           // New user - go to profile setup, preserving the return destination
-          navigate(`/auth?step=profile&to=${encodeURIComponent(returnTo)}`)
+          navigate(`/auth?step=profile&to=${encodeURIComponent(returnTo)}`);
         } else if (isAppDeepLink(returnTo)) {
           // Hand tokens back to the iOS app via deep link
-          redirectToApp(returnTo, session)
+          redirectToApp(returnTo, session);
         } else {
-          navigate(returnTo)
+          navigate(returnTo);
         }
       } else {
-        navigate('/auth')
+        navigate("/auth");
       }
-    }
+    };
 
-    handleCallback()
-  }, [navigate, searchParams])
+    handleCallback();
+  }, [navigate, searchParams]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
@@ -130,7 +145,7 @@ function AuthCallback() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default AuthCallback
+export default AuthCallback;

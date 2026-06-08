@@ -5,7 +5,7 @@
 
 export const preloadMeetingDetails = () => import("@/pages/MeetingDetails");
 export const preloadLive = () => import("@/pages/Attendance");
-export const preloadDashboard = () => import("@/pages/Dashboard");
+export const preloadDashboard = () => import("@/pages/Home");
 export const preloadSettings = () => import("@/pages/Settings");
 export const preloadAbout = () => import("@/pages/About");
 export const preloadCTF = () => import("@/pages/CTF");

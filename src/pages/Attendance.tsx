@@ -24,7 +24,8 @@ function Attendance() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [checkedInMeeting, setCheckedInMeeting] = useState<CheckedInMeeting | null>(null);
+  const [checkedInMeeting, setCheckedInMeeting] =
+    useState<CheckedInMeeting | null>(null);
 
   const { user, userProfile } = useAuth();
 
@@ -105,12 +106,13 @@ function Attendance() {
       }
 
       // Extract meeting info from the secure function response
+      const md = meetingData as any;
       const meeting = {
-        id: meetingData.meeting_id,
-        title: meetingData.meeting_title,
-        date: meetingData.meeting_date,
-        time: meetingData.meeting_time,
-        location: meetingData.meeting_location,
+        id: md.meeting_id,
+        title: md.meeting_title,
+        date: md.meeting_date,
+        time: md.meeting_time,
+        location: md.meeting_location,
       };
 
       // Check if already checked in (by user_id if logged in, or by student_id if not)
@@ -128,7 +130,7 @@ function Attendance() {
           .from("attendance")
           .select("id")
           .eq("meeting_id", meeting.id)
-          .eq("student_id", studentIdToUse)
+          .eq("student_id", studentIdToUse as string)
           .single();
         existingAttendance = data;
       }
@@ -142,35 +144,10 @@ function Attendance() {
       const { error: insertError } = await supabase.from("attendance").insert({
         meeting_id: meeting.id,
         user_id: user?.id || null,
-        student_id: studentIdToUse || "N/A",
+        student_id: studentIdToUse ?? "N/A",
       });
 
       if (insertError) throw insertError;
-
-      // Also create/update registration with "attended" status for logged-in users
-      if (user) {
-        const { data: existingRegistration } = await supabase
-          .from("registrations")
-          .select("id")
-          .eq("meeting_id", meeting.id)
-          .eq("user_id", user.id)
-          .single();
-
-        if (existingRegistration) {
-          // Update existing registration to "attended"
-          await supabase
-            .from("registrations")
-            .update({ status: "attended" })
-            .eq("id", existingRegistration.id);
-        } else {
-          // Create new registration with "attended" status
-          await supabase.from("registrations").insert({
-            meeting_id: meeting.id,
-            user_id: user.id,
-            status: "attended",
-          });
-        }
-      }
 
       // Fetch slug (verify RPC doesn't return it) so we can deep-link the success screen to the event detail
       let slug: string | null = null;
@@ -208,7 +185,9 @@ function Attendance() {
 
   if (submitted) {
     const m = checkedInMeeting;
-    const detailTo = m?.slug ? `/dashboard?meeting=${encodeURIComponent(m.slug)}` : "/dashboard";
+    const detailTo = m?.slug
+      ? `/home?meeting=${encodeURIComponent(m.slug)}`
+      : "/home";
 
     return (
       <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center p-6">
@@ -230,14 +209,20 @@ function Attendance() {
                 {m.title}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {parseLocalDate(m.date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} · {m.time} · {m.location}
+                {parseLocalDate(m.date).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                })}{" "}
+                · {m.time} · {m.location}
               </div>
             </div>
           ) : null}
 
           <div className="border-l-2 border-green-300 dark:border-matrix/30 pl-5 mb-8 text-left max-w-lg mx-auto">
             <p className="font-mono text-gray-600 dark:text-gray-400 text-sm">
-              Attendance verified and logged. Your dashboard will reflect this on next view.
+              Attendance verified and logged. Your dashboard will reflect this
+              on next view.
             </p>
           </div>
 
@@ -262,7 +247,10 @@ function Attendance() {
             </Link>
           </div>
           {!m?.slug && (
-            <p className="mt-3 text-[10px] text-gray-500 dark:text-gray-600 font-mono">Open the event from your dashboard list to see resources &amp; details.</p>
+            <p className="mt-3 text-[10px] text-gray-500 dark:text-gray-600 font-mono">
+              Open the event from your dashboard list to see resources &amp;
+              details.
+            </p>
           )}
         </div>
       </div>

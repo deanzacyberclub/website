@@ -6,9 +6,6 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type RegistrationType = 'open' | 'invite_only' | 'closed'
-export type RegistrationStatus = 'registered' | 'waitlist' | 'invited' | 'attended' | 'cancelled'
-
 export interface Resource {
   id: string
   title: string
@@ -61,14 +58,9 @@ export interface Database {
           date: string
           time: string
           location: string
-          featured: boolean
           topics: string[]
           resources: Resource[]
           secret_code: string | null
-          registration_type: RegistrationType
-          registration_capacity: number | null
-          invite_code: string | null
-          invite_form_url: string | null
           created_at: string
           updated_at: string
         }
@@ -80,14 +72,9 @@ export interface Database {
           date: string
           time: string
           location: string
-          featured?: boolean
           topics?: string[]
           resources?: Resource[]
           secret_code?: string | null
-          registration_type?: RegistrationType
-          registration_capacity?: number | null
-          invite_code?: string | null
-          invite_form_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -99,14 +86,9 @@ export interface Database {
           date?: string
           time?: string
           location?: string
-          featured?: boolean
           topics?: string[]
           resources?: Resource[]
           secret_code?: string | null
-          registration_type?: RegistrationType
-          registration_capacity?: number | null
-          invite_code?: string | null
-          invite_form_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -123,7 +105,7 @@ export interface Database {
         Insert: {
           id?: string
           meeting_id: string
-          user_id: string
+          user_id: string | null
           student_id: string
           checked_in_at?: string
         }
@@ -149,49 +131,6 @@ export interface Database {
           }
         ]
       }
-      registrations: {
-        Row: {
-          id: string
-          meeting_id: string
-          user_id: string
-          status: RegistrationStatus
-          invite_code_used: string | null
-          registered_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          meeting_id: string
-          user_id: string
-          status: RegistrationStatus
-          invite_code_used?: string | null
-          registered_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          meeting_id?: string
-          user_id?: string
-          status?: RegistrationStatus
-          invite_code_used?: string | null
-          registered_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "registrations_meeting_id_fkey"
-            columns: ["meeting_id"]
-            referencedRelation: "meetings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "registrations_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
     }
     Views: {
       meetings_public: {
@@ -203,12 +142,8 @@ export interface Database {
           date: string
           time: string
           location: string
-          featured: boolean
           topics: string[]
           resources: Resource[]
-          registration_type: RegistrationType
-          registration_capacity: number | null
-          invite_form_url: string | null
           created_at: string
           updated_at: string
         }
@@ -240,13 +175,41 @@ export interface Database {
         Args: Record<PropertyKey, never>
         Returns: Json | null
       }
-      // Existing officer + meeting RPCs (kept for reference)
       verify_officer_status: { Args: Record<PropertyKey, never>; Returns: boolean }
       get_all_users_for_officers: { Args: Record<PropertyKey, never>; Returns: Json }
       get_user_details_for_officers: { Args: { target_user_id: string }; Returns: Json }
       get_all_meetings_for_officers: { Args: Record<PropertyKey, never>; Returns: Json }
       get_meeting_with_secrets: { Args: { meeting_slug: string }; Returns: Json }
-      // ... other existing functions omitted for brevity
+      verify_meeting_secret_code: { Args: { secret_code_input: string }; Returns: Json }
+      create_meeting_for_officers: {
+        Args: {
+          p_slug: string
+          p_title: string
+          p_description: string
+          p_date: string
+          p_time: string
+          p_location: string
+          p_topics: string[]
+          p_secret_code: string | null
+          p_resources?: Json
+        }
+        Returns: Json
+      }
+      officer_update_meeting: {
+        Args: {
+          meeting_id: string
+          p_slug: string
+          p_title: string
+          p_description: string
+          p_date: string
+          p_time: string
+          p_location: string
+          p_topics: string[]
+          p_secret_code: string | null
+          p_resources: Json
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
@@ -260,4 +223,3 @@ export interface Database {
 export type Meeting = Database['public']['Tables']['meetings']['Row']
 export type MeetingPublic = Database['public']['Views']['meetings_public']['Row']
 export type Attendance = Database['public']['Tables']['attendance']['Row']
-export type Registration = Database['public']['Tables']['registrations']['Row']

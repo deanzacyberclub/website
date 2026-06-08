@@ -21,9 +21,9 @@ function PageHeader() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
 
-  const isHomeActive = location.pathname === "/dashboard";
+  const isHomeActive = location.pathname === "/home";
   const isCheckInActive = location.pathname === "/live";
-  const isDashboardActive = location.pathname === "/dashboard";
+  const isDashboardActive = location.pathname === "/home";
   const isSettingsActive = location.pathname === "/settings";
   const isSignInActive = location.pathname === "/auth";
 
@@ -76,19 +76,19 @@ function PageHeader() {
   };
 
   const authRedirect = `/auth?to=${encodeURIComponent(
-    location.pathname === "/" ? "/dashboard" : location.pathname,
+    location.pathname === "/" ? "/home" : location.pathname,
   )}`;
 
   return (
     <>
       {/* Header bar: rounded inset bar on mobile (all corners), rounded + centered on desktop */}
-      <div className="sticky top-0 z-50 w-full mx-2 mt-2 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] md:mx-auto md:mt-0 md:max-w-7xl md:px-6 md:rounded-3xl md:border md:border-gray-200 dark:md:border-gray-800 md:bg-white dark:md:bg-[#0a0a0a] md:shadow-sm">
+      <div className="sticky top-0 z-[110] w-full mx-2 mt-2 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] md:mx-auto md:mt-0 md:max-w-7xl md:px-6 md:rounded-3xl md:border md:border-gray-200 dark:md:border-gray-800 md:bg-white dark:md:bg-[#0a0a0a] md:shadow-sm">
         {/* Desktop layout: Nav | Centered Logo | Auth */}
         <div className="hidden md:flex items-center justify-between py-2.5 relative">
           {/* Left: Navigation */}
           <nav className="flex items-center gap-6 text-sm font-terminal font-bold">
             <Link
-              to="/dashboard"
+              to="/home"
               onMouseEnter={preloadDashboard}
               onFocus={preloadDashboard}
               className={`flex items-center gap-1.5 transition-colors font-medium ${
@@ -170,7 +170,10 @@ function PageHeader() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.12, ease: [0.25, 0.1, 0.25, 1] }}
+                        transition={{
+                          duration: 0.12,
+                          ease: [0.25, 0.1, 0.25, 1],
+                        }}
                         className="absolute inset-0 flex items-center justify-center text-matrix text-[13px] leading-none"
                         aria-hidden="true"
                       >
@@ -182,7 +185,10 @@ function PageHeader() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.12, ease: [0.25, 0.1, 0.25, 1] }}
+                        transition={{
+                          duration: 0.12,
+                          ease: [0.25, 0.1, 0.25, 1],
+                        }}
                         className="absolute inset-0 flex items-center justify-center"
                       >
                         <Login className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -253,7 +259,7 @@ function PageHeader() {
         <div className="mx-2 border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111111] overflow-hidden shadow-lg dark:shadow-2xl rounded-2xl">
           <div className="flex flex-col py-1 text-sm font-terminal">
             <Link
-              to="/dashboard"
+              to="/home"
               onClick={closeMobileMenu}
               onMouseEnter={preloadDashboard}
               onFocus={preloadDashboard}
@@ -308,7 +314,7 @@ function PageHeader() {
               <>
                 <div className="mx-5 my-1 h-px bg-gray-200 dark:bg-gray-700" />
                 <Link
-                  to="/dashboard"
+                  to="/home"
                   onClick={closeMobileMenu}
                   onMouseEnter={preloadDashboard}
                   onFocus={preloadDashboard}
@@ -381,7 +387,11 @@ function PageHeader() {
                 }`}
               >
                 <Login className="w-3.5 h-3.5" />
-                <span className={`transition-colors duration-150 ${isSignInActive ? "text-matrix" : ""}`}>&gt; sign in</span>
+                <span
+                  className={`transition-colors duration-150 ${isSignInActive ? "text-matrix" : ""}`}
+                >
+                  &gt; sign in
+                </span>
                 {isSignInActive ? (
                   <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />
                 ) : (

@@ -1,66 +1,74 @@
-import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import ConfirmDialog from './ConfirmDialog'
-import { User, Login, Home, Settings, Logout, Shield, ChevronRight } from '@/lib/cyberIcon'
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import ConfirmDialog from "./ConfirmDialog";
+import {
+  User,
+  Login,
+  Home,
+  Settings,
+  Logout,
+  Shield,
+  ChevronRight,
+} from "@/lib/cyberIcon";
 
 function ProfileMenu() {
-  const navigate = useNavigate()
-  const { userProfile, signOut, loading } = useAuth()
-  const [showMenu, setShowMenu] = useState(false)
-  const [isClosing, setIsClosing] = useState(false)
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const ignoreNextOutsideClick = useRef(false)
+  const navigate = useNavigate();
+  const { userProfile, signOut, loading } = useAuth();
+  const [showMenu, setShowMenu] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const ignoreNextOutsideClick = useRef(false);
 
   const closeMenu = () => {
-    setIsClosing(true)
+    setIsClosing(true);
     setTimeout(() => {
-      setShowMenu(false)
-      setIsClosing(false)
-    }, 200)
-  }
+      setShowMenu(false);
+      setIsClosing(false);
+    }, 200);
+  };
 
   const toggleMenu = () => {
     if (!showMenu) {
-      setShowMenu(true)
-      ignoreNextOutsideClick.current = true
+      setShowMenu(true);
+      ignoreNextOutsideClick.current = true;
       setTimeout(() => {
-        ignoreNextOutsideClick.current = false
-      }, 0)
+        ignoreNextOutsideClick.current = false;
+      }, 0);
     } else {
-      closeMenu()
+      closeMenu();
     }
-  }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (ignoreNextOutsideClick.current) return
+      if (ignoreNextOutsideClick.current) return;
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         if (showMenu && !isClosing) {
-          closeMenu()
+          closeMenu();
         }
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showMenu, isClosing])
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMenu, isClosing]);
 
   const handleSignOut = async () => {
-    setLoggingOut(true)
-    await signOut()
-    setLoggingOut(false)
-    setShowLogoutConfirm(false)
-    closeMenu()
-    navigate('/')
-  }
+    setLoggingOut(true);
+    await signOut();
+    setLoggingOut(false);
+    setShowLogoutConfirm(false);
+    closeMenu();
+    navigate("/");
+  };
 
   // Loading state - show skeleton
   if (loading) {
     return (
       <div className="w-8 h-8 border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-terminal-alt animate-pulse" />
-    )
+    );
   }
 
   // Signed out state
@@ -75,16 +83,22 @@ function ProfileMenu() {
         </button>
 
         {showMenu && (
-          <div className={`absolute right-0 mt-2 w-52 z-50 origin-top-right transition-all duration-200 ease-out ${
-            isClosing ? 'animate-[slideUp_0.2s_ease-out]' : 'animate-[slideDown_0.2s_ease-out]'
-          }`}>
+          <div
+            className={`absolute right-0 mt-2 w-52 z-50 origin-top-right transition-all duration-200 ease-out ${
+              isClosing
+                ? "animate-[slideUp_0.2s_ease-out]"
+                : "animate-[slideDown_0.2s_ease-out]"
+            }`}
+          >
             {/* Terminal window dropdown */}
             <div className="terminal-window overflow-hidden">
               <div className="terminal-header">
                 <div className="terminal-dot red" />
                 <div className="terminal-dot yellow" />
                 <div className="terminal-dot green" />
-                <span className="ml-3 text-xs text-gray-500 font-terminal">guest.sh</span>
+                <span className="ml-3 text-xs text-gray-500 font-terminal">
+                  guest.sh
+                </span>
               </div>
               <div className="py-1">
                 <Link
@@ -101,7 +115,7 @@ function ProfileMenu() {
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Signed in state
@@ -109,10 +123,7 @@ function ProfileMenu() {
 
   return (
     <div className="relative" ref={menuRef}>
-      <button
-        onClick={toggleMenu}
-        className="flex items-center gap-2 group"
-      >
+      <button onClick={toggleMenu} className="flex items-center gap-2 group">
         {/* Avatar - square for CLI aesthetic */}
         <div
           className={`w-8 h-8 overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 shrink-0 ${
@@ -142,15 +153,21 @@ function ProfileMenu() {
         {/* Online indicator dot — purple for officers, green otherwise */}
         <span
           className={`hidden sm:block w-1.5 h-1.5 rounded-full animate-pulse ${
-            isOfficer ? "bg-purple-600 dark:bg-hack-purple" : "bg-green-500 dark:bg-matrix"
+            isOfficer
+              ? "bg-purple-600 dark:bg-hack-purple"
+              : "bg-green-500 dark:bg-matrix"
           }`}
         />
       </button>
 
       {showMenu && (
-        <div className={`absolute right-0 mt-2 w-56 z-50 origin-top-right transition-all duration-200 ease-out ${
-          isClosing ? 'animate-[slideUp_0.2s_ease-out]' : 'animate-[slideDown_0.2s_ease-out]'
-        }`}>
+        <div
+          className={`absolute right-0 mt-2 w-56 z-50 origin-top-right transition-all duration-200 ease-out ${
+            isClosing
+              ? "animate-[slideUp_0.2s_ease-out]"
+              : "animate-[slideDown_0.2s_ease-out]"
+          }`}
+        >
           {/* Terminal window dropdown */}
           <div className="terminal-window overflow-hidden">
             <div className="terminal-header">
@@ -158,7 +175,7 @@ function ProfileMenu() {
               <div className="terminal-dot yellow" />
               <div className="terminal-dot green" />
               <span className="ml-3 text-xs text-gray-500 font-terminal truncate max-w-[120px]">
-                {userProfile.display_name.toLowerCase().replace(/\s+/g, '_')}.sh
+                {userProfile.display_name.toLowerCase().replace(/\s+/g, "_")}.sh
               </span>
               <span className="ml-auto text-[10px] text-green-600 dark:text-matrix/60 font-terminal">
                 ONLINE
@@ -170,7 +187,11 @@ function ProfileMenu() {
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 overflow-hidden border border-gray-300 dark:border-gray-700 shrink-0">
                   {userProfile.photo_url ? (
-                    <img src={userProfile.photo_url} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={userProfile.photo_url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div
                       className={`w-full h-full flex items-center justify-center font-bold text-xs ${
@@ -184,8 +205,12 @@ function ProfileMenu() {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-matrix truncate">{userProfile.display_name}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-600 truncate font-terminal">{userProfile.email}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-matrix truncate">
+                    {userProfile.display_name}
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-600 truncate font-terminal">
+                    {userProfile.email}
+                  </p>
                 </div>
               </div>
               {userProfile.is_officer && (
@@ -199,7 +224,7 @@ function ProfileMenu() {
             {/* Menu items */}
             <div className="py-1">
               <Link
-                to="/dashboard"
+                to="/home"
                 onClick={closeMenu}
                 className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-matrix/10 hover:text-green-700 dark:hover:text-matrix transition-all group relative"
               >
@@ -227,8 +252,8 @@ function ProfileMenu() {
             <div className="py-1">
               <button
                 onClick={() => {
-                  closeMenu()
-                  setShowLogoutConfirm(true)
+                  closeMenu();
+                  setShowLogoutConfirm(true);
                 }}
                 className="flex items-center gap-3 w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-hack-red/10 hover:text-red-600 dark:hover:text-hack-red transition-all group relative"
               >
@@ -252,10 +277,12 @@ function ProfileMenu() {
         cancelText="CANCEL"
         loading={loggingOut}
         variant="warning"
-        icon={<Logout className="w-8 h-8 text-yellow-600 dark:text-hack-yellow" />}
+        icon={
+          <Logout className="w-8 h-8 text-yellow-600 dark:text-hack-yellow" />
+        }
       />
     </div>
-  )
+  );
 }
 
-export default ProfileMenu
+export default ProfileMenu;

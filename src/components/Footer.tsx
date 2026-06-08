@@ -1,4 +1,10 @@
-import { forwardRef, useState, useRef, useEffect, type CSSProperties } from "react";
+import {
+  forwardRef,
+  useState,
+  useRef,
+  useEffect,
+  type CSSProperties,
+} from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Theme } from "@/contexts/ThemeContext";
@@ -28,7 +34,10 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -83,7 +92,7 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
             <ul className="space-y-3 font-mono text-[11px] uppercase tracking-wider">
               <li>
                 <Link
-                  to="/dashboard"
+                  to="/home"
                   className="text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
                 >
                   Home
@@ -132,7 +141,7 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
               </li>
               <li>
                 <Link
-                  to="/dashboard"
+                  to="/home"
                   className="text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
                 >
                   Home
@@ -233,7 +242,9 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
                   >
                     <span>{opt.icon}</span>
                     <span className="flex-1">{opt.label}</span>
-                    {theme === opt.id && <span className="ml-auto text-[8px] opacity-60">✓</span>}
+                    {theme === opt.id && (
+                      <span className="ml-auto text-[8px] opacity-60">✓</span>
+                    )}
                   </button>
                 ))}
               </div>

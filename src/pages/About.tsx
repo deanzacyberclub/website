@@ -165,7 +165,10 @@ const SECTIONS = [
 // ─── Build quarter → officers map ──────────────────────
 const QUARTER_ORDER = ["Fall", "Winter", "Spring", "Summer"];
 
-const quarterMap = new Map<string, { name: string; role: string; altRole?: string; photo?: string }[]>();
+const quarterMap = new Map<
+  string,
+  { name: string; role: string; altRole?: string; photo?: string }[]
+>();
 OFFICERS.forEach((officer) => {
   officer.leadershipHistory.forEach((entry) => {
     if (!entry.role) return;
@@ -206,7 +209,6 @@ function About() {
       <div className="crt-overlay dark:opacity-100 opacity-0" />
 
       <div className="max-w-5xl mx-auto px-6 py-16 relative z-10 space-y-20">
-
         {/* ── Page header ── */}
         <div className="border-t border-b border-dashed border-gray-300 dark:border-matrix/30 py-10 text-center">
           <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-3">
@@ -218,7 +220,8 @@ function About() {
           <p className="font-mono text-sm text-gray-600 dark:text-gray-400 max-w-xl mx-auto leading-relaxed">
             De Anza Cybersecurity Club — hands-on workshops, CTF competitions,
             and cert prep for students at De Anza College.
-            <br />No experience required.
+            <br />
+            No experience required.
           </p>
         </div>
 
@@ -277,13 +280,15 @@ function About() {
                   {section.note && (
                     <div className="border-l-2 border-green-400 dark:border-matrix/40 pl-4">
                       <p className="font-mono text-xs text-gray-500 dark:text-gray-600 leading-relaxed">
-                        <span className="text-green-700 dark:text-matrix">NOTE</span>{" "}
+                        <span className="text-green-700 dark:text-matrix">
+                          NOTE
+                        </span>{" "}
                         {section.note}
                       </p>
                     </div>
                   )}
                   <Link
-                    to="/dashboard"
+                    to="/home"
                     className="flex items-center gap-1.5 font-mono text-xs text-gray-500 dark:text-matrix/50 hover:text-green-700 dark:hover:text-matrix transition-colors group"
                   >
                     <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
@@ -329,13 +334,16 @@ function About() {
               return (
                 <div key={quarter}>
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="font-mono text-xs text-green-700 dark:text-matrix">$</span>
+                    <span className="font-mono text-xs text-green-700 dark:text-matrix">
+                      $
+                    </span>
                     <h3 className="font-mono text-sm font-bold text-green-700 dark:text-matrix uppercase tracking-widest">
                       {quarter}
                     </h3>
                     <div className="flex-1 border-t border-dashed border-gray-200 dark:border-matrix/20" />
                     <span className="font-mono text-xs text-gray-400 dark:text-matrix/40">
-                      {officers.length} officer{officers.length !== 1 ? "s" : ""}
+                      {officers.length} officer
+                      {officers.length !== 1 ? "s" : ""}
                     </span>
                   </div>
 
@@ -389,25 +397,43 @@ function About() {
             <div className="flex items-start gap-3">
               <Clock className="w-4 h-4 text-green-700 dark:text-matrix mt-0.5 shrink-0" />
               <div>
-                <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-1">When</p>
-                <p className="font-mono text-sm text-gray-700 dark:text-gray-300">Every Monday</p>
-                <p className="font-mono text-xs text-gray-500 dark:text-gray-600">2:30 PM – 4:00 PM</p>
+                <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-1">
+                  When
+                </p>
+                <p className="font-mono text-sm text-gray-700 dark:text-gray-300">
+                  Every Monday
+                </p>
+                <p className="font-mono text-xs text-gray-500 dark:text-gray-600">
+                  2:30 PM – 4:00 PM
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <MapPin className="w-4 h-4 text-green-700 dark:text-matrix mt-0.5 shrink-0" />
               <div>
-                <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-1">Where</p>
-                <p className="font-mono text-sm text-gray-700 dark:text-gray-300">ATC Room 205</p>
-                <p className="font-mono text-xs text-gray-500 dark:text-gray-600">Advanced Technology Center</p>
+                <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-1">
+                  Where
+                </p>
+                <p className="font-mono text-sm text-gray-700 dark:text-gray-300">
+                  ATC Room 205
+                </p>
+                <p className="font-mono text-xs text-gray-500 dark:text-gray-600">
+                  Advanced Technology Center
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Calendar className="w-4 h-4 text-green-700 dark:text-matrix mt-0.5 shrink-0" />
               <div>
-                <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-1">When to start</p>
-                <p className="font-mono text-sm text-gray-700 dark:text-gray-300">Any week</p>
-                <p className="font-mono text-xs text-gray-500 dark:text-gray-600">No registration required</p>
+                <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 uppercase tracking-widest mb-1">
+                  When to start
+                </p>
+                <p className="font-mono text-sm text-gray-700 dark:text-gray-300">
+                  Any week
+                </p>
+                <p className="font-mono text-xs text-gray-500 dark:text-gray-600">
+                  No registration required
+                </p>
               </div>
             </div>
           </div>
@@ -422,14 +448,13 @@ function About() {
               Join Discord
             </a>
             <Link
-              to="/dashboard"
+              to="/home"
               className="cli-btn-dashed font-mono text-sm justify-center"
             >
               [ View schedule ]
             </Link>
           </div>
         </section>
-
       </div>
     </div>
   );

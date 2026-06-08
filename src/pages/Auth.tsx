@@ -1,253 +1,301 @@
-import { useState, useEffect, FormEvent, ChangeEvent, useRef, KeyboardEvent, ClipboardEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
-import { isAppDeepLink, redirectToApp } from '@/lib/authRedirect'
-import { Spinner, GitHubAlt, Discord, LinkedIn, Apple, Plus } from '@/lib/cyberIcon'
+import {
+  useState,
+  useEffect,
+  FormEvent,
+  ChangeEvent,
+  useRef,
+  KeyboardEvent,
+  ClipboardEvent,
+} from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { isAppDeepLink, redirectToApp } from "@/lib/authRedirect";
+import {
+  Spinner,
+  GitHubAlt,
+  Discord,
+  LinkedIn,
+  Apple,
+  Plus,
+} from "@/lib/cyberIcon";
 
-type AuthStep = 'signin' | 'profile'
+type AuthStep = "signin" | "profile";
 
 function Auth() {
-  const [searchParams] = useSearchParams()
-  const [step, setStep] = useState<AuthStep>('signin')
-  const [displayName, setDisplayName] = useState('')
-  const [studentId, setStudentId] = useState('')
-  const [profilePicture, setProfilePicture] = useState<File | null>(null)
-  const [profilePreview, setProfilePreview] = useState<string | null>(null)
-  const [oauthAvatarUrl, setOauthAvatarUrl] = useState<string | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [loaded, setLoaded] = useState(false)
+  const [searchParams] = useSearchParams();
+  const [step, setStep] = useState<AuthStep>("signin");
+  const [displayName, setDisplayName] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePreview, setProfilePreview] = useState<string | null>(null);
+  const [oauthAvatarUrl, setOauthAvatarUrl] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const studentIdRefs = useRef<(HTMLInputElement | null)[]>([])
-  const navigate = useNavigate()
-  const { user, session, userProfile, loading: authLoading, signInWithGitHub, signInWithDiscord, signInWithLinkedIn, createProfile } = useAuth()
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const studentIdRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const navigate = useNavigate();
+  const {
+    user,
+    session,
+    userProfile,
+    loading: authLoading,
+    signInWithGitHub,
+    signInWithDiscord,
+    signInWithLinkedIn,
+    createProfile,
+  } = useAuth();
 
   useEffect(() => {
-    setTimeout(() => setLoaded(true), 100)
-  }, [])
+    setTimeout(() => setLoaded(true), 100);
+  }, []);
 
   useEffect(() => {
     // Wait for auth to finish loading
-    if (authLoading) return
+    if (authLoading) return;
 
     // If user is logged in and has a profile, go to return URL or dashboard
     if (user && userProfile) {
-      const returnTo = searchParams.get('to') || '/dashboard'
+      const returnTo = searchParams.get("to") || "/home";
       if (isAppDeepLink(returnTo)) {
         // Never use navigate() for deep links — React Router treats them as
         // relative paths. Redirect via window.location only when session is ready;
         // the effect re-runs when session updates.
-        if (session) redirectToApp(returnTo, session)
-        return
+        if (session) redirectToApp(returnTo, session);
+        return;
       }
-      navigate(returnTo)
-      return
+      navigate(returnTo);
+      return;
     }
 
     // If user is logged in but no profile, show profile step
     if (user && !userProfile) {
-      setStep('profile')
+      setStep("profile");
       // Get OAuth avatar from provider metadata
-      const avatarUrl = user.user_metadata?.avatar_url ||
+      const avatarUrl =
+        user.user_metadata?.avatar_url ||
         user.user_metadata?.picture ||
-        user.user_metadata?.avatar
+        user.user_metadata?.avatar;
       if (avatarUrl && !profilePreview) {
-        setOauthAvatarUrl(avatarUrl)
-        setProfilePreview(avatarUrl)
+        setOauthAvatarUrl(avatarUrl);
+        setProfilePreview(avatarUrl);
       }
       // Pre-fill display name from OAuth if available
-      const oauthName = user.user_metadata?.full_name ||
+      const oauthName =
+        user.user_metadata?.full_name ||
         user.user_metadata?.name ||
         user.user_metadata?.user_name ||
-        user.user_metadata?.preferred_username
+        user.user_metadata?.preferred_username;
       if (oauthName && !displayName) {
-        setDisplayName(oauthName)
+        setDisplayName(oauthName);
       }
-      return
+      return;
     }
 
     // If not logged in, always show signin (ignore ?step=profile)
     if (!user) {
-      setStep('signin')
+      setStep("signin");
       // Clear the URL param if someone tries to access ?step=profile without being logged in
-      if (searchParams.get('step') === 'profile') {
-        navigate('/auth', { replace: true })
+      if (searchParams.get("step") === "profile") {
+        navigate("/auth", { replace: true });
       }
     }
-  }, [user, session, userProfile, authLoading, navigate, searchParams, profilePreview, displayName])
+  }, [
+    user,
+    session,
+    userProfile,
+    authLoading,
+    navigate,
+    searchParams,
+    profilePreview,
+    displayName,
+  ]);
 
   const handleGitHubSignIn = async () => {
-    setLoading(true)
-    setError('')
+    setLoading(true);
+    setError("");
     try {
-      const returnTo = searchParams.get('to') || undefined
+      const returnTo = searchParams.get("to") || undefined;
       // For app deep links, stash returnTo in sessionStorage so the base
       // redirect URL stays clean (Supabase rejects redirectTo URLs that
       // don't exactly match the allowlist).
       if (returnTo && isAppDeepLink(returnTo)) {
-        sessionStorage.setItem('auth_return_to', returnTo)
-        await signInWithGitHub()
+        sessionStorage.setItem("auth_return_to", returnTo);
+        await signInWithGitHub();
       } else {
-        await signInWithGitHub(returnTo)
+        await signInWithGitHub(returnTo);
       }
     } catch {
-      setError('[ERROR] Failed to sign in with GitHub. Retry.')
-      setLoading(false)
+      setError("[ERROR] Failed to sign in with GitHub. Retry.");
+      setLoading(false);
     }
-  }
+  };
 
   const handleDiscordSignIn = async () => {
-    setLoading(true)
-    setError('')
+    setLoading(true);
+    setError("");
     try {
-      const returnTo = searchParams.get('to') || undefined
+      const returnTo = searchParams.get("to") || undefined;
       if (returnTo && isAppDeepLink(returnTo)) {
-        sessionStorage.setItem('auth_return_to', returnTo)
-        await signInWithDiscord()
+        sessionStorage.setItem("auth_return_to", returnTo);
+        await signInWithDiscord();
       } else {
-        await signInWithDiscord(returnTo)
+        await signInWithDiscord(returnTo);
       }
     } catch {
-      setError('[ERROR] Failed to sign in with Discord. Retry.')
-      setLoading(false)
+      setError("[ERROR] Failed to sign in with Discord. Retry.");
+      setLoading(false);
     }
-  }
+  };
 
   const handleLinkedInSignIn = async () => {
-    setLoading(true)
-    setError('')
+    setLoading(true);
+    setError("");
     try {
-      const returnTo = searchParams.get('to') || undefined
+      const returnTo = searchParams.get("to") || undefined;
       if (returnTo && isAppDeepLink(returnTo)) {
-        sessionStorage.setItem('auth_return_to', returnTo)
-        await signInWithLinkedIn()
+        sessionStorage.setItem("auth_return_to", returnTo);
+        await signInWithLinkedIn();
       } else {
-        await signInWithLinkedIn(returnTo)
+        await signInWithLinkedIn(returnTo);
       }
     } catch {
-      setError('[ERROR] Failed to sign in with LinkedIn. Retry.')
-      setLoading(false)
+      setError("[ERROR] Failed to sign in with LinkedIn. Retry.");
+      setLoading(false);
     }
-  }
+  };
 
   const handleProfileSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!displayName.trim()) {
-      setError('[ERROR] Display name required')
-      return
+      setError("[ERROR] Display name required");
+      return;
     }
     if (studentId && studentId.length !== 8) {
-      setError('[ERROR] Student ID must be 8 digits if provided')
-      return
+      setError("[ERROR] Student ID must be 8 digits if provided");
+      return;
     }
-    setLoading(true)
-    setError('')
+    setLoading(true);
+    setError("");
     try {
       // Pass custom file if uploaded, otherwise pass OAuth avatar URL
       await createProfile(
         displayName,
         studentId,
         profilePicture || undefined,
-        !profilePicture && oauthAvatarUrl ? oauthAvatarUrl : undefined
-      )
-      const returnTo = searchParams.get('to') || '/dashboard'
+        !profilePicture && oauthAvatarUrl ? oauthAvatarUrl : undefined,
+      );
+      const returnTo = searchParams.get("to") || "/home";
       if (isAppDeepLink(returnTo)) {
-        const { data: { session: newSession } } = await supabase.auth.getSession()
+        const {
+          data: { session: newSession },
+        } = await supabase.auth.getSession();
         if (newSession) {
-          redirectToApp(returnTo, newSession)
+          redirectToApp(returnTo, newSession);
         } else {
-          navigate('/dashboard')
+          navigate("/home");
         }
       } else {
-        navigate(returnTo)
+        navigate(returnTo);
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      console.error('Profile creation error:', err)
-      if (errorMessage.includes('already') || errorMessage.includes('duplicate')) {
-        setError('[ERROR] Profile already exists.')
-      } else if (errorMessage.includes('Database not configured')) {
-        setError('[ERROR] Database not configured. Run supabase/setup.sql first.')
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.error("Profile creation error:", err);
+      if (
+        errorMessage.includes("already") ||
+        errorMessage.includes("duplicate")
+      ) {
+        setError("[ERROR] Profile already exists.");
+      } else if (errorMessage.includes("Database not configured")) {
+        setError(
+          "[ERROR] Database not configured. Run supabase/setup.sql first.",
+        );
       } else {
-        setError(`[ERROR] ${errorMessage}`)
+        setError(`[ERROR] ${errorMessage}`);
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setError('[ERROR] Image must be under 5MB')
-        return
+        setError("[ERROR] Image must be under 5MB");
+        return;
       }
-      setProfilePicture(file)
+      setProfilePicture(file);
       // When uploading custom file, clear OAuth avatar (we'll use the file instead)
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setProfilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleRemovePhoto = () => {
-    setProfilePicture(null)
-    setProfilePreview(null)
-    setOauthAvatarUrl(null)
-  }
+    setProfilePicture(null);
+    setProfilePreview(null);
+    setOauthAvatarUrl(null);
+  };
 
   const handleStudentIdDigitChange = (index: number, value: string) => {
     // Only allow single digit
-    const digit = value.replace(/\D/g, '').slice(-1)
-    const newId = studentId.split('')
+    const digit = value.replace(/\D/g, "").slice(-1);
+    const newId = studentId.split("");
 
     // Pad with empty strings if needed
-    while (newId.length < 8) newId.push('')
+    while (newId.length < 8) newId.push("");
 
-    newId[index] = digit
-    setStudentId(newId.join(''))
+    newId[index] = digit;
+    setStudentId(newId.join(""));
 
     // Move to next input if digit entered
     if (digit && index < 7) {
-      studentIdRefs.current[index + 1]?.focus()
+      studentIdRefs.current[index + 1]?.focus();
     }
-  }
+  };
 
-  const handleStudentIdKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
+  const handleStudentIdKeyDown = (
+    index: number,
+    e: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Backspace") {
       if (!studentId[index] && index > 0) {
         // If current box is empty, move to previous and clear it
-        e.preventDefault()
-        const newId = studentId.split('')
-        while (newId.length < 8) newId.push('')
-        newId[index - 1] = ''
-        setStudentId(newId.join(''))
-        studentIdRefs.current[index - 1]?.focus()
+        e.preventDefault();
+        const newId = studentId.split("");
+        while (newId.length < 8) newId.push("");
+        newId[index - 1] = "";
+        setStudentId(newId.join(""));
+        studentIdRefs.current[index - 1]?.focus();
       }
-    } else if (e.key === 'ArrowLeft' && index > 0) {
-      e.preventDefault()
-      studentIdRefs.current[index - 1]?.focus()
-    } else if (e.key === 'ArrowRight' && index < 7) {
-      e.preventDefault()
-      studentIdRefs.current[index + 1]?.focus()
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      e.preventDefault();
+      studentIdRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 7) {
+      e.preventDefault();
+      studentIdRefs.current[index + 1]?.focus();
     }
-  }
+  };
 
   const handleStudentIdPaste = (e: ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault()
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 8)
+    e.preventDefault();
+    const pastedData = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 8);
     if (pastedData) {
-      setStudentId(pastedData)
+      setStudentId(pastedData);
       // Focus on the last filled input or the next empty one
-      const focusIndex = Math.min(pastedData.length, 7)
-      studentIdRefs.current[focusIndex]?.focus()
+      const focusIndex = Math.min(pastedData.length, 7);
+      studentIdRefs.current[focusIndex]?.focus();
     }
-  }
+  };
 
   // Show loading while checking auth state
   if (authLoading) {
@@ -261,10 +309,10 @@ function Auth() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  const redirectTo = searchParams.get('to')
+  const redirectTo = searchParams.get("to");
 
   const renderSignInStep = () => (
     <div className="terminal-window max-w-md mx-auto">
@@ -272,20 +320,26 @@ function Auth() {
         <div className="terminal-dot red" />
         <div className="terminal-dot yellow" />
         <div className="terminal-dot green" />
-        <span className="ml-4 text-xs text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">init_auth.sh</span>
+        <span className="ml-4 text-xs text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">
+          init_auth.sh
+        </span>
       </div>
       <div className="terminal-body">
         {redirectTo && (
           <div className="mb-4 px-3 py-2 bg-hack-cyan/10 border border-hack-cyan/30 rounded-lg">
             <p className="text-sm text-hack-cyan font-terminal">
-              <span className="text-hack-yellow">[NOTICE]</span> Sign in to continue to{' '}
-              <span className="text-gray-900 dark:text-matrix">{redirectTo}</span>
+              <span className="text-hack-yellow">[NOTICE]</span> Sign in to
+              continue to{" "}
+              <span className="text-gray-900 dark:text-matrix">
+                {redirectTo}
+              </span>
             </p>
           </div>
         )}
 
         <p className="text-sm text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal mb-6">
-          <span className="text-gray-900 dark:text-matrix">&gt;</span> Choose your authentication method
+          <span className="text-gray-900 dark:text-matrix">&gt;</span> Choose
+          your authentication method
         </p>
 
         <div className="space-y-3">
@@ -295,7 +349,9 @@ function Auth() {
             className="w-full flex items-center px-4 py-3 bg-[#24292e] hover:bg-[#2f363d] border border-gray-200 dark:border-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white"
           >
             <GitHubAlt className="w-5 h-5 shrink-0" />
-            <span className="font-medium flex-1 text-center">Continue with GitHub</span>
+            <span className="font-medium flex-1 text-center">
+              Continue with GitHub
+            </span>
           </button>
 
           <button
@@ -304,7 +360,9 @@ function Auth() {
             className="w-full flex items-center px-4 py-3 bg-[#5865F2] hover:bg-[#4752c4] border border-[#5865F2] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white"
           >
             <Discord className="w-5 h-5 shrink-0" />
-            <span className="font-medium flex-1 text-center">Continue with Discord</span>
+            <span className="font-medium flex-1 text-center">
+              Continue with Discord
+            </span>
           </button>
 
           <button
@@ -313,7 +371,9 @@ function Auth() {
             className="w-full flex items-center px-4 py-3 bg-[#0A66C2] hover:bg-[#004182] border border-[#0A66C2] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white"
           >
             <LinkedIn className="w-5 h-5 shrink-0" />
-            <span className="font-medium flex-1 text-center">Continue with LinkedIn</span>
+            <span className="font-medium flex-1 text-center">
+              Continue with LinkedIn
+            </span>
           </button>
 
           <button
@@ -321,7 +381,9 @@ function Auth() {
             className="w-full flex items-center px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg opacity-50 cursor-not-allowed relative"
           >
             <Apple className="w-5 h-5 shrink-0 text-white" />
-            <span className="font-medium flex-1 text-center text-white">Continue with Apple</span>
+            <span className="font-medium flex-1 text-center text-white">
+              Continue with Apple
+            </span>
             <span className="text-[10px] font-terminal text-gray-400 border border-gray-600 px-1.5 py-0.5 bg-gray-800">
               COMING SOON
             </span>
@@ -329,7 +391,9 @@ function Auth() {
         </div>
 
         {error && (
-          <div className="text-hack-red text-sm font-terminal mt-4">{error}</div>
+          <div className="text-hack-red text-sm font-terminal mt-4">
+            {error}
+          </div>
         )}
 
         {loading && (
@@ -340,7 +404,7 @@ function Auth() {
         )}
       </div>
     </div>
-  )
+  );
 
   const renderProfileStep = () => (
     <div className="terminal-window max-w-md mx-auto">
@@ -348,11 +412,14 @@ function Auth() {
         <div className="terminal-dot red" />
         <div className="terminal-dot yellow" />
         <div className="terminal-dot green" />
-        <span className="ml-4 text-xs text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">setup_profile.sh</span>
+        <span className="ml-4 text-xs text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">
+          setup_profile.sh
+        </span>
       </div>
       <div className="terminal-body">
         <p className="text-sm text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal mb-4">
-          <span className="text-gray-900 dark:text-matrix">&gt;</span> Tell us about yourself
+          <span className="text-gray-900 dark:text-matrix">&gt;</span> Tell us
+          about yourself
         </p>
 
         <form onSubmit={handleProfileSubmit} className="space-y-4">
@@ -363,15 +430,23 @@ function Auth() {
               className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center cursor-pointer hover:border-blue-500 dark:hover:neon-box transition-shadow overflow-hidden"
             >
               {profilePreview ? (
-                <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
+                <img
+                  src={profilePreview}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <Plus className="w-8 h-8 text-gray-900 dark:text-matrix/50" />
               )}
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-900 dark:text-matrix font-terminal">Profile Picture</p>
+              <p className="text-sm text-gray-900 dark:text-matrix font-terminal">
+                Profile Picture
+              </p>
               <p className="text-xs text-gray-700 dark:text-gray-600">
-                {oauthAvatarUrl && !profilePicture ? 'From your account' : '(Optional) Max 5MB'}
+                {oauthAvatarUrl && !profilePicture
+                  ? "From your account"
+                  : "(Optional) Max 5MB"}
               </p>
               <input
                 ref={fileInputRef}
@@ -386,7 +461,7 @@ function Auth() {
                   onClick={() => fileInputRef.current?.click()}
                   className="text-xs text-gray-900 dark:text-matrix hover:underline"
                 >
-                  {profilePreview ? 'Change' : 'Upload'}
+                  {profilePreview ? "Change" : "Upload"}
                 </button>
                 {profilePreview && (
                   <button
@@ -402,7 +477,9 @@ function Auth() {
           </div>
 
           <div>
-            <label className="block text-sm mb-2 text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">--display-name *</label>
+            <label className="block text-sm mb-2 text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">
+              --display-name *
+            </label>
             <input
               type="text"
               value={displayName}
@@ -415,18 +492,24 @@ function Auth() {
           </div>
 
           <div>
-            <label className="block text-sm mb-2 text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">--student-id (optional)</label>
+            <label className="block text-sm mb-2 text-gray-700 dark:text-gray-600 dark:text-gray-500 font-terminal">
+              --student-id (optional)
+            </label>
             {/* 8 separate boxes for larger screens */}
             <div className="hidden sm:flex gap-2 justify-between">
               {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
                 <input
                   key={index}
-                  ref={(el) => { studentIdRefs.current[index] = el }}
+                  ref={(el) => {
+                    studentIdRefs.current[index] = el;
+                  }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
-                  value={studentId[index] || ''}
-                  onChange={(e) => handleStudentIdDigitChange(index, e.target.value)}
+                  value={studentId[index] || ""}
+                  onChange={(e) =>
+                    handleStudentIdDigitChange(index, e.target.value)
+                  }
                   onKeyDown={(e) => handleStudentIdKeyDown(index, e)}
                   onPaste={handleStudentIdPaste}
                   className="w-10 h-12 text-center text-lg font-terminal bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 rounded-lg text-gray-900 dark:text-matrix focus:border-blue-500 dark:focus:border-matrix focus:neon-box outline-none transition-all"
@@ -439,13 +522,18 @@ function Auth() {
               inputMode="numeric"
               maxLength={8}
               value={studentId}
-              onChange={(e) => setStudentId(e.target.value.replace(/\D/g, '').slice(0, 8))}
+              onChange={(e) =>
+                setStudentId(e.target.value.replace(/\D/g, "").slice(0, 8))
+              }
               placeholder="8-digit Student ID (optional)"
               className="sm:hidden input-hack w-full rounded-lg"
             />
             <p className="text-xs text-gray-700 dark:text-gray-600 font-terminal mt-2">
-              <span className="text-gray-900 dark:text-matrix">&gt;</span> Student ID
-              <span className="text-hack-yellow ml-2">(optional, cannot be changed later)</span>
+              <span className="text-gray-900 dark:text-matrix">&gt;</span>{" "}
+              Student ID
+              <span className="text-hack-yellow ml-2">
+                (optional, cannot be changed later)
+              </span>
             </p>
           </div>
 
@@ -464,13 +552,13 @@ function Auth() {
                 CREATING PROFILE...
               </span>
             ) : (
-              'COMPLETE SETUP'
+              "COMPLETE SETUP"
             )}
           </button>
         </form>
       </div>
     </div>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
@@ -478,7 +566,7 @@ function Auth() {
 
       {/* Header with ASCII Background */}
       <header
-        className={`min-h-[40vh] flex flex-col justify-center relative overflow-hidden mb-12 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        className={`min-h-[40vh] flex flex-col justify-center relative overflow-hidden mb-12 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
       >
         {/* Background ASCII Art */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
@@ -494,17 +582,17 @@ function Auth() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 w-full">
           <p className="font-mono text-sm text-gray-600 dark:text-matrix/60 mb-6">
-            <span className="text-blue-700 dark:text-matrix">&gt;</span>{' '}
+            <span className="text-blue-700 dark:text-matrix">&gt;</span>{" "}
             ./authenticate --secure
           </p>
 
           <h1 className="font-mono font-bold text-blue-700 dark:text-matrix leading-tight mb-6">
-            {step === 'signin' && (
+            {step === "signin" && (
               <span className="block text-5xl md:text-6xl lg:text-7xl">
                 SIGN IN
               </span>
             )}
-            {step === 'profile' && (
+            {step === "profile" && (
               <>
                 <span className="block text-5xl md:text-6xl lg:text-7xl">
                   SETUP
@@ -518,8 +606,10 @@ function Auth() {
 
           <div className="border-l-2 border-blue-300 dark:border-matrix/30 pl-5 max-w-2xl">
             <p className="font-mono text-gray-600 dark:text-gray-400 text-sm md:text-base">
-              {step === 'signin' && 'Securely sign in with a supported provider.'}
-              {step === 'profile' && 'Complete your profile to finish registration.'}
+              {step === "signin" &&
+                "Securely sign in with a supported provider."}
+              {step === "profile" &&
+                "Complete your profile to finish registration."}
             </p>
           </div>
         </div>
@@ -528,15 +618,15 @@ function Auth() {
       <div className="relative z-10 max-w-5xl mx-auto px-6">
         {/* Content */}
         <div
-          className={`transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: '200ms' }}
+          className={`transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          style={{ transitionDelay: "200ms" }}
         >
-          {step === 'signin' && renderSignInStep()}
-          {step === 'profile' && renderProfileStep()}
+          {step === "signin" && renderSignInStep()}
+          {step === "profile" && renderProfileStep()}
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Auth
+export default Auth;

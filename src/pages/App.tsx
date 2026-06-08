@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Discord,
@@ -22,9 +29,13 @@ import Monogram from "@/components/Monogram";
 const CircularGallery = lazy(() =>
   import("@/components/CircularGallery").then((mod) => ({
     default: mod.default as React.ComponentType<any>,
-  }))
+  })),
 );
-import { parseLocalDate, isMeetingLive, isMeetingPast } from "@/lib/meetingUtils";
+import {
+  parseLocalDate,
+  isMeetingLive,
+  isMeetingPast,
+} from "@/lib/meetingUtils";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -32,7 +43,6 @@ import { OFFICERS, CURRENT_QUARTER, ROLE_ORDER } from "@/constants";
 import type { OfficerData } from "@/constants";
 import { useInView } from "@/hooks/useInView";
 import { ScrollReveal } from "@/components/ScrollReveal";
-
 
 const prefetchLive = () => import("./Attendance");
 
@@ -341,9 +351,24 @@ function SectionHeader({
 // ─── Stats Bar ───────────────────────────────────────
 const stats = [
   { label: "ACTIVE MEMBERS", value: "100+", sub: "And growing", icon: Users },
-  { label: "WORKSHOPS", value: "20+", sub: "Hands-on sessions", icon: Calendar },
-  { label: "TOOLS COVERED", value: "15+", sub: "Industry standard", icon: Code },
-  { label: "CTF CHALLENGES", value: "30+", sub: "All difficulty levels", icon: Flag },
+  {
+    label: "WORKSHOPS",
+    value: "20+",
+    sub: "Hands-on sessions",
+    icon: Calendar,
+  },
+  {
+    label: "TOOLS COVERED",
+    value: "15+",
+    sub: "Industry standard",
+    icon: Code,
+  },
+  {
+    label: "CTF CHALLENGES",
+    value: "30+",
+    sub: "All difficulty levels",
+    icon: Flag,
+  },
 ];
 
 function StatsBar({ loaded }: { loaded: boolean }) {
@@ -394,7 +419,6 @@ function StatsBar({ loaded }: { loaded: boolean }) {
 
 // ─── Recent Events Section (redesigned) ───────────────────────────
 function RecentEvents({ meetings }: { meetings: Meeting[] }) {
-
   if (meetings.length === 0) return null;
 
   return (
@@ -431,7 +455,7 @@ function EventCard({
 
   return (
     <Link
-      to={`/dashboard?meeting=${meeting.slug}`}
+      to={`/home?meeting=${meeting.slug}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-xl transition-all duration-300 hover:border-white/25 hover:shadow-2xl"
@@ -441,18 +465,26 @@ function EventCard({
         {/* Compact date */}
         <div className="text-center shrink-0 w-11 border border-white/15 rounded-lg p-1 group-hover:border-white/30 transition-colors">
           <div className="text-xl font-bold font-mono text-white">{day}</div>
-          <div className="text-[9px] text-white/60 uppercase font-mono -mt-0.5">{month}</div>
+          <div className="text-[9px] text-white/60 uppercase font-mono -mt-0.5">
+            {month}
+          </div>
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-0.5">
             {isLive ? (
-              <span className="text-[9px] font-mono uppercase text-red-400 animate-pulse">● LIVE</span>
+              <span className="text-[9px] font-mono uppercase text-red-400 animate-pulse">
+                ● LIVE
+              </span>
             ) : isNew ? (
-              <span className="text-[9px] font-mono uppercase text-emerald-400 animate-pulse">● NEW</span>
+              <span className="text-[9px] font-mono uppercase text-emerald-400 animate-pulse">
+                ● NEW
+              </span>
             ) : null}
           </div>
-          <h3 className="text-white font-mono font-semibold text-sm truncate">{meeting.title}</h3>
+          <h3 className="text-white font-mono font-semibold text-sm truncate">
+            {meeting.title}
+          </h3>
           <div className="flex items-center gap-2 mt-0.5 text-white/60 font-mono text-[10px]">
             <span className="flex items-center gap-0.5">
               <Clock className="w-2.5 h-2.5" /> {meeting.time}
@@ -463,7 +495,9 @@ function EventCard({
           </div>
         </div>
 
-        <ChevronRight className={`w-4 h-4 text-white/50 transition-all flex-shrink-0 ${isHovered ? "translate-x-0.5" : ""}`} />
+        <ChevronRight
+          className={`w-4 h-4 text-white/50 transition-all flex-shrink-0 ${isHovered ? "translate-x-0.5" : ""}`}
+        />
       </div>
 
       {/* Desktop+: Rich vertical card with hover overlay */}
@@ -472,21 +506,31 @@ function EventCard({
           <div className="flex items-start justify-between gap-3 mb-3">
             {/* Big date */}
             <div className="text-center shrink-0 w-14 border border-white/15 rounded-xl p-2 group-hover:border-white/30 transition-colors">
-              <div className="text-3xl font-bold font-mono text-white leading-none">{day}</div>
-              <div className="text-[10px] text-white/60 uppercase font-mono tracking-wider mt-0.5">{month}</div>
+              <div className="text-3xl font-bold font-mono text-white leading-none">
+                {day}
+              </div>
+              <div className="text-[10px] text-white/60 uppercase font-mono tracking-wider mt-0.5">
+                {month}
+              </div>
             </div>
 
             <div className="flex-1 min-w-0 pt-1">
               {(isLive || isNew) && (
                 <div className="flex items-center gap-2 mb-1">
                   {isLive ? (
-                    <span className="text-[10px] font-mono uppercase text-red-400 animate-pulse">● LIVE</span>
+                    <span className="text-[10px] font-mono uppercase text-red-400 animate-pulse">
+                      ● LIVE
+                    </span>
                   ) : (
-                    <span className="text-[10px] font-mono uppercase text-emerald-400 animate-pulse">● NEW</span>
+                    <span className="text-[10px] font-mono uppercase text-emerald-400 animate-pulse">
+                      ● NEW
+                    </span>
                   )}
                 </div>
               )}
-              <h3 className="text-white font-mono font-semibold text-base leading-tight">{meeting.title}</h3>
+              <h3 className="text-white font-mono font-semibold text-base leading-tight">
+                {meeting.title}
+              </h3>
             </div>
           </div>
 
@@ -499,8 +543,6 @@ function EventCard({
             </span>
           </div>
         </div>
-
-
       </div>
     </Link>
   );
@@ -541,7 +583,15 @@ function LearnModules() {
 
 // Reusable mic icon (used in CTF card)
 const MicIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
     <path d="M12 1v12m0 0c-2.21 0-4-1.79-4-4V5a4 4 0 118 0v4c0 2.21-1.79 4-4 4zm6-4v4a6 6 0 01-12 0V9" />
     <path d="M19 10v2a7 7 0 01-14 0v-2" />
     <path d="M12 19v4" />
@@ -550,9 +600,17 @@ const MicIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 // ─── 01 HACKING FUNDAMENTALS ─────────────────────────────────
 function HackingFundamentalsDemo() {
-  const [messages, setMessages] = useState<Array<{ role: "user" | "bot"; text: string }>>([
-    { role: "bot", text: "Recon is the first phase: passive OSINT then active scanning to map the target without tripping alarms." },
-    { role: "bot", text: "After enumeration comes exploitation — turning a discovered weakness into a working foothold." },
+  const [messages, setMessages] = useState<
+    Array<{ role: "user" | "bot"; text: string }>
+  >([
+    {
+      role: "bot",
+      text: "Recon is the first phase: passive OSINT then active scanning to map the target without tripping alarms.",
+    },
+    {
+      role: "bot",
+      text: "After enumeration comes exploitation — turning a discovered weakness into a working foothold.",
+    },
   ]);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -566,7 +624,8 @@ function HackingFundamentalsDemo() {
         "Every great breach starts with patient, boring reconnaissance.",
       ];
       setMessages((prev) => {
-        const next = autonomousLines[(prev.length + 1) % autonomousLines.length];
+        const next =
+          autonomousLines[(prev.length + 1) % autonomousLines.length];
         // keep last 3 messages, add a new bot line
         const trimmed = prev.slice(-2);
         return [...trimmed, { role: "bot", text: next }];
@@ -583,34 +642,50 @@ function HackingFundamentalsDemo() {
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-black/40">
-        <Shield className={`w-3.5 h-3.5 text-emerald-400 transition-transform duration-300 ${isHovered ? 'scale-110 rotate-6' : ''}`} />
-        <span className="text-xs font-medium tracking-wide text-white/80">HACKING FUNDAMENTALS</span>
+        <Shield
+          className={`w-3.5 h-3.5 text-emerald-400 transition-transform duration-300 ${isHovered ? "scale-110 rotate-6" : ""}`}
+        />
+        <span className="text-xs font-medium tracking-wide text-white/80">
+          HACKING FUNDAMENTALS
+        </span>
       </div>
 
       {/* Main content that dims on hover (pure opacity = smoother) */}
-      <div className={`flex-1 px-3 pt-2 pb-4 text-[11px] text-white/60 font-sans transition-opacity duration-300 ${isHovered ? 'opacity-30' : 'opacity-100'}`}>
-        Think like an attacker. Learn the full lifecycle: recon → scanning → exploitation → post-exploitation.
+      <div
+        className={`flex-1 px-3 pt-2 pb-4 text-[11px] text-white/60 font-sans transition-opacity duration-300 ${isHovered ? "opacity-30" : "opacity-100"}`}
+      >
+        Think like an attacker. Learn the full lifecycle: recon → scanning →
+        exploitation → post-exploitation.
       </div>
 
       {/* Live self-updating conversation (no clicks needed) */}
-      <div className={`p-3 space-y-2 min-h-[142px] text-sm bg-[#0a0a0a] font-sans transition-opacity duration-300 ${isHovered ? 'opacity-35' : 'opacity-100'}`}>
+      <div
+        className={`p-3 space-y-2 min-h-[142px] text-sm bg-[#0a0a0a] font-sans transition-opacity duration-300 ${isHovered ? "opacity-35" : "opacity-100"}`}
+      >
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div
+            key={i}
+            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+          >
             <div className="max-w-[82%] px-3 py-1.5 text-xs leading-snug rounded-2xl bg-white/5 text-white/80 border border-white/10">
               {m.text}
             </div>
           </div>
         ))}
-        <div className="text-[10px] text-emerald-400/60 mt-1">The card teaches itself — watch it evolve.</div>
+        <div className="text-[10px] text-emerald-400/60 mt-1">
+          The card teaches itself — watch it evolve.
+        </div>
       </div>
 
       {/* Centered Explore overlay — appears on hover, card is already dimmed */}
       <a
         href="/about#hacking-fundamentals"
-        className={`group/explore absolute inset-0 z-20 flex items-center justify-center transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`group/explore absolute inset-0 z-20 flex items-center justify-center transition-all duration-300 ${isHovered ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       >
         <div className="flex flex-col items-center">
-          <span className="text-lg font-medium tracking-wider text-white/90">EXPLORE</span>
+          <span className="text-lg font-medium tracking-wider text-white/90">
+            EXPLORE
+          </span>
           <span className="inline-flex items-center gap-2 text-emerald-400 mt-1 text-sm">
             Hacking Fundamentals
             <ChevronRight className="w-5 h-5 transition-all duration-200 group-hover/explore:translate-x-2 group-hover/explore:scale-125 group-hover/explore:rotate-12" />
@@ -623,7 +698,11 @@ function HackingFundamentalsDemo() {
 
 // ─── 03 REAL TOOLS ───────────────────────────────────────────
 function RealToolsDemo() {
-  const [logs, setLogs] = useState(["Starting Nmap SYN scan", "Probing top 1000 ports", "Running service version detection"]);
+  const [logs, setLogs] = useState([
+    "Starting Nmap SYN scan",
+    "Probing top 1000 ports",
+    "Running service version detection",
+  ]);
   const [isHovered, setIsHovered] = useState(false);
   const [livePercent, setLivePercent] = useState(37);
 
@@ -652,8 +731,16 @@ function RealToolsDemo() {
     { num: 2, text: "Starting Nmap 7.94 ( https://nmap.org )", hl: "" },
     { num: 3, text: "Nmap scan report for target", hl: "" },
     { num: 4, text: "PORT   STATE SERVICE  VERSION", hl: "" },
-    { num: 5, text: "22/tcp open  ssh      OpenSSH 8.9", hl: "bg-emerald-950/50 text-emerald-400" },
-    { num: 6, text: "VULN: CVE-2023-38408 (critical)", hl: "bg-red-950/50 text-red-400" },
+    {
+      num: 5,
+      text: "22/tcp open  ssh      OpenSSH 8.9",
+      hl: "bg-emerald-950/50 text-emerald-400",
+    },
+    {
+      num: 6,
+      text: "VULN: CVE-2023-38408 (critical)",
+      hl: "bg-red-950/50 text-red-400",
+    },
   ];
 
   return (
@@ -669,38 +756,57 @@ function RealToolsDemo() {
           <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
           <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
         </div>
-        <div className="flex-1 text-center font-medium text-white/60 tracking-wider text-xs">real_tools.sh — live nmap</div>
-        <div className={`text-emerald-400/80 tabular-nums transition-all ${isHovered ? 'text-emerald-400' : ''}`}>{Math.floor(livePercent)}%</div>
+        <div className="flex-1 text-center font-medium text-white/60 tracking-wider text-xs">
+          real_tools.sh — live nmap
+        </div>
+        <div
+          className={`text-emerald-400/80 tabular-nums transition-all ${isHovered ? "text-emerald-400" : ""}`}
+        >
+          {Math.floor(livePercent)}%
+        </div>
       </div>
 
       {/* Terminal area dims on hover (pure opacity) */}
-      <div className={`p-3 bg-[#0a0a0a] font-mono text-[11px] leading-[1.35] text-white/80 overflow-hidden transition-opacity duration-300 ${isHovered ? 'opacity-25' : 'opacity-100'}`}>
+      <div
+        className={`p-3 bg-[#0a0a0a] font-mono text-[11px] leading-[1.35] text-white/80 overflow-hidden transition-opacity duration-300 ${isHovered ? "opacity-25" : "opacity-100"}`}
+      >
         {codeLines.map((line, i) => (
-          <div key={i} className={`flex items-center gap-3 px-1 py-px rounded ${line.hl}`}>
-            <span className="text-white/30 w-6 text-right tabular-nums select-none">{line.num}</span>
+          <div
+            key={i}
+            className={`flex items-center gap-3 px-1 py-px rounded ${line.hl}`}
+          >
+            <span className="text-white/30 w-6 text-right tabular-nums select-none">
+              {line.num}
+            </span>
             <span className="flex-1">{line.text}</span>
           </div>
         ))}
       </div>
 
       {/* Self-updating live log (no user input needed) */}
-      <div className={`px-3 py-2 border-t border-white/10 bg-black/40 text-[10px] font-mono space-y-0.5 flex-1 transition-opacity duration-300 ${isHovered ? 'opacity-30' : 'opacity-100'}`}>
+      <div
+        className={`px-3 py-2 border-t border-white/10 bg-black/40 text-[10px] font-mono space-y-0.5 flex-1 transition-opacity duration-300 ${isHovered ? "opacity-30" : "opacity-100"}`}
+      >
         {logs.map((log, i) => (
           <div key={i} className="flex items-center gap-2 text-white/70">
             <span className="text-emerald-400/70">▶</span>
             {log}
           </div>
         ))}
-        <div className="pt-1 text-white/40">The scan never stops. Same tools the pros use every day.</div>
+        <div className="pt-1 text-white/40">
+          The scan never stops. Same tools the pros use every day.
+        </div>
       </div>
 
       {/* Centered Explore overlay on hover */}
       <a
         href="/about#real-tools"
-        className={`group/explore absolute inset-0 z-20 flex items-center justify-center transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`group/explore absolute inset-0 z-20 flex items-center justify-center transition-all duration-300 ${isHovered ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       >
         <div className="flex flex-col items-center">
-          <span className="text-lg font-medium tracking-wider text-white/90">EXPLORE</span>
+          <span className="text-lg font-medium tracking-wider text-white/90">
+            EXPLORE
+          </span>
           <span className="inline-flex items-center gap-2 text-emerald-400 mt-1 text-sm">
             Real Tools
             <ChevronRight className="w-5 h-5 transition-all duration-200 group-hover/explore:translate-x-2 group-hover/explore:scale-125 group-hover/explore:rotate-12" />
@@ -714,9 +820,21 @@ function RealToolsDemo() {
 // ─── 02 GET CERTIFIED ────────────────────────────────────────
 function GetCertifiedDemo() {
   const [variants, setVariants] = useState([
-    { label: "Security+ (SY0-701) — Core concepts & threats", seed: 1, displaySeed: 4821 },
-    { label: "Network+ (N10-009) — Infrastructure & troubleshooting", seed: 2, displaySeed: 7193 },
-    { label: "CySA+ — Threat detection & response", seed: 3, displaySeed: 3640 },
+    {
+      label: "Security+ (SY0-701) — Core concepts & threats",
+      seed: 1,
+      displaySeed: 4821,
+    },
+    {
+      label: "Network+ (N10-009) — Infrastructure & troubleshooting",
+      seed: 2,
+      displaySeed: 7193,
+    },
+    {
+      label: "CySA+ — Threat detection & response",
+      seed: 3,
+      displaySeed: 3640,
+    },
   ]);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -735,21 +853,29 @@ function GetCertifiedDemo() {
           label: options[(item.seed + i + 1) % options.length],
           seed: item.seed + 1,
           displaySeed: 1000 + ((item.displaySeed + 31) % 9000),
-        }))
+        })),
       );
     }, 3200);
     return () => clearInterval(autoStudy);
   }, []);
 
   const viz = (label: string, displaySeed: number, isBig = false) => (
-    <div className={`relative flex items-center justify-center overflow-hidden bg-zinc-950 border border-white/10 ${isBig ? "aspect-[4/3]" : "aspect-video"} group/img transition-all duration-300 ${isHovered ? 'scale-[1.015] brightness-110' : ''}`}>
+    <div
+      className={`relative flex items-center justify-center overflow-hidden bg-zinc-950 border border-white/10 ${isBig ? "aspect-[4/3]" : "aspect-video"} group/img transition-all duration-300 ${isHovered ? "scale-[1.015] brightness-110" : ""}`}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(#222_0.6px,transparent_1px)] bg-[length:3px_3px]" />
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-amber-500/10" />
       <div className="relative z-10 text-center px-3">
-        <div className="text-[10px] uppercase tracking-[2px] text-white/40 mb-0.5">STUDY MODULE</div>
-        <div className="text-xs text-white/90 leading-tight font-medium">{label}</div>
+        <div className="text-[10px] uppercase tracking-[2px] text-white/40 mb-0.5">
+          STUDY MODULE
+        </div>
+        <div className="text-xs text-white/90 leading-tight font-medium">
+          {label}
+        </div>
       </div>
-      <div className="absolute bottom-2 right-2 text-[9px] text-emerald-400/60 font-mono">CERT {displaySeed}</div>
+      <div className="absolute bottom-2 right-2 text-[9px] text-emerald-400/60 font-mono">
+        CERT {displaySeed}
+      </div>
     </div>
   );
 
@@ -761,17 +887,26 @@ function GetCertifiedDemo() {
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-black/40">
-        <Flag className={`w-3.5 h-3.5 text-amber-400 transition-transform ${isHovered ? 'scale-110' : ''}`} />
-        <span className="text-xs font-medium tracking-wide text-white/80">GET CERTIFIED</span>
+        <Flag
+          className={`w-3.5 h-3.5 text-amber-400 transition-transform ${isHovered ? "scale-110" : ""}`}
+        />
+        <span className="text-xs font-medium tracking-wide text-white/80">
+          GET CERTIFIED
+        </span>
       </div>
 
       {/* Description dims on hover */}
-      <div className={`px-3 pt-2 text-[11px] text-white/60 font-sans transition-opacity duration-300 ${isHovered ? 'opacity-25' : 'opacity-100'}`}>
-        Structured study groups for Security+, Network+, and CySA+. We help you actually pass and get hired.
+      <div
+        className={`px-3 pt-2 text-[11px] text-white/60 font-sans transition-opacity duration-300 ${isHovered ? "opacity-25" : "opacity-100"}`}
+      >
+        Structured study groups for Security+, Network+, and CySA+. We help you
+        actually pass and get hired.
       </div>
 
       {/* Self-cycling study visuals */}
-      <div className={`p-2.5 bg-[#0a0a0a] grid grid-cols-3 gap-2 flex-1 transition-opacity duration-300 ${isHovered ? 'opacity-25' : 'opacity-100'}`}>
+      <div
+        className={`p-2.5 bg-[#0a0a0a] grid grid-cols-3 gap-2 flex-1 transition-opacity duration-300 ${isHovered ? "opacity-25" : "opacity-100"}`}
+      >
         <div className="col-span-2 row-span-2 rounded-xl overflow-hidden border border-white/10">
           {viz(variants[0].label, variants[0].displaySeed, true)}
         </div>
@@ -786,10 +921,12 @@ function GetCertifiedDemo() {
       {/* Centered Explore that appears on hover */}
       <a
         href="/about#get-certified"
-        className={`group/explore absolute inset-0 z-20 flex items-center justify-center transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`group/explore absolute inset-0 z-20 flex items-center justify-center transition-all duration-300 ${isHovered ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       >
         <div className="flex flex-col items-center">
-          <span className="text-lg font-medium tracking-wider text-white/90">EXPLORE</span>
+          <span className="text-lg font-medium tracking-wider text-white/90">
+            EXPLORE
+          </span>
           <span className="inline-flex items-center gap-2 text-amber-400 mt-1 text-sm">
             Get Certified
             <ChevronRight className="w-5 h-5 transition-all duration-200 group-hover/explore:translate-x-2 group-hover/explore:scale-125 group-hover/explore:rotate-12" />
@@ -836,18 +973,29 @@ function CTFCompetitionsDemo() {
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-black/40">
-        <Trophy className={`w-3.5 h-3.5 text-yellow-400 transition-transform duration-300 ${isHovered ? 'scale-110 rotate-12' : ''}`} />
-        <span className="text-xs font-medium tracking-wide text-white/80">CTF COMPETITIONS</span>
+        <Trophy
+          className={`w-3.5 h-3.5 text-yellow-400 transition-transform duration-300 ${isHovered ? "scale-110 rotate-12" : ""}`}
+        />
+        <span className="text-xs font-medium tracking-wide text-white/80">
+          CTF COMPETITIONS
+        </span>
       </div>
 
-      <div className={`px-3 pt-2 text-[11px] text-white/60 font-sans transition-opacity duration-300 ${isHovered ? 'opacity-20' : 'opacity-100'}`}>
-        Weekly internal challenges, monthly CTFs, $500+ in prizes, and the best bragging rights on campus.
+      <div
+        className={`px-3 pt-2 text-[11px] text-white/60 font-sans transition-opacity duration-300 ${isHovered ? "opacity-20" : "opacity-100"}`}
+      >
+        Weekly internal challenges, monthly CTFs, $500+ in prizes, and the best
+        bragging rights on campus.
       </div>
 
       {/* Smooth CSS-driven waveform — zero jank, GPU accelerated.
           Hover simply makes the existing animations more energetic via duration change. */}
-      <div className={`flex-1 flex flex-col items-center justify-center gap-4 py-4 bg-[#0a0a0a] transition-all duration-300 ${isHovered ? 'opacity-30' : 'opacity-100'}`}>
-        <div className={`flex items-end gap-[3px] h-14 px-4 waveform ${isHovered ? 'waveform--energetic' : ''}`}>
+      <div
+        className={`flex-1 flex flex-col items-center justify-center gap-4 py-4 bg-[#0a0a0a] transition-all duration-300 ${isHovered ? "opacity-30" : "opacity-100"}`}
+      >
+        <div
+          className={`flex items-end gap-[3px] h-14 px-4 waveform ${isHovered ? "waveform--energetic" : ""}`}
+        >
           {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
@@ -857,20 +1005,28 @@ function CTFCompetitionsDemo() {
           ))}
         </div>
 
-        <div className="font-mono text-[10px] text-white/60 text-center max-w-[220px] min-h-[18px]">{transcript}</div>
-        <div className={`text-[10px] font-mono transition-all ${isHovered ? 'text-yellow-400' : 'text-yellow-400/80'}`}>
+        <div className="font-mono text-[10px] text-white/60 text-center max-w-[220px] min-h-[18px]">
+          {transcript}
+        </div>
+        <div
+          className={`text-[10px] font-mono transition-all ${isHovered ? "text-yellow-400" : "text-yellow-400/80"}`}
+        >
           FLAGS CAPTURED: {flags} / 5
         </div>
-        <div className="text-[10px] text-white/40">The competition never stops.</div>
+        <div className="text-[10px] text-white/40">
+          The competition never stops.
+        </div>
       </div>
 
       {/* Big centered Explore revealed on hover */}
       <a
         href="/about#ctf-competitions"
-        className={`group/explore absolute inset-0 z-20 flex items-center justify-center transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`group/explore absolute inset-0 z-20 flex items-center justify-center transition-all duration-300 ${isHovered ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       >
         <div className="flex flex-col items-center">
-          <span className="text-lg font-medium tracking-wider text-white/90">EXPLORE</span>
+          <span className="text-lg font-medium tracking-wider text-white/90">
+            EXPLORE
+          </span>
           <span className="inline-flex items-center gap-2 text-yellow-400 mt-1 text-sm">
             CTF Competitions
             <ChevronRight className="w-5 h-5 transition-all duration-200 group-hover/explore:translate-x-2 group-hover/explore:scale-125 group-hover/explore:rotate-12" />
@@ -1050,7 +1206,9 @@ function OfficerCard({
             {role}
             {altRole && <span className="text-white/40"> · {altRole}</span>}
           </div>
-          <div className="font-mono font-semibold text-white text-base truncate">{name}</div>
+          <div className="font-mono font-semibold text-white text-base truncate">
+            {name}
+          </div>
 
           {/* Compact social icons */}
           {links && links.length > 0 && (
@@ -1068,7 +1226,9 @@ function OfficerCard({
           )}
         </div>
 
-        <ChevronRight className={`w-4 h-4 text-white/50 transition-all flex-shrink-0 ${isHovered ? "translate-x-0.5" : ""}`} />
+        <ChevronRight
+          className={`w-4 h-4 text-white/50 transition-all flex-shrink-0 ${isHovered ? "translate-x-0.5" : ""}`}
+        />
       </div>
 
       {/* ========== DESKTOP / LARGE: Fancy vertical layout with big photo + centered overlay ========== */}
@@ -1101,9 +1261,13 @@ function OfficerCard({
         </div>
 
         {/* Content */}
-        <div className={`p-4 transition-opacity duration-300 ${isHovered ? "opacity-20" : "opacity-100"}`}>
+        <div
+          className={`p-4 transition-opacity duration-300 ${isHovered ? "opacity-20" : "opacity-100"}`}
+        >
           <div className="flex items-baseline justify-between gap-2">
-            <p className="font-mono font-semibold text-white text-lg tracking-tight">{name}</p>
+            <p className="font-mono font-semibold text-white text-lg tracking-tight">
+              {name}
+            </p>
             {links && links.length > 0 && (
               <div className="flex gap-1.5 shrink-0">
                 {links.map((link, idx) => (
@@ -1127,7 +1291,9 @@ function OfficerCard({
           }`}
         >
           <div className="flex flex-col items-center">
-            <span className="text-sm font-medium tracking-[3px] text-white/90">VIEW PROFILE</span>
+            <span className="text-sm font-medium tracking-[3px] text-white/90">
+              VIEW PROFILE
+            </span>
             <span className="mt-1 inline-flex items-center gap-1 text-white/70 text-xs">
               {name.split(" ")[0]}
               <ChevronRight className="w-4 h-4 transition-all duration-200 group-hover:translate-x-1.5 group-hover:scale-125 group-hover:rotate-12" />
@@ -1400,7 +1566,7 @@ function App() {
               </p>
             ) : userProfile ? (
               <button
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/home")}
                 className="font-mono text-sm text-gray-500 dark:text-matrix/60 hover:text-green-700 dark:hover:text-matrix transition-colors mb-8 group flex items-center gap-2"
               >
                 <span className="w-1.5 h-1.5 bg-green-500 dark:bg-matrix rounded-full" />
@@ -1440,7 +1606,7 @@ function App() {
             <div className="flex flex-col sm:flex-row gap-4 mb-10">
               <DiscordButton />
               <Link
-                to="/dashboard"
+                to="/home"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 px-6 py-3 text-sm font-medium text-gray-800 dark:text-white/80 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-all w-full sm:w-auto"
               >
                 View events
@@ -1482,7 +1648,7 @@ function App() {
               <RecentEvents meetings={recentMeetings} />
               <div className="mt-6 text-center">
                 <Link
-                  to="/dashboard"
+                  to="/home"
                   className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-all group"
                 >
                   VIEW ALL EVENTS
@@ -1566,7 +1732,9 @@ function App() {
                     <CircularGallery
                       ref={galleryRef}
                       bend={1}
-                      textColor={resolvedTheme === "dark" ? "#ffffff" : "#000000"}
+                      textColor={
+                        resolvedTheme === "dark" ? "#ffffff" : "#000000"
+                      }
                       borderRadius={0.05}
                       scrollSpeed={2}
                       scrollEase={0.05}

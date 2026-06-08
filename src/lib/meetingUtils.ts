@@ -25,7 +25,6 @@ export interface CreateMeetingForm {
   startTime: string;
   endTime: string;
   location: string;
-  featured: boolean;
   topics: string;
   secret_code: string;
 }
@@ -38,7 +37,6 @@ export const defaultCreateForm: CreateMeetingForm = {
   startTime: '14:30',
   endTime: '16:00',
   location: 'ATC 205',
-  featured: false,
   topics: '',
   secret_code: ''
 };

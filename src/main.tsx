@@ -16,11 +16,10 @@ const Legal = lazy(() => import("@/pages/Legal"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Dashboard = lazy(() => import("@/pages/Home"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const CTF = lazy(() => import("@/pages/CTF"));
 const AppPromo = lazy(() => import("@/pages/AppPromo"));
-const Officer = lazy(() => import("@/pages/Officer"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
 
 ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
@@ -58,7 +57,7 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
                 }
               />
               <Route
-                path="/dashboard"
+                path="/home"
                 element={
                   <ProtectedRoute>
                     <Dashboard />
@@ -70,14 +69,6 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
                 element={
                   <ProtectedRoute>
                     <Settings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/officer"
-                element={
-                  <ProtectedRoute>
-                    <Officer />
                   </ProtectedRoute>
                 }
               />

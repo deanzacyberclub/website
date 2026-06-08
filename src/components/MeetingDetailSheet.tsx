@@ -19,6 +19,7 @@ export default function MeetingDetailSheet({
   const [isMobile, setIsMobile] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [activeSlug, setActiveSlug] = useState<string | null>(slug)
+  const [meetingTitle, setMeetingTitle] = useState<string | null>(null)
 
   // Refs for animation control
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -51,6 +52,7 @@ export default function MeetingDetailSheet({
       }
       setIsClosing(false)
       setActiveSlug(slug)
+      setMeetingTitle(null)
     } else if (activeSlug) {
       if (!isSwipeClosingRef.current) {
         triggerClose()
@@ -205,7 +207,7 @@ export default function MeetingDetailSheet({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-end md:items-stretch justify-end"
+      className="fixed inset-0 z-[300] flex items-end md:items-stretch justify-end"
       aria-modal="true"
       role="dialog"
     >
@@ -234,9 +236,17 @@ export default function MeetingDetailSheet({
           )}
           {/* Header bar */}
           <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-terminal text-gray-500 dark:text-gray-400">MEETING</span>
-              <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix font-terminal">DETAIL</span>
+            <div className="flex items-center gap-2 min-w-0">
+              {meetingTitle ? (
+                <span className="text-sm font-semibold text-gray-800 dark:text-white truncate">
+                  {meetingTitle}
+                </span>
+              ) : (
+                <>
+                  <span className="text-xs font-terminal text-gray-500 dark:text-gray-400">MEETING</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix font-terminal">DETAIL</span>
+                </>
+              )}
             </div>
             <button
               onClick={triggerClose}
@@ -256,6 +266,7 @@ export default function MeetingDetailSheet({
             availableTopics={availableTopics}
             onClose={triggerClose}
             onSelectMeeting={onSelectMeeting}
+            onTitleLoad={setMeetingTitle}
           />
         </div>
       </div>
