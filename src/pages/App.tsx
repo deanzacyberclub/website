@@ -24,7 +24,7 @@ const CircularGallery = lazy(() =>
     default: mod.default as React.ComponentType<any>,
   }))
 );
-import { TYPE_COLORS, TYPE_LABELS, parseLocalDate, isMeetingLive, isMeetingPast } from "@/lib/meetingUtils";
+import { parseLocalDate, isMeetingLive, isMeetingPast } from "@/lib/meetingUtils";
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -446,9 +446,6 @@ function EventCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className={`inline-block px-1.5 py-0 text-[9px] font-mono uppercase border ${TYPE_COLORS[meeting.type]}`}>
-              {TYPE_LABELS[meeting.type]}
-            </span>
             {isLive ? (
               <span className="text-[9px] font-mono uppercase text-red-400 animate-pulse">● LIVE</span>
             ) : isNew ? (
@@ -480,16 +477,15 @@ function EventCard({
             </div>
 
             <div className="flex-1 min-w-0 pt-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className={`inline-block px-2 py-0.5 text-[10px] font-mono uppercase border ${TYPE_COLORS[meeting.type]}`}>
-                  {TYPE_LABELS[meeting.type]}
-                </span>
-                {isLive ? (
-                  <span className="text-[10px] font-mono uppercase text-red-400 animate-pulse">● LIVE</span>
-                ) : isNew ? (
-                  <span className="text-[10px] font-mono uppercase text-emerald-400 animate-pulse">● NEW</span>
-                ) : null}
-              </div>
+              {(isLive || isNew) && (
+                <div className="flex items-center gap-2 mb-1">
+                  {isLive ? (
+                    <span className="text-[10px] font-mono uppercase text-red-400 animate-pulse">● LIVE</span>
+                  ) : (
+                    <span className="text-[10px] font-mono uppercase text-emerald-400 animate-pulse">● NEW</span>
+                  )}
+                </div>
+              )}
               <h3 className="text-white font-mono font-semibold text-base leading-tight">{meeting.title}</h3>
             </div>
           </div>

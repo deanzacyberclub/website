@@ -4,8 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import { supabase } from "@/lib/supabase";
 import {
-  TYPE_COLORS,
-  TYPE_LABELS,
   defaultCreateForm,
   formatTimeRange,
   getCurrentTopicsList,
@@ -14,7 +12,7 @@ import {
   isMeetingLive,
 } from "@/lib/meetingUtils";
 import type { CreateMeetingForm } from "@/lib/meetingUtils";
-import type { Meeting, MeetingType, Registration } from "@/types/database.types";
+import type { Meeting, Registration } from "@/types/database.types";
 import MeetingDetailSheet from "@/components/MeetingDetailSheet";
 import {
   CheckCircle,
@@ -26,7 +24,6 @@ import {
   Close,
 } from "@/lib/cyberIcon";
 import { Tabs } from "@/components/Tabs";
-import { SectionHeader } from "@/components/SectionHeader";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
 interface MeetingWithRegistration extends Meeting {
@@ -135,20 +132,27 @@ function Dashboard() {
     setSearchParams(params, { replace: true });
   };
 
-  // Search + Type filter (expandable search + pills), synced with URL for deep linking from tags in MeetingDetails
+  // Search (expandable), synced with URL for deep linking from topic tags in MeetingDetails
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") || "");
-  const [typeFilter, setTypeFilter] = useState<"all" | MeetingType>(() => (searchParams.get("type") as any) || "all");
   const [isSearchExpanded, setIsSearchExpanded] = useState(!!searchParams.get("q"));
+  const [isSearchClosing, setIsSearchClosing] = useState(false);
 
-  const updateFilterUrl = (q?: string, t?: string) => {
+  const updateFilterUrl = (q?: string) => {
     const params = new URLSearchParams(searchParams);
     if (q !== undefined) {
       if (q.trim()) params.set("q", q.trim()); else params.delete("q");
     }
-    if (t !== undefined) {
-      if (t && t !== "all") params.set("type", t); else params.delete("type");
-    }
     setSearchParams(params, { replace: true });
+  };
+
+  const closeSearchBar = () => {
+    setIsSearchClosing(true);
+    setTimeout(() => {
+      setSearchQuery("");
+      setIsSearchExpanded(false);
+      setIsSearchClosing(false);
+      updateFilterUrl("");
+    }, 80);
   };
 
   // Officer create meeting flow (exact same as Meetings.tsx)
@@ -162,15 +166,13 @@ function Dashboard() {
     setTimeout(() => setLoaded(true), 100);
   }, []);
 
-  // Sync search + type filters from URL (so clicks on "Topics Covered" / type tags
-  // from MeetingDetails — even when the sheet is open — actually filter the list).
+  // Sync search from URL (so clicks on "Topics Covered" tags from MeetingDetails —
+  // even when the sheet is open — actually filter the list).
   // Using functional setters avoids stale closures and feedback loops.
   useEffect(() => {
     const q = searchParams.get("q") || "";
-    const t = (searchParams.get("type") as MeetingType | null) || "all";
 
     setSearchQuery((curr) => (curr !== q ? q : curr));
-    setTypeFilter((curr) => (curr !== t ? t : curr));
 
     if (q) {
       setIsSearchExpanded(true);
@@ -306,13 +308,9 @@ function Dashboard() {
     return upcomingMeetings.find((m) => isMeetingLive(m));
   }, [upcomingMeetings]);
 
-  // Apply search + type filter (client-side on whatever the tab gives us)
+  // Apply search filter (client-side on whatever the tab gives us)
   const displayedMeetings = useMemo(() => {
     let list = baseDisplayed;
-
-    if (typeFilter !== "all") {
-      list = list.filter((m) => m.type === typeFilter);
-    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -324,7 +322,7 @@ function Dashboard() {
       );
     }
     return list;
-  }, [baseDisplayed, searchQuery, typeFilter]);
+  }, [baseDisplayed, searchQuery]);
 
   const allTopics = useMemo(() => {
     const set = new Set<string>();
@@ -452,7 +450,6 @@ function Dashboard() {
         p_date: createForm.date,
         p_time: timeStr,
         p_location: createForm.location.trim() || "ATC 205",
-        p_type: createForm.type,
         p_featured: createForm.featured,
         p_topics: topicsArray,
         p_secret_code: createForm.secret_code.trim() || null,
@@ -599,7 +596,7 @@ function Dashboard() {
                   onClick={() => setShowCreateModal(true)}
                   icon={Calendar}
                   title="New Meeting"
-                  description="Schedule a new workshop, lecture, CTF, or social and set the secret attendance code."
+                  description="Schedule a new meeting and set the secret attendance code."
                   headerFile="create_meeting.sh"
                   headerTag="CREATE"
                   tagColor="text-blue-600 dark:text-hack-cyan"
@@ -615,7 +612,9 @@ function Dashboard() {
           <ScrollReveal delay={0}>
             <section className="mb-12">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                <SectionHeader index="01" title="Events" />
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-matrix uppercase tracking-wide">
+                  Events
+                </h2>
 
                 <div className="flex items-center gap-3 flex-wrap">
                   <Tabs
@@ -629,20 +628,7 @@ function Dashboard() {
                     }
                   />
 
-                  {/* Manual refresh — useful after check-in on /live to pull latest attendance status */}
-                  <button
-                    onClick={fetchDashboardData}
-                    disabled={dataLoading}
-                    className="p-2 border border-gray-300 dark:border-gray-700 hover:border-green-500 dark:hover:border-matrix/60 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-matrix transition-colors rounded disabled:opacity-50"
-                    aria-label="Refresh events and attendance"
-                    title="Refresh (pulls latest attendance from check-ins)"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${dataLoading ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.058 11H1M12 3v2m0 16v2m9-9H15m-6 0a8 8 0 01-.937-1.073M12 21a8 8 0 01-8-8" />
-                    </svg>
-                  </button>
-
-                  {/* Expandable search button (per request) */}
+                  {/* Expandable search button */}
                   <div className="flex items-center gap-2">
                     {!isSearchExpanded ? (
                       <button
@@ -656,24 +642,20 @@ function Dashboard() {
                         </svg>
                       </button>
                     ) : (
-                      <div className="relative w-48 sm:w-64">
+                      <div className={`relative w-48 sm:w-64 ${isSearchClosing ? "animate-search-close" : "animate-search-open"}`}>
                         <input
                           type="text"
                           value={searchQuery}
                           onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            updateFilterUrl(e.target.value, undefined);
+                            updateFilterUrl(e.target.value);
                           }}
                           placeholder="Search by name, topic, location..."
                           className="input-hack w-full pr-8 text-sm"
                           autoFocus
                         />
                         <button
-                          onClick={() => {
-                            setSearchQuery("");
-                            setIsSearchExpanded(false);
-                            updateFilterUrl("", undefined);
-                          }}
+                          onClick={closeSearchBar}
                           className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                           aria-label="Close search"
                         >
@@ -683,43 +665,6 @@ function Dashboard() {
                     )}
                   </div>
                 </div>
-              </div>
-
-              {/* Type filter pills (always visible, works with search + tabs) */}
-              <div className="flex items-center gap-2 mb-4 flex-wrap">
-                <span className="text-[10px] font-terminal text-gray-500 dark:text-gray-600 uppercase tracking-wider mr-1">Filter</span>
-                {(["all", "workshop", "lecture", "ctf", "social", "general"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => {
-                      const next = t === "all" ? "all" : t;
-                      setTypeFilter(next as any);
-                      updateFilterUrl(undefined, next);
-                    }}
-                    className={`px-2.5 py-0.5 text-xs font-terminal border transition-all ${
-                      typeFilter === t
-                        ? t === "all"
-                          ? "bg-blue-100 dark:bg-matrix/20 text-blue-700 dark:text-matrix border-blue-300 dark:border-matrix"
-                          : `bg-opacity-15 dark:bg-opacity-15 ${TYPE_COLORS[t]}`
-                        : "bg-gray-100 dark:bg-terminal-alt text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700 hover:border-gray-400"
-                    }`}
-                  >
-                    {t === "all" ? "ALL" : TYPE_LABELS[t]}
-                  </button>
-                ))}
-                {(searchQuery || typeFilter !== "all") && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery("");
-                      setTypeFilter("all");
-                      setIsSearchExpanded(false);
-                      updateFilterUrl("", "all");
-                    }}
-                    className="ml-2 text-xs font-terminal text-hack-red hover:text-red-400"
-                  >
-                    CLEAR
-                  </button>
-                )}
               </div>
 
               {dataLoading ? (
@@ -735,7 +680,9 @@ function Dashboard() {
                     </div>
                   ))}
                 </div>
-              ) : displayedMeetings.length > 0 ? (
+              ) : (
+                <div key={activeTab} className="animate-tab-enter">
+                {displayedMeetings.length > 0 ? (
                 <div className="space-y-0">
                   {displayedMeetings.map((meeting, index) => (
                     <div key={meeting.id} className="flex gap-4 group">
@@ -792,11 +739,6 @@ function Dashboard() {
                               {meeting.title}
                             </h3>
                             <div className="flex flex-wrap items-center gap-3 mb-3">
-                              <span
-                                className={`inline-block px-2 py-0.5 text-xs font-terminal border ${TYPE_COLORS[meeting.type]}`}
-                              >
-                                {TYPE_LABELS[meeting.type]}
-                              </span>
                               <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-600">
                                 <MapPin className="w-3 h-3" />
                                 {meeting.location}
@@ -840,7 +782,7 @@ function Dashboard() {
                     </div>
                   ))}
                 </div>
-              ) : (
+                ) : (
                 <div className="terminal-window">
                   <div className="terminal-header">
                     <div className="terminal-dot red" />
@@ -853,30 +795,25 @@ function Dashboard() {
                         <Calendar className="w-8 h-8 text-gray-400 dark:text-gray-600" />
                       </div>
                       <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">
-                        {searchQuery || typeFilter !== "all"
-                          ? "No matches for your filters"
+                        {searchQuery
+                          ? "No matches for your search"
                           : activeTab === "upcoming"
                             ? "No upcoming events yet"
                             : "No past events yet"}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-500 text-sm mb-6">
-                        {searchQuery || typeFilter !== "all"
-                          ? "Try a different search term or clear the type filter."
+                        {searchQuery
+                          ? "Try a different search term."
                           : activeTab === "upcoming"
                             ? "Check out our meetings page to discover and register for upcoming events and workshops."
                             : "All past club events appear here. Use the secret code on the check-in page to mark attendance. \"Attended\" = verified with code. \"Missed\" = registered/invited but no check-in recorded."}
                       </p>
-                      {searchQuery || typeFilter !== "all" ? (
+                      {searchQuery ? (
                         <button
-                          onClick={() => {
-                            setSearchQuery("");
-                            setTypeFilter("all");
-                            setIsSearchExpanded(false);
-                            updateFilterUrl("", "all");
-                          }}
+                          onClick={closeSearchBar}
                           className="cli-btn-filled px-6 py-2.5 inline-flex items-center gap-2 text-sm"
                         >
-                          Clear Filters
+                          Clear Search
                         </button>
                       ) : (
                         <Link
@@ -889,6 +826,8 @@ function Dashboard() {
                       )}
                     </div>
                   </div>
+                </div>
+                )}
                 </div>
               )}
             </section>
@@ -965,22 +904,6 @@ function Dashboard() {
                   placeholder="auto-generated-from-title"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">/dashboard?meeting={createForm.slug || createForm.title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").slice(0, 30) || "slug"}</p>
-              </div>
-
-              {/* Type */}
-              <div>
-                <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">TYPE</label>
-                <select
-                  value={createForm.type}
-                  onChange={(e) => setCreateForm({ ...createForm, type: e.target.value as any })}
-                  className="input-hack w-full"
-                >
-                  <option value="general">General</option>
-                  <option value="workshop">Workshop</option>
-                  <option value="lecture">Lecture</option>
-                  <option value="ctf">CTF</option>
-                  <option value="social">Social</option>
-                </select>
               </div>
 
               {/* Date + Time Range */}

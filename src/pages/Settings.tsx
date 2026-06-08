@@ -1,8 +1,8 @@
 import { useState, useEffect, FormEvent, ChangeEvent, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import { GitHubAlt, Discord, LinkedIn, Apple, Spinner, User, Unlink, Check, Key, AlertTriangle, Code } from '@/lib/cyberIcon'
+import { GitHubAlt, Discord, LinkedIn, Apple, Spinner, User, Unlink, Check, Key, AlertTriangle, Code, Mail } from '@/lib/cyberIcon'
 import { SectionHeader } from '@/components/SectionHeader'
 import { ScrollReveal } from '@/components/ScrollReveal'
 
@@ -16,18 +16,14 @@ function Settings() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteError, setDeleteError] = useState('')
-  const [deleteLoading, setDeleteLoading] = useState(false)
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null)
   const [unlinkConfirmProvider, setUnlinkConfirmProvider] = useState<string | null>(null)
   const [unlinkLoading, setUnlinkLoading] = useState(false)
   const [linkError, setLinkError] = useState('')
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { user, userProfile, updateUserProfile, deleteAccount, linkIdentity, unlinkIdentity } = useAuth()
+  const { user, userProfile, updateUserProfile, linkIdentity, unlinkIdentity } = useAuth()
 
   const linkedAccounts = userProfile?.linked_accounts || []
 
@@ -96,7 +92,7 @@ function Settings() {
     setSuccess('')
 
     try {
-      const pictureToUpload = removePhoto ? null : profilePicture
+      const pictureToUpload = removePhoto ? null : (profilePicture ?? undefined)
       await updateUserProfile(displayName.trim(), studentId, pictureToUpload)
       setSuccess('[SUCCESS] Profile updated')
       setProfilePicture(null)
@@ -105,21 +101,6 @@ function Settings() {
       setError('[ERROR] Failed to update profile')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleDeleteAccount = async () => {
-    setDeleteLoading(true)
-    setDeleteError('')
-
-    try {
-      await deleteAccount()
-      navigate('/')
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      setDeleteError(`[ERROR] ${errorMessage}`)
-    } finally {
-      setDeleteLoading(false)
     }
   }
 
@@ -477,54 +458,36 @@ function Settings() {
                 <p className="text-xs text-gray-500 dark:text-gray-600 font-terminal mt-4">
                   <span className="text-green-700 dark:text-matrix">&gt;</span> You can sign in with any linked account
                 </p>
-              </div>
-            </div>
-          </section>
-        </ScrollReveal>
 
-        {/* Danger Zone */}
-        <ScrollReveal delay={100}>
-          <section>
-            <SectionHeader index="03" title="Danger Zone" />
-            <div className="terminal-window relative overflow-hidden">
-              <div className="terminal-header">
-                <div className="terminal-dot red" />
-                <div className="terminal-dot yellow" />
-                <div className="terminal-dot green" />
-                <span className="ml-4 text-xs text-red-600 dark:text-hack-red font-terminal">danger_zone.sh</span>
-                <span className="ml-auto text-xs text-red-600/60 dark:text-hack-red/40 font-terminal animate-pulse">WARNING</span>
-              </div>
-              <div className="terminal-body">
-                <div className="border border-red-200 dark:border-hack-red/30 p-5 bg-red-50/50 dark:bg-hack-red/5 relative overflow-hidden group">
-                  {/* Corner brackets */}
-                  <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-red-300 dark:border-hack-red/40" />
-                  <span className="absolute top-0 right-0 w-2 h-2 border-t border-r border-red-300 dark:border-hack-red/40" />
-                  <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-red-300 dark:border-hack-red/40" />
-                  <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-red-300 dark:border-hack-red/40" />
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 border border-red-300 dark:border-hack-red/40 bg-red-100 dark:bg-hack-red/10 flex items-center justify-center shrink-0">
-                      <AlertTriangle className="w-5 h-5 text-red-600 dark:text-hack-red" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-red-700 dark:text-hack-red font-semibold mb-1">Delete Account</h3>
-                      <p className="text-gray-600 dark:text-gray-500 text-sm mb-4">
-                        Permanently delete your account and all associated data. This action cannot be undone.
+                {/* Registered Emails */}
+                {(() => {
+                  const emails = [...new Set(
+                    linkedAccounts
+                      .map(a => a.provider_email)
+                      .filter((e): e is string => !!e)
+                  )]
+                  if (!emails.length) return null
+                  return (
+                    <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-800">
+                      <p className="text-xs text-gray-500 dark:text-gray-500 font-terminal uppercase tracking-wider mb-3">
+                        Registered Emails
                       </p>
-                      <button
-                        onClick={() => setShowDeleteModal(true)}
-                        className="px-4 py-2 bg-red-100 dark:bg-hack-red/20 border border-red-300 dark:border-hack-red/50 text-red-700 dark:text-hack-red hover:bg-red-200 dark:hover:bg-hack-red/30 transition-colors font-terminal text-sm flex items-center gap-2"
-                      >
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        DELETE ACCOUNT
-                      </button>
+                      <div className="space-y-2">
+                        {emails.map((email) => (
+                          <div key={email} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-terminal-bg/50">
+                            <Mail className="w-4 h-4 text-green-600 dark:text-matrix/70 shrink-0" />
+                            <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{email}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  )
+                })()}
               </div>
             </div>
           </section>
         </ScrollReveal>
+
       </div>
 
       {/* Unlink Confirmation Dialog */}
@@ -544,21 +507,6 @@ function Settings() {
         icon={<Unlink className="w-8 h-8 text-hack-yellow" />}
       />
 
-      {/* Delete Account Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false)
-          setDeleteError('')
-        }}
-        onConfirm={handleDeleteAccount}
-        title="DELETE ACCOUNT?"
-        message="This will permanently delete your account, profile data, and cannot be undone."
-        confirmText="DELETE FOREVER"
-        loading={deleteLoading}
-        error={deleteError}
-        variant="danger"
-      />
     </div>
   )
 }

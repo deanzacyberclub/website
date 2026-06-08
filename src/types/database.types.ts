@@ -6,7 +6,6 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type MeetingType = 'workshop' | 'lecture' | 'ctf' | 'social' | 'general'
 export type RegistrationType = 'open' | 'invite_only' | 'closed'
 export type RegistrationStatus = 'registered' | 'waitlist' | 'invited' | 'attended' | 'cancelled'
 
@@ -62,7 +61,6 @@ export interface Database {
           date: string
           time: string
           location: string
-          type: MeetingType
           featured: boolean
           topics: string[]
           resources: Resource[]
@@ -82,7 +80,6 @@ export interface Database {
           date: string
           time: string
           location: string
-          type: MeetingType
           featured?: boolean
           topics?: string[]
           resources?: Resource[]
@@ -102,7 +99,6 @@ export interface Database {
           date?: string
           time?: string
           location?: string
-          type?: MeetingType
           featured?: boolean
           topics?: string[]
           resources?: Resource[]
@@ -207,7 +203,6 @@ export interface Database {
           date: string
           time: string
           location: string
-          type: MeetingType
           featured: boolean
           topics: string[]
           resources: Resource[]

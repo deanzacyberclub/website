@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { TYPE_COLORS, TYPE_LABELS } from "@/lib/meetingUtils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import type {
   Meeting,
-  MeetingType,
   Resource,
   Registration,
   RegistrationType,
@@ -79,7 +77,6 @@ interface EditForm {
   date: string;
   time: string;
   location: string;
-  type: MeetingType;
   featured: boolean;
   topics: string;
   secret_code: string;
@@ -220,8 +217,8 @@ function MeetingDetails({
             const { data: related } = await supabase
               .from("meetings_public")
               .select("*")
-              .eq("type", data.type)
               .neq("slug", slug)
+              .order("date", { ascending: false })
               .limit(3);
             setRelatedMeetings(related || []);
           }
@@ -433,7 +430,6 @@ function MeetingDetails({
       date: meeting.date,
       time: meeting.time,
       location: meeting.location,
-      type: meeting.type,
       featured: meeting.featured,
       topics: meeting.topics?.join(", ") || "",
       secret_code: meeting.secret_code || "",
@@ -566,7 +562,6 @@ function MeetingDetails({
           p_date: editForm.date,
           p_time: editForm.time,
           p_location: editForm.location,
-          p_type: editForm.type,
           p_featured: editForm.featured,
           p_topics: topicsArray,
           p_secret_code: editForm.secret_code || null,
@@ -799,7 +794,7 @@ function MeetingDetails({
                     </div>
                   )}
 
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div>
                     {/* Slug */}
                     <div>
                       <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
@@ -822,26 +817,6 @@ function MeetingDetails({
                       <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                         /meetings/{editForm.slug}
                       </p>
-                    </div>
-
-                    {/* Type */}
-                    <div>
-                      <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
-                        TYPE
-                      </label>
-                      <select
-                        value={editForm.type}
-                        onChange={(e) =>
-                          handleEditChange("type", e.target.value)
-                        }
-                        className="input-hack w-full "
-                      >
-                        <option value="workshop">Workshop</option>
-                        <option value="lecture">Lecture</option>
-                        <option value="ctf">CTF</option>
-                        <option value="social">Social</option>
-                        <option value="general">General</option>
-                      </select>
                     </div>
                   </div>
 
@@ -1303,13 +1278,6 @@ function MeetingDetails({
                       <span className="text-white/40">›</span>
                     </div>
                     {meeting.featured && <span className="text-[10px] px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/30">FEATURED</span>}
-                    {/* Clickable type tag — filters in Dashboard instead of old /meetings page */}
-                    <Link
-                      to={`/dashboard?type=${meeting.type}`}
-                      className={`text-[10px] px-2 py-0.5 rounded border ${TYPE_COLORS[meeting.type]} hover:opacity-80 transition-opacity`}
-                    >
-                      {TYPE_LABELS[meeting.type]}
-                    </Link>
                   </div>
 
                   {/* Big Title */}
@@ -1420,9 +1388,6 @@ function MeetingDetails({
                   <div className="hidden">
                     {/* Status Badges */}
                     <div className="flex flex-wrap items-center gap-3 mb-6">
-                      <span className={`inline-block px-3 py-1 text-sm font-terminal border ${TYPE_COLORS[meeting.type]}`}>
-                        {TYPE_LABELS[meeting.type]}
-                      </span>
                       {meeting.featured && <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-terminal bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix/50"><Star className="w-4 h-4" /> FEATURED</span>}
                       {isPast(meeting.date) && <span className="inline-block px-3 py-1 text-sm font-terminal border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-500">COMPLETED</span>}
                     </div>
@@ -1984,12 +1949,12 @@ function MeetingDetails({
             <div className="flex items-center gap-3 mb-6">
               <span className="text-matrix neon-text-subtle text-lg">$</span>
               <span className="text-gray-400 font-terminal">
-                ls ./meetings/ --type={meeting.type} | head -3
+                ls ./meetings/ | head -3
               </span>
             </div>
 
             <h2 className="text-xl font-bold text-matrix mb-4">
-              Related {TYPE_LABELS[meeting.type]} Events
+              Related Events
             </h2>
             <div className="grid gap-4 md:grid-cols-3">
               {relatedMeetings.map((related) => (
@@ -2008,18 +1973,13 @@ function MeetingDetails({
                     isPast(related.date) ? "opacity-70" : ""
                   }`}
                 >
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span
-                      className={`inline-block px-2 py-0.5text-xs font-terminal border ${TYPE_COLORS[related.type]}`}
-                    >
-                      {TYPE_LABELS[related.type]}
-                    </span>
-                    {isPast(related.date) && (
+                  {isPast(related.date) && (
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className="inline-block px-2 py-0.5text-xs font-terminal border border-gray-600 text-gray-500">
                         PAST
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <h3
                     className={`font-semibold mb-2 group-hover:neon-text-subtle transition-all line-clamp-2 ${
                       isPast(related.date) ? "text-gray-400" : "text-matrix"

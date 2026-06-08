@@ -1,4 +1,4 @@
-import type { Meeting, MeetingType, Resource } from '@/types/database.types';
+import type { Meeting, Resource } from '@/types/database.types';
 
 // Discord is the canonical announcement channel.
 // We always ensure this resource exists on every meeting.
@@ -25,7 +25,6 @@ export interface CreateMeetingForm {
   startTime: string;
   endTime: string;
   location: string;
-  type: MeetingType;
   featured: boolean;
   topics: string;
   secret_code: string;
@@ -39,7 +38,6 @@ export const defaultCreateForm: CreateMeetingForm = {
   startTime: '14:30',
   endTime: '16:00',
   location: 'ATC 205',
-  type: 'general',
   featured: false,
   topics: '',
   secret_code: ''
@@ -78,22 +76,6 @@ export const getCurrentTopicsList = (topicsStr: string): string[] =>
 export const getLastTopicPartial = (topicsStr: string): string => {
   const parts = topicsStr.split(',');
   return parts[parts.length - 1].trim().toLowerCase();
-};
-
-export const TYPE_COLORS: Record<MeetingType, string> = {
-  workshop: 'text-hack-cyan border-hack-cyan/50',
-  lecture: 'text-hack-yellow border-hack-yellow/50',
-  ctf: 'text-hack-red border-hack-red/50',
-  social: 'text-purple-400 border-purple-400/50',
-  general: 'text-matrix border-matrix/50'
-};
-
-export const TYPE_LABELS: Record<MeetingType, string> = {
-  workshop: 'WORKSHOP',
-  lecture: 'LECTURE',
-  ctf: 'CTF',
-  social: 'SOCIAL',
-  general: 'GENERAL'
 };
 
 // ─── Live / time helpers (centralized, used by landing + dashboard for "LIVE" indicators and attendance prompts) ───
