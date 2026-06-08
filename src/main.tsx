@@ -42,7 +42,7 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               <Route
                 path="/@/:id"
                 element={
-                  <ProtectedRoute requireOfficer>
+                  <ProtectedRoute>
                     <UserProfile />
                   </ProtectedRoute>
                 }
@@ -76,7 +76,7 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               <Route
                 path="/officer"
                 element={
-                  <ProtectedRoute requireOfficer>
+                  <ProtectedRoute>
                     <Officer />
                   </ProtectedRoute>
                 }

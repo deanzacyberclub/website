@@ -68,10 +68,7 @@ function UserProfile() {
   const [error, setError] = useState<string | null>(null);
   const [deletingAttendance, setDeletingAttendance] = useState<string | null>(null);
 
-  // Note: The entire route is already protected by <ProtectedRoute requireOfficer> in main.tsx.
-  // That component performs the server-side verify_officer_status() RPC and will redirect
-  // non-officers (or show loading) before this component ever mounts.
-  // We still have a 403 catch inside fetch for belt-and-suspenders defense.
+
 
   // Fetch user details (guarded by the route wrapper + server-side checks inside the officer RPCs)
   useEffect(() => {

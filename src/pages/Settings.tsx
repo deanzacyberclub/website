@@ -1,178 +1,202 @@
-import { useState, useEffect, FormEvent, ChangeEvent, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import ConfirmDialog from '@/components/ConfirmDialog'
-import { GitHubAlt, Discord, LinkedIn, Apple, Spinner, User, Unlink, Check, Key, AlertTriangle, Code, Mail } from '@/lib/cyberIcon'
-import { SectionHeader } from '@/components/SectionHeader'
-import { ScrollReveal } from '@/components/ScrollReveal'
+import { useState, useEffect, FormEvent, ChangeEvent, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import {
+  GitHubAlt,
+  Discord,
+  LinkedIn,
+  Apple,
+  Spinner,
+  User,
+  Unlink,
+  Check,
+  Key,
+  AlertTriangle,
+  Code,
+  Mail,
+} from "@/lib/cyberIcon";
+import { SectionHeader } from "@/components/SectionHeader";
+import { ScrollReveal } from "@/components/ScrollReveal";
 
 function Settings() {
-  const [loaded, setLoaded] = useState(false)
-  const [displayName, setDisplayName] = useState('')
-  const [studentId, setStudentId] = useState('')
-  const [profilePicture, setProfilePicture] = useState<File | null>(null)
-  const [profilePreview, setProfilePreview] = useState<string | null>(null)
-  const [removePhoto, setRemovePhoto] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [linkingProvider, setLinkingProvider] = useState<string | null>(null)
-  const [unlinkConfirmProvider, setUnlinkConfirmProvider] = useState<string | null>(null)
-  const [unlinkLoading, setUnlinkLoading] = useState(false)
-  const [linkError, setLinkError] = useState('')
+  const [loaded, setLoaded] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePreview, setProfilePreview] = useState<string | null>(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
+  const [unlinkConfirmProvider, setUnlinkConfirmProvider] = useState<
+    string | null
+  >(null);
+  const [unlinkLoading, setUnlinkLoading] = useState(false);
+  const [linkError, setLinkError] = useState("");
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const { user, userProfile, updateUserProfile, linkIdentity, unlinkIdentity } = useAuth()
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user, userProfile, updateUserProfile, linkIdentity, unlinkIdentity } =
+    useAuth();
 
-  const linkedAccounts = userProfile?.linked_accounts || []
+  const linkedAccounts = userProfile?.linked_accounts || [];
 
   useEffect(() => {
-    setTimeout(() => setLoaded(true), 100)
-  }, [])
+    setTimeout(() => setLoaded(true), 100);
+  }, []);
 
   // Handle linking errors from URL
   useEffect(() => {
-    const errorParam = searchParams.get('error')
+    const errorParam = searchParams.get("error");
     if (errorParam) {
-      if (errorParam === 'already_linked') {
-        setLinkError('[ERROR] This account is already linked to another user')
-      } else if (errorParam === 'linking_failed') {
-        setLinkError('[ERROR] Failed to link account')
+      if (errorParam === "already_linked") {
+        setLinkError("[ERROR] This account is already linked to another user");
+      } else if (errorParam === "linking_failed") {
+        setLinkError("[ERROR] Failed to link account");
       } else {
-        setLinkError(`[ERROR] ${decodeURIComponent(errorParam)}`)
+        setLinkError(`[ERROR] ${decodeURIComponent(errorParam)}`);
       }
       // Clear the error from URL
-      setSearchParams({}, { replace: true })
+      setSearchParams({}, { replace: true });
     }
-  }, [searchParams, setSearchParams])
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     if (userProfile) {
-      setDisplayName(userProfile.display_name || '')
-      setStudentId(userProfile.student_id || '')
+      setDisplayName(userProfile.display_name || "");
+      setStudentId(userProfile.student_id || "");
       if (userProfile.photo_url) {
-        setProfilePreview(userProfile.photo_url)
+        setProfilePreview(userProfile.photo_url);
       }
     }
-  }, [userProfile])
+  }, [userProfile]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setError('[ERROR] Image must be under 5MB')
-        return
+        setError("[ERROR] Image must be under 5MB");
+        return;
       }
-      setProfilePicture(file)
-      setRemovePhoto(false)
-      const reader = new FileReader()
+      setProfilePicture(file);
+      setRemovePhoto(false);
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setProfilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleRemovePhoto = () => {
-    setProfilePicture(null)
-    setProfilePreview(null)
-    setRemovePhoto(true)
-  }
+    setProfilePicture(null);
+    setProfilePreview(null);
+    setRemovePhoto(true);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!displayName.trim()) {
-      setError('[ERROR] Display name required')
-      return
+      setError("[ERROR] Display name required");
+      return;
     }
 
-    setLoading(true)
-    setError('')
-    setSuccess('')
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
     try {
-      const pictureToUpload = removePhoto ? null : (profilePicture ?? undefined)
-      await updateUserProfile(displayName.trim(), studentId, pictureToUpload)
-      setSuccess('[SUCCESS] Profile updated')
-      setProfilePicture(null)
-      setRemovePhoto(false)
+      const pictureToUpload = removePhoto
+        ? null
+        : (profilePicture ?? undefined);
+      await updateUserProfile(displayName.trim(), studentId, pictureToUpload);
+      setSuccess("[SUCCESS] Profile updated");
+      setProfilePicture(null);
+      setRemovePhoto(false);
     } catch {
-      setError('[ERROR] Failed to update profile')
+      setError("[ERROR] Failed to update profile");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleLinkAccount = async (provider: 'github' | 'discord' | 'linkedin_oidc') => {
-    setLinkingProvider(provider)
-    setLinkError('')
+  const handleLinkAccount = async (
+    provider: "github" | "discord" | "linkedin_oidc",
+  ) => {
+    setLinkingProvider(provider);
+    setLinkError("");
     try {
-      await linkIdentity(provider)
+      await linkIdentity(provider);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      setLinkError(`[ERROR] ${errorMessage}`)
-      setLinkingProvider(null)
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setLinkError(`[ERROR] ${errorMessage}`);
+      setLinkingProvider(null);
     }
-  }
+  };
 
   const handleUnlinkAccount = async () => {
-    if (!unlinkConfirmProvider) return
+    if (!unlinkConfirmProvider) return;
 
     if (linkedAccounts.length <= 1) {
-      setLinkError('[ERROR] You must have at least one linked account')
-      return
+      setLinkError("[ERROR] You must have at least one linked account");
+      return;
     }
 
-    setUnlinkLoading(true)
-    setLinkError('')
+    setUnlinkLoading(true);
+    setLinkError("");
     try {
-      await unlinkIdentity(unlinkConfirmProvider)
-      setUnlinkConfirmProvider(null)
+      await unlinkIdentity(unlinkConfirmProvider);
+      setUnlinkConfirmProvider(null);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      setLinkError(`[ERROR] ${errorMessage}`)
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setLinkError(`[ERROR] ${errorMessage}`);
     } finally {
-      setUnlinkLoading(false)
+      setUnlinkLoading(false);
     }
-  }
+  };
 
   const getProviderDisplayName = (provider: string) => {
-    return providerConfig[provider as keyof typeof providerConfig]?.name || provider
-  }
+    return (
+      providerConfig[provider as keyof typeof providerConfig]?.name || provider
+    );
+  };
 
   const providerConfig = {
     github: {
-      name: 'GitHub',
+      name: "GitHub",
       icon: <GitHubAlt className="w-5 h-5 text-white" />,
-      iconBg: 'bg-[#24292e]',
-      borderColor: 'border-gray-700 dark:border-gray-600',
+      iconBg: "bg-[#24292e]",
+      borderColor: "border-gray-700 dark:border-gray-600",
     },
     discord: {
-      name: 'Discord',
+      name: "Discord",
       icon: <Discord className="w-5 h-5 text-white" />,
-      iconBg: 'bg-[#5865F2]',
-      borderColor: 'border-indigo-300 dark:border-[#5865F2]/50',
+      iconBg: "bg-[#5865F2]",
+      borderColor: "border-indigo-300 dark:border-[#5865F2]/50",
     },
     linkedin_oidc: {
-      name: 'LinkedIn',
+      name: "LinkedIn",
       icon: <LinkedIn className="w-5 h-5 text-white" />,
-      iconBg: 'bg-[#0A66C2]',
-      borderColor: 'border-blue-300 dark:border-[#0A66C2]/50',
+      iconBg: "bg-[#0A66C2]",
+      borderColor: "border-blue-300 dark:border-[#0A66C2]/50",
     },
-  }
+  };
 
   const comingSoonProviders = [
     {
-      name: 'Apple',
+      name: "Apple",
       icon: <Apple className="w-5 h-5 text-white" />,
-      iconBg: 'bg-gray-900 dark:bg-gray-800',
-      borderColor: 'border-gray-300 dark:border-gray-700',
+      iconBg: "bg-gray-900 dark:bg-gray-800",
+      borderColor: "border-gray-300 dark:border-gray-700",
     },
-  ]
+  ];
 
-  const isLinked = (provider: string) => linkedAccounts.some(a => a.provider === provider)
-  const getLinkedAccount = (provider: string) => linkedAccounts.find(a => a.provider === provider)
+  const isLinked = (provider: string) =>
+    linkedAccounts.some((a) => a.provider === provider);
+  const getLinkedAccount = (provider: string) =>
+    linkedAccounts.find((a) => a.provider === provider);
 
   return (
     <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix">
@@ -180,7 +204,9 @@ function Settings() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
-        <header className={`mb-10 transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <header
+          className={`mb-10 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+        >
           <div className="flex items-center gap-2 mb-3">
             <span className="w-1.5 h-1.5 bg-green-500 dark:bg-matrix rounded-full animate-pulse" />
             <span className="font-mono text-xs text-gray-400 dark:text-matrix/40 uppercase tracking-widest">
@@ -191,7 +217,8 @@ function Settings() {
             Settings
           </h1>
           <p className="text-gray-500 dark:text-gray-500 font-mono text-sm">
-            <span className="text-green-700 dark:text-matrix">$</span> ./settings --edit-profile
+            <span className="text-green-700 dark:text-matrix">$</span>{" "}
+            ./settings --edit-profile
           </p>
         </header>
 
@@ -204,7 +231,9 @@ function Settings() {
                 <div className="terminal-dot red" />
                 <div className="terminal-dot yellow" />
                 <div className="terminal-dot green" />
-                <span className="ml-4 text-xs text-gray-500 font-terminal">edit_profile.sh</span>
+                <span className="ml-4 text-xs text-gray-500 font-terminal">
+                  edit_profile.sh
+                </span>
                 <span className="ml-auto text-xs text-gray-400 dark:text-matrix/40 font-terminal">
                   {userProfile?.id?.slice(0, 8)}...
                 </span>
@@ -218,17 +247,27 @@ function Settings() {
                       className="w-20 h-20 bg-green-50 dark:bg-matrix/5 border border-green-200 dark:border-matrix/30 flex items-center justify-center cursor-pointer hover:border-green-500 dark:hover:border-matrix/50 transition-all overflow-hidden group/photo relative"
                     >
                       {profilePreview ? (
-                        <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
+                        <img
+                          src={profilePreview}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <User className="w-8 h-8 text-green-300 dark:text-matrix/40" />
                       )}
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity">
-                        <span className="text-white text-[10px] font-terminal uppercase">Change</span>
+                        <span className="text-white text-[10px] font-terminal uppercase">
+                          Change
+                        </span>
                       </div>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-green-700 dark:text-matrix font-terminal mb-1">Profile Picture</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-600 mb-3">Max 5MB, click to change</p>
+                      <p className="text-sm text-green-700 dark:text-matrix font-terminal mb-1">
+                        Profile Picture
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-600 mb-3">
+                        Max 5MB, click to change
+                      </p>
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -276,7 +315,10 @@ function Settings() {
                   {/* Student ID (read-only) */}
                   <div>
                     <label className="block text-xs mb-2 text-gray-500 dark:text-gray-500 font-terminal uppercase tracking-wider">
-                      Student ID <span className="text-gray-400 dark:text-gray-600 font-normal normal-case">(read-only)</span>
+                      Student ID{" "}
+                      <span className="text-gray-400 dark:text-gray-600 font-normal normal-case">
+                        (read-only)
+                      </span>
                     </label>
                     <input
                       type="text"
@@ -285,18 +327,24 @@ function Settings() {
                       className="input-hack w-full opacity-50 cursor-not-allowed"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-600 font-terminal mt-2">
-                      <span className="text-green-700 dark:text-matrix">&gt;</span> Student ID cannot be changed after account creation
+                      <span className="text-green-700 dark:text-matrix">
+                        &gt;
+                      </span>{" "}
+                      Student ID cannot be changed after account creation
                     </p>
                   </div>
 
                   {/* Email (read-only) */}
                   <div>
                     <label className="block text-xs mb-2 text-gray-500 dark:text-gray-500 font-terminal uppercase tracking-wider">
-                      Email <span className="text-gray-400 dark:text-gray-600 font-normal normal-case">(read-only)</span>
+                      Email{" "}
+                      <span className="text-gray-400 dark:text-gray-600 font-normal normal-case">
+                        (read-only)
+                      </span>
                     </label>
                     <input
                       type="email"
-                      value={user?.email || ''}
+                      value={user?.email || ""}
                       disabled
                       className="input-hack w-full opacity-50 cursor-not-allowed"
                     />
@@ -327,7 +375,7 @@ function Settings() {
                         SAVING...
                       </span>
                     ) : (
-                      'SAVE CHANGES'
+                      "SAVE CHANGES"
                     )}
                   </button>
                 </form>
@@ -345,11 +393,14 @@ function Settings() {
                 <div className="terminal-dot red" />
                 <div className="terminal-dot yellow" />
                 <div className="terminal-dot green" />
-                <span className="ml-4 text-xs text-gray-500 font-terminal">link_accounts.sh</span>
+                <span className="ml-4 text-xs text-gray-500 font-terminal">
+                  link_accounts.sh
+                </span>
               </div>
               <div className="terminal-body">
                 <p className="text-sm text-gray-500 dark:text-gray-500 font-terminal mb-5">
-                  <span className="text-green-700 dark:text-matrix">$</span> Link additional accounts to sign in with multiple providers
+                  <span className="text-green-700 dark:text-matrix">$</span>{" "}
+                  Link additional accounts to sign in with multiple providers
                 </p>
 
                 {linkError && (
@@ -360,11 +411,15 @@ function Settings() {
                 )}
 
                 <div className="space-y-3">
-                  {(Object.keys(providerConfig) as Array<keyof typeof providerConfig>).map((provider) => {
-                    const config = providerConfig[provider]
-                    const linked = isLinked(provider)
-                    const linkedAccount = getLinkedAccount(provider)
-                    const isLinking = linkingProvider === provider
+                  {(
+                    Object.keys(providerConfig) as Array<
+                      keyof typeof providerConfig
+                    >
+                  ).map((provider) => {
+                    const config = providerConfig[provider];
+                    const linked = isLinked(provider);
+                    const linkedAccount = getLinkedAccount(provider);
+                    const isLinking = linkingProvider === provider;
 
                     return (
                       <div
@@ -372,12 +427,16 @@ function Settings() {
                         className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-terminal-bg/50 hover:border-green-500 dark:hover:border-matrix/30 transition-all duration-300 group"
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`p-2.5 ${config.iconBg} border ${config.borderColor} transition-colors`}>
+                          <div
+                            className={`p-2.5 ${config.iconBg} border ${config.borderColor} transition-colors`}
+                          >
                             {config.icon}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-900 dark:text-white text-sm">{config.name}</span>
+                              <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                                {config.name}
+                              </span>
                               {linked && (
                                 <span className="text-[10px] text-green-700 dark:text-matrix font-terminal border border-green-200 dark:border-matrix/30 px-1.5 py-0.5 bg-green-50 dark:bg-matrix/5">
                                   LINKED
@@ -397,7 +456,11 @@ function Settings() {
                               onClick={() => setUnlinkConfirmProvider(provider)}
                               disabled={linkedAccounts.length <= 1}
                               className="px-3 py-1.5 text-xs font-terminal border border-red-300 dark:border-hack-red/50 text-red-600 dark:text-hack-red hover:bg-red-50 dark:hover:bg-hack-red/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              title={linkedAccounts.length <= 1 ? 'You must have at least one linked account' : undefined}
+                              title={
+                                linkedAccounts.length <= 1
+                                  ? "You must have at least one linked account"
+                                  : undefined
+                              }
                             >
                               UNLINK
                             </button>
@@ -422,7 +485,7 @@ function Settings() {
                           )}
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
 
@@ -433,12 +496,16 @@ function Settings() {
                       className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-terminal-bg/50 opacity-60"
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`p-2.5 ${provider.iconBg} border ${provider.borderColor}`}>
+                        <div
+                          className={`p-2.5 ${provider.iconBg} border ${provider.borderColor}`}
+                        >
                           {provider.icon}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900 dark:text-white text-sm">{provider.name}</span>
+                            <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                              {provider.name}
+                            </span>
                             <span className="text-[10px] text-gray-500 dark:text-gray-500 font-terminal border border-gray-300 dark:border-gray-700 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800">
                               COMING SOON
                             </span>
@@ -455,18 +522,16 @@ function Settings() {
                   ))}
                 </div>
 
-                <p className="text-xs text-gray-500 dark:text-gray-600 font-terminal mt-4">
-                  <span className="text-green-700 dark:text-matrix">&gt;</span> You can sign in with any linked account
-                </p>
-
                 {/* Registered Emails */}
                 {(() => {
-                  const emails = [...new Set(
-                    linkedAccounts
-                      .map(a => a.provider_email)
-                      .filter((e): e is string => !!e)
-                  )]
-                  if (!emails.length) return null
+                  const emails = [
+                    ...new Set(
+                      linkedAccounts
+                        .map((a) => a.provider_email)
+                        .filter((e): e is string => !!e),
+                    ),
+                  ];
+                  if (!emails.length) return null;
                   return (
                     <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-800">
                       <p className="text-xs text-gray-500 dark:text-gray-500 font-terminal uppercase tracking-wider mb-3">
@@ -474,41 +539,44 @@ function Settings() {
                       </p>
                       <div className="space-y-2">
                         {emails.map((email) => (
-                          <div key={email} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-terminal-bg/50">
+                          <div
+                            key={email}
+                            className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-terminal-bg/50"
+                          >
                             <Mail className="w-4 h-4 text-green-600 dark:text-matrix/70 shrink-0" />
-                            <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{email}</span>
+                            <span className="text-sm font-mono text-gray-700 dark:text-gray-300">
+                              {email}
+                            </span>
                           </div>
                         ))}
                       </div>
                     </div>
-                  )
+                  );
                 })()}
               </div>
             </div>
           </section>
         </ScrollReveal>
-
       </div>
 
       {/* Unlink Confirmation Dialog */}
       <ConfirmDialog
         isOpen={unlinkConfirmProvider !== null}
         onClose={() => {
-          setUnlinkConfirmProvider(null)
-          setLinkError('')
+          setUnlinkConfirmProvider(null);
+          setLinkError("");
         }}
         onConfirm={handleUnlinkAccount}
-        title={`UNLINK ${unlinkConfirmProvider ? getProviderDisplayName(unlinkConfirmProvider).toUpperCase() : ''}?`}
-        message={`This will unlink your ${unlinkConfirmProvider ? getProviderDisplayName(unlinkConfirmProvider) : ''} account. You won't be able to sign in with it anymore.`}
+        title={`UNLINK ${unlinkConfirmProvider ? getProviderDisplayName(unlinkConfirmProvider).toUpperCase() : ""}?`}
+        message={`This will unlink your ${unlinkConfirmProvider ? getProviderDisplayName(unlinkConfirmProvider) : ""} account. You won't be able to sign in with it anymore.`}
         confirmText="UNLINK"
         loading={unlinkLoading}
         error={linkError}
         variant="warning"
         icon={<Unlink className="w-8 h-8 text-hack-yellow" />}
       />
-
     </div>
-  )
+  );
 }
 
-export default Settings
+export default Settings;

@@ -686,8 +686,8 @@ function Dashboard() {
                 <div className="space-y-0">
                   {displayedMeetings.map((meeting, index) => (
                     <div key={meeting.id} className="flex gap-4 group">
-                      {/* Timeline column */}
-                      <div className="flex flex-col items-center shrink-0">
+                      {/* Timeline column — desktop only */}
+                      <div className="hidden md:flex flex-col items-center shrink-0">
                         <div className="text-left w-24">
                           <div className="text-sm font-terminal text-gray-700 dark:text-gray-400">
                             {parseLocalDate(meeting.date).toLocaleDateString(
@@ -710,7 +710,7 @@ function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Event card — click opens the same MeetingDetailSheet as in the old /meetings */}
+                      {/* Event card */}
                       <div
                         onClick={() => openMeeting(meeting.slug)}
                         role="button"
@@ -721,35 +721,47 @@ function Dashboard() {
                             openMeeting(meeting.slug);
                           }
                         }}
-                        className="flex-1 border border-gray-200 dark:border-matrix/20 p-4 hover:border-green-500 dark:hover:border-matrix/40 hover:bg-green-50/30 dark:hover:bg-matrix/[0.03] hover:translate-x-1 transition-all duration-300 mb-4 relative overflow-hidden group/card cursor-pointer"
+                        className="flex-1 border border-gray-200 dark:border-matrix/20 p-3 md:p-4 hover:border-green-500 dark:hover:border-matrix/40 hover:bg-green-50/30 dark:hover:bg-matrix/[0.03] md:hover:translate-x-1 transition-all duration-300 mb-3 md:mb-4 relative overflow-hidden group/card cursor-pointer"
                       >
                         <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-500 dark:bg-matrix scale-y-0 group-hover/card:scale-y-100 transition-transform duration-300 origin-top" />
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
+                            {/* Date row — mobile only */}
+                            <div className="flex md:hidden items-center gap-1.5 mb-1.5 text-[11px] font-terminal text-gray-500 dark:text-gray-600">
+                              <span>
+                                {parseLocalDate(meeting.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              </span>
+                              <span>·</span>
+                              <span>
+                                {parseLocalDate(meeting.date).toLocaleDateString("en-US", { weekday: "short" })}
+                              </span>
+                            </div>
+
+                            {/* Time + LIVE */}
+                            <div className="flex items-center gap-2 mb-1.5 md:mb-2">
                               <span className="text-gray-500 dark:text-gray-500 text-xs font-terminal flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 {meeting.time}
                               </span>
                               {isMeetingLive(meeting) && (
-                                <span className="ml-1 text-[9px] font-mono px-1.5 py-px rounded border bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 animate-pulse">LIVE</span>
+                                <span className="text-[9px] font-mono px-1.5 py-px rounded border bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 animate-pulse">LIVE</span>
                               )}
                             </div>
-                            <h3 className="text-gray-900 dark:text-matrix font-semibold text-base mb-2 group-hover/card:tracking-wider transition-all duration-300">
+
+                            <h3 className="text-gray-900 dark:text-matrix font-semibold text-sm md:text-base mb-1.5 md:mb-2 group-hover/card:tracking-wider transition-all duration-300 leading-snug">
                               {meeting.title}
                             </h3>
-                            <div className="flex flex-wrap items-center gap-3 mb-3">
-                              <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-600">
-                                <MapPin className="w-3 h-3" />
+
+                            <div className="flex flex-wrap items-center gap-2 mb-2 md:mb-3">
+                              <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-600 truncate">
+                                <MapPin className="w-3 h-3 shrink-0" />
                                 {meeting.location}
                               </span>
                             </div>
 
+                            {/* Status badge */}
                             <div className="flex items-center gap-2">
                               {activeTab === "past" ? (
-                                // Past tab: Attended only if verified via secret code (or officer).
-                                // If had a registration but no "attended" status: "Missed".
-                                // Otherwise (no interaction with this event): no personal badge.
                                 meeting.userRegistration?.status === "attended" ? (
                                   <span className="inline-block px-2 py-0.5 text-xs font-terminal border bg-green-100 dark:bg-matrix/20 text-green-800 dark:text-matrix border-green-300 dark:border-matrix/40">
                                     Attended
@@ -760,10 +772,7 @@ function Dashboard() {
                                   </span>
                                 ) : null
                               ) : meeting.userRegistration &&
-                                getStatusBadge(
-                                  meeting.userRegistration,
-                                  false,
-                                ) ? (
+                                getStatusBadge(meeting.userRegistration, false) ? (
                                 <span
                                   className={`inline-block px-2 py-0.5 text-xs font-terminal border ${getStatusBadge(meeting.userRegistration, false)!.color}`}
                                 >
@@ -776,7 +785,7 @@ function Dashboard() {
                               )}
                             </div>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400 dark:text-matrix/30 group-hover/card:text-green-600 dark:group-hover/card:text-matrix group-hover/card:translate-x-0.5 transition-all shrink-0 mt-1" />
+                          <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-gray-400 dark:text-matrix/30 group-hover/card:text-green-600 dark:group-hover/card:text-matrix group-hover/card:translate-x-0.5 transition-all shrink-0 mt-1" />
                         </div>
                       </div>
                     </div>

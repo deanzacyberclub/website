@@ -1,44 +1,48 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 /**
  * Hook to verify officer status server-side
  * This prevents client-side tampering of the is_officer flag
  */
 export function useOfficerVerification() {
-  const [isVerifiedOfficer, setIsVerifiedOfficer] = useState<boolean | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isVerifiedOfficer, setIsVerifiedOfficer] = useState<boolean | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    verifyOfficerStatus()
-  }, [])
+    verifyOfficerStatus();
+  }, []);
 
   const verifyOfficerStatus = async () => {
     try {
-      const { data, error } = await supabase.rpc('verify_officer_status')
+      const { data, error } = await supabase.rpc("verify_officer_status");
 
       // Diagnostic logging - remove after debugging
-      const { data: { user } } = await supabase.auth.getUser()
-      console.log('[OfficerVerification] RPC result:', {
-        returned: data,
-        error: error?.message || null,
-        authUid: user?.id,
-        timestamp: new Date().toISOString(),
-      })
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      // console.log('[OfficerVerification] RPC result:', {
+      //   returned: data,
+      //   error: error?.message || null,
+      //   authUid: user?.id,
+      //   timestamp: new Date().toISOString(),
+      // })
 
       if (error) {
-        console.error('Error verifying officer status:', error)
-        setIsVerifiedOfficer(false)
+        console.error("Error verifying officer status:", error);
+        setIsVerifiedOfficer(false);
       } else {
-        setIsVerifiedOfficer(data === true)
+        setIsVerifiedOfficer(data === true);
       }
     } catch (err) {
-      console.error('Error verifying officer status:', err)
-      setIsVerifiedOfficer(false)
+      console.error("Error verifying officer status:", err);
+      setIsVerifiedOfficer(false);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  return { isVerifiedOfficer, isLoading, refetch: verifyOfficerStatus }
+  return { isVerifiedOfficer, isLoading, refetch: verifyOfficerStatus };
 }
