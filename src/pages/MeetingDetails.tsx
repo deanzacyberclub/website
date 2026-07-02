@@ -28,13 +28,13 @@ import {
 const DISCORD_RESOURCE: Resource = {
   id: "discord-default",
   title: "Join Discord",
-  url: "https://discord.gg/v5JWDrZVNp",
+  url: "https://discord.gg/MEtzjYFts2",
   type: "link",
 };
 
 function ensureDiscordResource(resources: Resource[]): Resource[] {
   const hasDiscord = resources.some((r) =>
-    r.url.includes("discord.gg/v5JWDrZVNp"),
+    r.url.includes("discord.gg/MEtzjYFts2"),
   );
   if (hasDiscord) return resources;
   return [DISCORD_RESOURCE, ...resources];
@@ -1065,7 +1065,7 @@ function MeetingDetails({
                         {checkInSubmitting ? "Checking in..." : "Check In"}
                       </button>
                       <a
-                        href="https://discord.gg/v5JWDrZVNp"
+                        href="https://discord.gg/MEtzjYFts2"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block w-full py-2 text-sm text-center text-white/50 hover:text-white/80 transition-colors"
@@ -1107,7 +1107,7 @@ function MeetingDetails({
                       Upcoming Event
                     </div>
                     <a
-                      href="https://discord.gg/v5JWDrZVNp"
+                      href="https://discord.gg/MEtzjYFts2"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block w-full py-2 text-sm text-center text-white/50 hover:text-white/80 transition-colors"

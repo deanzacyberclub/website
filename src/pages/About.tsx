@@ -439,7 +439,7 @@ function About() {
           </div>
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-matrix/20 flex flex-col sm:flex-row gap-4">
             <a
-              href="https://discord.gg/v5JWDrZVNp"
+              href="https://discord.gg/MEtzjYFts2"
               target="_blank"
               rel="noopener noreferrer"
               className="cli-btn-filled font-mono text-sm justify-center"

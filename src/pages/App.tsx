@@ -1433,7 +1433,7 @@ function OfficerModal({
 }
 
 // ─── Discord CTA Button ──────────────────────────────
-const DISCORD_URL = "https://discord.gg/v5JWDrZVNp";
+const DISCORD_URL = "https://discord.gg/MEtzjYFts2";
 
 function DiscordButton() {
   const [copied, setCopied] = useState(false);

@@ -158,7 +158,7 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
             <ul className="space-y-3 font-mono text-[11px] uppercase tracking-wider">
               <li>
                 <a
-                  href="https://discord.gg/v5JWDrZVNp"
+                  href="https://discord.gg/MEtzjYFts2"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"

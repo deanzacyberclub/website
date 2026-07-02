@@ -360,7 +360,7 @@ function Dashboard() {
         {
           id: "discord-default",
           title: "Join Discord",
-          url: "https://discord.gg/v5JWDrZVNp",
+          url: "https://discord.gg/MEtzjYFts2",
           type: "link" as const,
         },
       ];

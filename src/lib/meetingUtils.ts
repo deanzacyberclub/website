@@ -5,13 +5,13 @@ import type { Meeting, Resource } from '@/types/database.types';
 export const DISCORD_RESOURCE: Resource = {
   id: "discord-default",
   title: "Join Discord",
-  url: "https://discord.gg/v5JWDrZVNp",
+  url: "https://discord.gg/MEtzjYFts2",
   type: "link",
 };
 
 export function ensureDiscordResource(resources: Resource[]): Resource[] {
   const hasDiscord = resources.some((r) =>
-    r.url.includes("discord.gg/v5JWDrZVNp")
+    r.url.includes("discord.gg/MEtzjYFts2")
   );
   if (hasDiscord) return resources;
   return [DISCORD_RESOURCE, ...resources];

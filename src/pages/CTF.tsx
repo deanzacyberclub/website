@@ -197,7 +197,7 @@ function CTF() {
           {/* Mysterious label / easter egg message */}
           {flagCaught ? (
             <a
-              href="https://discord.gg/v5JWDrZVNp"
+              href="https://discord.gg/MEtzjYFts2"
               target="_blank"
               rel="noopener noreferrer"
               className="font-mono text-xs tracking-[0.2em] text-green-500 dark:text-matrix mb-10 uppercase hover:underline"
@@ -537,7 +537,7 @@ function CTF() {
               </div>
               <div className="flex flex-wrap gap-4 justify-center">
                 <a
-                  href="https://discord.gg/v5JWDrZVNp"
+                  href="https://discord.gg/MEtzjYFts2"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="cli-btn-filled px-8 py-4 flex items-center gap-3"
