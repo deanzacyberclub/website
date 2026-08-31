@@ -5,6 +5,7 @@ import {
   Flag,
   Code,
   Trophy,
+  Lightbulb,
   MapPin,
   Clock,
   Calendar,
@@ -16,6 +17,34 @@ import Monogram from "@/components/Monogram";
 
 // ─── Section definitions ───────────────────────────────
 const SECTIONS = [
+  {
+    id: "ml-foundations",
+    icon: Lightbulb,
+    title: "MACHINE LEARNING FOUNDATIONS",
+    file: "ml_foundations.sh",
+    tagline: "Understand the models you use every day.",
+    intro:
+      "Machine learning now underpins everything from search results to security tooling. We break down how models are actually built and trained — and how agentic AI systems are changing both offense and defense in security.",
+    topics: [
+      {
+        label: "How Models Learn",
+        body: "Training versus inference, datasets, loss functions, and gradient descent — the core loop behind every model, explained with intuition rather than heavy math.",
+      },
+      {
+        label: "Neural Networks & LLMs",
+        body: "From simple perceptrons to transformers. How large language models are trained, why they behave the way they do, and what their real capabilities and limits are.",
+      },
+      {
+        label: "Agentic AI",
+        body: "Models that use tools, browse, and take multi-step actions on their own. How agent systems are built and what they mean for automation, development, and security work.",
+      },
+      {
+        label: "AI Security",
+        body: "Prompt injection, jailbreaks, data poisoning, and adversarial examples — how ML systems get attacked, and how to defend the models you build and deploy.",
+      },
+    ],
+    note: "No prior ML experience needed — we start from intuition, not equations.",
+  },
   {
     id: "hacking-fundamentals",
     icon: Shield,
@@ -218,8 +247,9 @@ function About() {
             ABOUT DACC
           </h1>
           <p className="font-mono text-sm text-gray-600 dark:text-gray-400 max-w-xl mx-auto leading-relaxed">
-            De Anza Cybersecurity Club — hands-on workshops, CTF competitions,
-            and cert prep for students at De Anza College.
+            De Anza ML and Agentic Cybersecurity Club — machine learning
+            foundations, hands-on security workshops, CTF competitions, and
+            cert prep for students at De Anza College.
             <br />
             No experience required.
           </p>

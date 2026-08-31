@@ -5,7 +5,7 @@
 
 ## Overview
 
-The De Anza Cybersecurity Club design system is inspired by **terminal CLI aesthetics** — raw, functional, and authentically retro. It strips away visual flourishes to reveal a system-level interface that feels like hacking into a mainframe.
+The De Anza ML and Agentic Cybersecurity Club design system is inspired by **terminal CLI aesthetics** — raw, functional, and authentically retro. It strips away visual flourishes to reveal a system-level interface that feels like hacking into a mainframe.
 
 **Design Philosophy:**
 - **Brutally functional** — every element serves a purpose

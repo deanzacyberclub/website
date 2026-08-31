@@ -26,6 +26,7 @@ import { supabase } from "@/lib/supabase";
 import Monogram from "@/components/Monogram";
 
 // Lazy load the heavy CircularGallery (uses ogl/WebGL) only when needed
+import type { CircularGalleryHandle } from "@/components/CircularGallery";
 const CircularGallery = lazy(() =>
   import("@/components/CircularGallery").then((mod) => ({
     default: mod.default as React.ComponentType<any>,
@@ -43,8 +44,6 @@ import { OFFICERS, CURRENT_QUARTER, ROLE_ORDER } from "@/constants";
 import type { OfficerData } from "@/constants";
 import { useInView } from "@/hooks/useInView";
 import { ScrollReveal } from "@/components/ScrollReveal";
-
-const prefetchLive = () => import("./Attendance");
 
 // ─── Typewriter for hero heading ─────────────────────
 const HACKING_TERMS = [
@@ -230,9 +229,10 @@ function ScrollIndicator({ onClick }: { onClick: () => void }) {
 
 // ─── Cycling Status Messages ─────────────────────────
 const STATUS_MESSAGES = [
-  "Join 100+ members learning cybersecurity at De Anza College",
+  "Join 100+ members learning ML and cybersecurity at De Anza College",
   "Mondays 2:30–4:00 PM · ATC Room 205",
   "No experience required — beginners welcome",
+  "Now recruiting officers — help lead the club",
   "Next meeting: check Discord for updates",
   "Compete in CTFs · Earn certifications · Build real skills",
 ];
@@ -580,23 +580,6 @@ function LearnModules() {
     </div>
   );
 }
-
-// Reusable mic icon (used in CTF card)
-const MicIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.75}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M12 1v12m0 0c-2.21 0-4-1.79-4-4V5a4 4 0 118 0v4c0 2.21-1.79 4-4 4zm6-4v4a6 6 0 01-12 0V9" />
-    <path d="M19 10v2a7 7 0 01-14 0v-2" />
-    <path d="M12 19v4" />
-  </svg>
-);
 
 // ─── 01 HACKING FUNDAMENTALS ─────────────────────────────────
 function HackingFundamentalsDemo() {
@@ -1037,7 +1020,75 @@ function CTFCompetitionsDemo() {
   );
 }
 
-// ─── CTF Hackathon Teaser ────────────────────────────
+// ─── Officer Recruitment ─────────────────────────────
+const CLUB_GOALS = [
+  {
+    icon: Code,
+    title: "Machine Learning Foundations",
+    body: "Learn the basics of machine learning and understand how the models you use every day actually function.",
+  },
+  {
+    icon: Shield,
+    title: "Cybersecurity Fundamentals",
+    body: "Build security foundations that make you a stronger programmer, regardless of specialization.",
+  },
+  {
+    icon: Flag,
+    title: "Hands-On Pentesting",
+    body: "Work directly with industry tools like Burp Suite, Nmap, and Wireshark on legal practice targets.",
+  },
+];
+
+function OfficerRecruitment() {
+  return (
+    <section>
+      <SectionHeader
+        index="01"
+        title="OFFICERS WANTED"
+        subtitle="Help lead the De Anza ML and Agentic Cybersecurity Club"
+      />
+
+      <div className="border-l-2 border-green-300 dark:border-matrix/30 pl-5 mb-8 max-w-3xl">
+        <p className="font-mono text-gray-600 dark:text-gray-400 text-sm md:text-base leading-relaxed">
+          We&apos;re thrilled to announce the formation of the De Anza ML and
+          Agentic Cybersecurity Club — and we&apos;re looking for active,
+          engaged students to lead it. No prior experience is required, only a
+          willingness to learn and grow.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+        {CLUB_GOALS.map((goal) => {
+          const Icon = goal.icon;
+          return (
+            <div
+              key={goal.title}
+              className="group rounded-2xl border border-white/10 bg-[#0a0a0a] p-5 shadow-xl transition-all duration-300 hover:border-white/25 hover:shadow-2xl"
+            >
+              <div className="mb-3 w-9 h-9 rounded-xl border border-white/15 flex items-center justify-center text-emerald-400/80 group-hover:text-emerald-400 group-hover:border-white/25 transition-all">
+                <Icon className="w-4 h-4" />
+              </div>
+              <h3 className="font-mono font-semibold text-white text-sm mb-2">
+                {goal.title}
+              </h3>
+              <p className="font-sans text-xs text-white/60 leading-relaxed">
+                {goal.body}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <DiscordButton />
+        <p className="font-mono text-xs text-gray-500 dark:text-matrix/50 text-center">
+          Interested? Reach out on Discord or come to a meeting.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 // ─── FAQ Section ─────────────────────────────────────
 const faqs = [
   {
@@ -1053,7 +1104,7 @@ const faqs = [
   {
     question: "What will I learn?",
     answer:
-      "Everything from networking fundamentals and Linux basics to penetration testing, CTF competitions, and industry certifications like Security+ and Network+. We'll also cover game and app hacking in the future, so stay tuned!",
+      "Machine learning fundamentals — how the models you use every day are built and how they work — plus cybersecurity foundations: networking, Linux, penetration testing with tools like Burp Suite, Nmap, and Wireshark, CTF competitions, and industry certifications like Security+ and Network+.",
   },
   {
     question: "How do I join?",
@@ -1061,9 +1112,14 @@ const faqs = [
       "Just show up to a meeting! No registration required. Join our Discord to stay updated on events and connect with other members.",
   },
   {
+    question: "How can I become an officer?",
+    answer:
+      "We're actively recruiting officers right now. No prior experience is required — just a willingness to learn, grow, and stay engaged. Come to a meeting or reach out on Discord and we'll get you started.",
+  },
+  {
     question: "Is this club only for CS majors?",
     answer:
-      "Absolutely not! Cybersecurity is for everyone. We have members from all majors—what matters is your interest in learning.",
+      "Absolutely not! Machine learning and cybersecurity are for everyone. We have members from all majors — what matters is your interest in learning.",
   },
 ];
 
@@ -1595,10 +1651,11 @@ function App() {
             {/* Description with left border */}
             <div className="border-l-2 border-green-300 dark:border-matrix/30 pl-5 mb-10 max-w-2xl">
               <p className="font-mono text-gray-600 dark:text-gray-400 text-sm md:text-base leading-relaxed">
-                De Anza Cybersecurity Club brings students together with
-                hands-on workshops, CTF competitions, and industry
-                certifications. No experience required — we&apos;ll teach you
-                everything from the ground up.
+                The De Anza ML and Agentic Cybersecurity Club brings students
+                together to learn how modern machine learning models work,
+                build cybersecurity fundamentals, and get hands-on with tools
+                like Burp Suite, Nmap, and Wireshark. No experience required —
+                we&apos;ll teach you everything from the ground up.
               </p>
             </div>
 
@@ -1637,11 +1694,16 @@ function App() {
           ref={contentRef}
           className="max-w-5xl mx-auto px-6 py-20 space-y-24"
         >
+          {/* ── OFFICER RECRUITMENT ── */}
+          <ScrollReveal delay={0}>
+            <OfficerRecruitment />
+          </ScrollReveal>
+
           {/* ── RECENT EVENTS ── */}
           <ScrollReveal delay={0}>
             <section>
               <SectionHeader
-                index="01"
+                index="02"
                 title="RECENT EVENTS"
                 subtitle="Upcoming workshops, CTFs, and club meetings"
               />
@@ -1662,7 +1724,7 @@ function App() {
           <ScrollReveal delay={100}>
             <section>
               <SectionHeader
-                index="02"
+                index="03"
                 title="WHAT YOU'LL LEARN"
                 subtitle="Hands-on skills from industry professionals"
               />
@@ -1674,7 +1736,7 @@ function App() {
           <ScrollReveal delay={100}>
             <section>
               <SectionHeader
-                index="03"
+                index="04"
                 title="CLUB LEADERSHIP"
                 subtitle="The team running the club this quarter"
               />
@@ -1718,7 +1780,7 @@ function App() {
             <ScrollReveal delay={100}>
               <section>
                 <SectionHeader
-                  index="04"
+                  index="06"
                   title="THE EXPERIENCE"
                   subtitle="See our meetings for yourself"
                 />

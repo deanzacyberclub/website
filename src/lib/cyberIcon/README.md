@@ -2,4 +2,4 @@
 
 ## About
 
-A set of high-quality, reusable icons for De Anza Cybersecurity Club's website.
+A set of high-quality, reusable icons for the De Anza ML and Agentic Cybersecurity Club website.

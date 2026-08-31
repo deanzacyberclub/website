@@ -66,7 +66,8 @@ function TermsContent() {
           1. Acceptance of Terms
         </h2>
         <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-          By accessing and using the De Anza Cybersecurity Club (DACC) website,
+          By accessing and using the De Anza ML and Agentic Cybersecurity Club
+          (DACC) website,
           you agree to be bound by these Terms of Service. If you do not agree
           to these terms, please do not use our website.
         </p>
@@ -176,8 +177,8 @@ function PrivacyContent() {
           1. Information We Collect
         </h2>
         <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
-          The De Anza Cybersecurity Club (DACC) collects the following types of
-          information:
+          The De Anza ML and Agentic Cybersecurity Club (DACC) collects the
+          following types of information:
         </p>
         <ul className="text-gray-600 dark:text-gray-400 space-y-2 ml-4">
           <li className="flex items-start gap-2">

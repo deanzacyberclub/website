@@ -50,7 +50,9 @@ export function Tabs({
       {tabs.map((tab, index) => (
         <button
           key={tab.id}
-          ref={(el) => (tabRefs.current[index] = el)}
+          ref={(el) => {
+            tabRefs.current[index] = el;
+          }}
           onClick={() => onTabChange(tab.id)}
           className={`relative z-10 px-4 py-1.5 text-sm font-medium transition-colors ${
             activeTab === tab.id

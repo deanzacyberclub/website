@@ -8,10 +8,9 @@ import {
   Mail,
   Calendar,
   Shield,
-  Trophy,
   CheckCircle,
-  Users,
 } from "@/lib/cyberIcon";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface UserDetails {
   id: string;
@@ -34,14 +33,6 @@ interface UserAttendance {
   };
 }
 
-interface CTFTeamInfo {
-  team_id: string;
-  team_name: string;
-  is_captain: boolean;
-  total_points: number;
-  solves_count: number;
-}
-
 function UserProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -49,12 +40,11 @@ function UserProfile() {
   const [loaded, setLoaded] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [attendance, setAttendance] = useState<UserAttendance[]>([]);
-  const [ctfInfo, setCtfInfo] = useState<CTFTeamInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deletingAttendance, setDeletingAttendance] = useState<string | null>(
-    null,
-  );
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingAttendance, setDeletingAttendance] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // Fetch user details (guarded by the route wrapper + server-side checks inside the officer RPCs)
   useEffect(() => {
@@ -103,10 +93,6 @@ function UserProfile() {
           }));
           setAttendance(attendanceWithMeetings);
         }
-
-        // CTF team feature was removed in 2026 (tables dropped).
-        // Leaving ctfInfo as null keeps the UI clean. No queries attempted.
-        setCtfInfo(null);
       } catch (err: any) {
         console.error("Error fetching user details:", err);
         // If authorization error, redirect to dashboard
@@ -142,25 +128,26 @@ function UserProfile() {
     });
   };
 
-  const deleteAttendanceRecord = async (attendanceId: string) => {
-    if (!confirm("Remove this attendance record?")) return;
+  const deleteAttendanceRecord = async () => {
+    if (!confirmDeleteId) return;
 
-    setDeletingAttendance(attendanceId);
+    setDeletingAttendance(true);
+    setDeleteError("");
     try {
-      const { error: deleteError } = await supabase
+      const { error: removeError } = await supabase
         .from("attendance")
         .delete()
-        .eq("id", attendanceId);
+        .eq("id", confirmDeleteId);
 
-      if (deleteError) throw deleteError;
+      if (removeError) throw removeError;
 
-      // Remove from local state
-      setAttendance(attendance.filter((a) => a.id !== attendanceId));
+      setAttendance(attendance.filter((a) => a.id !== confirmDeleteId));
+      setConfirmDeleteId(null);
     } catch (err) {
       console.error("Error deleting attendance record:", err);
-      alert("Failed to delete attendance record");
+      setDeleteError("Failed to delete the attendance record. Please try again.");
     } finally {
-      setDeletingAttendance(null);
+      setDeletingAttendance(false);
     }
   };
 
@@ -177,11 +164,11 @@ function UserProfile() {
       <div className="min-h-screen bg-terminal-bg text-matrix">
         <div className="max-w-4xl mx-auto px-6 py-8">
           <Link
-            to="/officer"
+            to="/home"
             className="inline-flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors mb-8"
           >
             <ChevronLeft className="w-5 h-5" />
-            Back to Officer Dashboard
+            Back to Dashboard
           </Link>
           <div className="terminal-window">
             <div className="terminal-header">
@@ -203,11 +190,11 @@ function UserProfile() {
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Back Button */}
         <Link
-          to="/officer"
+          to="/home"
           className={`inline-flex items-center gap-2 text-gray-400 hover:text-matrix transition-colors mb-8 ${loaded ? "opacity-100" : "opacity-0"}`}
         >
           <ChevronLeft className="w-5 h-5" />
-          Back to Officer Dashboard
+          Back to Dashboard
         </Link>
 
         {/* User Header */}
@@ -274,9 +261,9 @@ function UserProfile() {
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats */}
         <div
-          className={`grid grid-cols-2 gap-4 mb-8 transition-all duration-700 delay-100 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          className={`mb-8 transition-all duration-700 delay-100 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
           <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800">
             <div className="text-2xl font-bold text-white">
@@ -286,51 +273,7 @@ function UserProfile() {
               EVENTS ATTENDED
             </div>
           </div>
-          <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800">
-            <div className="text-2xl font-bold text-white">
-              {ctfInfo?.solves_count || 0}
-            </div>
-            <div className="text-xs text-gray-500 font-terminal">
-              CTF SOLVES
-            </div>
-          </div>
         </div>
-
-        {/* CTF Team */}
-        {ctfInfo && (
-          <div
-            className={`mb-8 transition-all duration-700 delay-150 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-          >
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-hack-red" />
-              CTF Team
-            </h2>
-            <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-hack-red/10">
-                    <Users className="w-5 h-5 text-hack-red" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-white">
-                      {ctfInfo.team_name}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {ctfInfo.is_captain ? "Team Captain" : "Team Member"} •{" "}
-                      {ctfInfo.solves_count} solves
-                    </div>
-                  </div>
-                </div>
-                <Link
-                  to="/ctf/leaderboard"
-                  className="text-sm text-hack-cyan hover:underline"
-                >
-                  View Leaderboard
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Recent Attendance */}
         <div
@@ -370,11 +313,13 @@ function UserProfile() {
                     </span>
                     {/* Only officers can reach this page (enforced by ProtectedRoute + server RPCs), so always show delete control */}
                     <button
-                      onClick={() => deleteAttendanceRecord(att.id)}
-                      disabled={deletingAttendance === att.id}
-                      className="px-2 py-1 text-xs rounded text-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors disabled:opacity-50"
+                      onClick={() => {
+                        setDeleteError("");
+                        setConfirmDeleteId(att.id);
+                      }}
+                      className="px-2 py-1 text-xs rounded text-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors"
                     >
-                      {deletingAttendance === att.id ? "..." : "Remove"}
+                      Remove
                     </button>
                   </div>
                 </div>
@@ -392,6 +337,17 @@ function UserProfile() {
           </p>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={deleteAttendanceRecord}
+        title="Remove Attendance Record"
+        message="This attendance record will be permanently removed. This cannot be undone."
+        confirmText="REMOVE"
+        loading={deletingAttendance}
+        error={deleteError}
+      />
     </div>
   );
 }

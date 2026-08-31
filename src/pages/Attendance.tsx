@@ -176,7 +176,9 @@ function Attendance() {
         studentId: userProfile?.student_id || "",
       });
     } catch (err) {
-      setError("[ERROR] Transmission failed. Retry.");
+      setError(
+        "[ERROR] Check-in failed. Please check your connection and try again.",
+      );
       console.error(err);
     } finally {
       setSubmitting(false);

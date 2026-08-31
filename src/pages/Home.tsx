@@ -21,6 +21,7 @@ import {
   Calendar,
   Clock,
   Close,
+  Spinner,
 } from "@/lib/cyberIcon";
 import { Tabs } from "@/components/Tabs";
 import { ScrollReveal } from "@/components/ScrollReveal";
@@ -113,7 +114,7 @@ function Dashboard() {
   const { user, userProfile } = useAuth();
   const { isVerifiedOfficer } = useOfficerVerification();
 
-  // Sheet / detail drawer state (ported from Meetings.tsx) driven by ?meeting=slug
+  // Sheet / detail drawer state, driven by ?meeting=slug
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedSlug = searchParams.get("meeting");
 
@@ -157,7 +158,7 @@ function Dashboard() {
     }, 80);
   };
 
-  // Officer create meeting flow (exact same as Meetings.tsx)
+  // Officer create-meeting flow
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] =
     useState<CreateMeetingForm>(defaultCreateForm);
@@ -301,7 +302,7 @@ function Dashboard() {
     return Array.from(set).sort();
   }, [meetings]);
 
-  // Same autocomplete suggestions logic as Meetings.tsx for the create form
+  // Topic autocomplete suggestions for the create form
   const createTopicSuggestions = useMemo(() => {
     const partial = getLastTopicPartial(createForm.topics);
     const current = getCurrentTopicsList(createForm.topics);
@@ -315,7 +316,6 @@ function Dashboard() {
       .slice(0, 8);
   }, [createForm.topics, allTopics]);
 
-  // Exact same create logic as Meetings.tsx (rich form with topics autocomplete, slug, proper time formatting, etc.)
   const createMeeting = async () => {
     if (!createForm.title.trim()) {
       setCreateError("Title is required");
@@ -767,7 +767,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Meeting detail sheet (sidebar on desktop, bottom sheet on mobile) — exact same component as used in Meetings.tsx */}
+      {/* Meeting detail sheet (sidebar on desktop, bottom sheet on mobile) */}
       <MeetingDetailSheet
         slug={selectedSlug}
         onClose={closeMeeting}
@@ -779,7 +779,7 @@ function Dashboard() {
         }}
       />
 
-      {/* Officer-only Create New Meeting modal — EXACT same rich form as in Meetings.tsx (topics autocomplete, slug preview, type select, featured toggle, proper time range, etc.) */}
+      {/* Officer-only Create New Meeting modal */}
       {showCreateModal && isVerifiedOfficer === true && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80">
           <div className="terminal-window w-full max-w-2xl max-h-[90vh] flex flex-col">
@@ -1079,9 +1079,7 @@ function Dashboard() {
                   className="cli-btn-filled disabled:opacity-50 flex items-center gap-2"
                 >
                   {creating && (
-                    <span className="animate-spin h-4 w-4 inline-block">
-                      ⏳
-                    </span>
+                    <Spinner className="animate-spin h-4 w-4 inline-block" />
                   )}
                   {creating ? "CREATING..." : "CREATE MEETING"}
                 </button>

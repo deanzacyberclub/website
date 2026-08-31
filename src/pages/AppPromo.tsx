@@ -363,8 +363,9 @@ export default function AppPromo() {
             </h1>
 
             <p className="hero-fade hero-fade-3 font-mono text-sm text-gray-500 dark:text-white/40 leading-relaxed mb-10 max-w-md mx-auto lg:mx-0">
-              The official De Anza Cybersecurity Club app. Track meetings,
-              check in to events, compete in CTFs, and stay connected with the club — all from your iPhone.
+              The official De Anza ML and Agentic Cybersecurity Club app.
+              Track meetings, check in to events, compete in CTFs, and stay
+              connected with the club — all from your iPhone.
             </p>
 
             <div className="hero-fade hero-fade-4 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
@@ -422,7 +423,7 @@ export default function AppPromo() {
             <span className="font-mono text-xs text-gray-300 dark:text-white/10">[01]</span>
           </div>
           <p className="font-mono text-xs text-gray-400 dark:text-white/20 text-center mt-4 uppercase tracking-widest">
-            Built for De Anza Cybersecurity Club members
+            Built for De Anza ML and Agentic Cybersecurity Club members
           </p>
         </div>
 

@@ -7,6 +7,7 @@ import {
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import type { Json } from "@/types/database.types";
 
 export interface LinkedAccount {
   provider: string;
@@ -15,6 +16,12 @@ export interface LinkedAccount {
   provider_username: string | null;
   provider_avatar_url: string | null;
   linked_at: string;
+}
+
+// The database stores linked_accounts as a plain JSON column; narrow it to
+// the typed shape at the row boundary.
+export function toLinkedAccounts(value: unknown): LinkedAccount[] {
+  return Array.isArray(value) ? (value as LinkedAccount[]) : [];
 }
 
 export interface UserProfile {
@@ -68,12 +75,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change:", event, session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Use setTimeout to avoid Supabase deadlock issues
+        // Defer Supabase calls out of the auth callback — awaiting them
+        // inside onAuthStateChange can deadlock (per Supabase docs).
         setTimeout(async () => {
           const profile = await fetchUserProfile(session.user.id);
 
@@ -94,7 +101,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // THEN get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log("Initial session:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -127,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Ensure linked_accounts is always an array
       let profile: UserProfile = {
         ...data,
-        linked_accounts: data.linked_accounts || [],
+        linked_accounts: toLinkedAccounts(data.linked_accounts),
         is_officer: data.is_officer || false,
       };
 
@@ -165,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (updatedData) {
           profile = {
             ...updatedData,
-            linked_accounts: updatedData.linked_accounts || [],
+            linked_accounts: toLinkedAccounts(updatedData.linked_accounts),
             is_officer: updatedData.is_officer || false,
           };
         }
@@ -217,7 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase
       .from("users")
-      .update({ linked_accounts: newLinkedAccounts })
+      .update({ linked_accounts: newLinkedAccounts as unknown as Json })
       .eq("id", userId)
       .select()
       .single();
@@ -229,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUserProfile({
       ...data,
-      linked_accounts: data.linked_accounts || [],
+      linked_accounts: toLinkedAccounts(data.linked_accounts),
     });
   };
 
@@ -318,7 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data, error: updateError } = await supabase
       .from("users")
-      .update({ linked_accounts: updatedLinkedAccounts })
+      .update({ linked_accounts: updatedLinkedAccounts as unknown as Json })
       .eq("id", user.id)
       .select()
       .single();
@@ -327,7 +333,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUserProfile({
       ...data,
-      linked_accounts: data.linked_accounts || [],
+      linked_accounts: toLinkedAccounts(data.linked_accounts),
     });
   };
 
@@ -395,7 +401,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         display_name: displayName,
         student_id: studentId || null,
         photo_url: photoUrl,
-        linked_accounts: initialLinkedAccounts,
+        linked_accounts: initialLinkedAccounts as unknown as Json,
       })
       .select()
       .single();
@@ -415,7 +421,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUserProfile({
       ...data,
-      linked_accounts: data.linked_accounts || [],
+      linked_accounts: toLinkedAccounts(data.linked_accounts),
     });
   };
 
@@ -480,7 +486,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
 
     if (error) throw error;
-    setUserProfile(data);
+    setUserProfile({
+      ...data,
+      linked_accounts: toLinkedAccounts(data.linked_accounts),
+    });
   };
 
   const deleteAccount = async () => {

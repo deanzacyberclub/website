@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { isAppDeepLink, redirectToApp } from "@/lib/authRedirect";
+import { toLinkedAccounts } from "@/contexts/AuthContext";
 import { Spinner } from "@/lib/cyberIcon";
+import type { Json } from "@/types/database.types";
 
 function AuthCallback() {
   const navigate = useNavigate();
@@ -58,10 +60,9 @@ function AuthCallback() {
           .single();
 
         if (profile && session.user.identities) {
+          const linkedAccounts = toLinkedAccounts(profile.linked_accounts);
           const existingProviders = new Set(
-            (profile.linked_accounts || []).map(
-              (a: { provider: string }) => a.provider,
-            ),
+            linkedAccounts.map((a) => a.provider),
           );
           const hasNewIdentity = session.user.identities.some(
             (i) => !existingProviders.has(i.provider),
@@ -72,8 +73,8 @@ function AuthCallback() {
             const newLinkedAccounts = session.user.identities.map(
               (identity) => {
                 const identityData = identity.identity_data || {};
-                const existing = (profile.linked_accounts || []).find(
-                  (a: { provider: string }) => a.provider === identity.provider,
+                const existing = linkedAccounts.find(
+                  (a) => a.provider === identity.provider,
                 );
                 return {
                   provider: identity.provider,
@@ -95,7 +96,7 @@ function AuthCallback() {
 
             await supabase
               .from("users")
-              .update({ linked_accounts: newLinkedAccounts })
+              .update({ linked_accounts: newLinkedAccounts as unknown as Json })
               .eq("id", session.user.id);
           }
         }

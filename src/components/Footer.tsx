@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  useState,
-  useRef,
-  useEffect,
-  type CSSProperties,
-} from "react";
+import { forwardRef, useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Theme } from "@/contexts/ThemeContext";
@@ -14,10 +8,10 @@ interface FooterProps {
   className?: string;
 }
 
-const THEME_OPTIONS: { id: Theme; icon: string; label: string }[] = [
-  { id: "light", icon: "☀️", label: "LIGHT" },
-  { id: "dark", icon: "🌙", label: "DARK" },
-  { id: "system", icon: "💻", label: "AUTO" },
+const THEME_OPTIONS: { id: Theme; label: string }[] = [
+  { id: "light", label: "LIGHT" },
+  { id: "dark", label: "DARK" },
+  { id: "system", label: "AUTO" },
 ];
 
 const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
@@ -26,7 +20,7 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
 ) {
   const location = useLocation();
   const currentYear = new Date().getFullYear();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   // Dropdown state for theme selector
   const [isOpen, setIsOpen] = useState(false);
@@ -53,15 +47,9 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
 
   const currentTheme = THEME_OPTIONS.find((t) => t.id === theme)!;
 
-  // TODO: keep transparent for now, eventually remove
-  const footerStyle: CSSProperties = {
-    backgroundColor: resolvedTheme === "dark" ? "transparent" : "transparent",
-  };
-
   return (
     <footer
       ref={ref}
-      style={footerStyle}
       className={`border-t border-gray-200 dark:border-matrix/20 relative z-10 ${className}`}
     >
       <div className="max-w-7xl mx-auto px-6">
@@ -205,7 +193,7 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
             COPYRIGHT &nbsp;&nbsp; © {currentYear}
           </p>
           <p className="font-mono text-[10px] text-gray-400 dark:text-gray-400 uppercase tracking-widest text-center leading-relaxed">
-            DE ANZA CYBERSECURITY CLUB
+            DE ANZA ML AND AGENTIC CYBERSECURITY CLUB
             <br />
             CUPERTINO, CALIFORNIA
           </p>
@@ -218,7 +206,6 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
               aria-label={`Current theme: ${currentTheme.label}. Click to select theme.`}
               aria-expanded={isOpen}
             >
-              <span>{currentTheme.icon}</span>
               <span>{currentTheme.label}</span>
               <ChevronDown
                 className={`w-2.5 h-2.5 ml-0.5 transition-transform ${isOpen ? "-rotate-180" : ""}`}
@@ -240,7 +227,6 @@ const Footer = forwardRef<HTMLElement, FooterProps>(function Footer(
                         : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900/70 hover:text-gray-700 dark:hover:text-gray-200"
                     }`}
                   >
-                    <span>{opt.icon}</span>
                     <span className="flex-1">{opt.label}</span>
                     {theme === opt.id && (
                       <span className="ml-auto text-[8px] opacity-60">✓</span>

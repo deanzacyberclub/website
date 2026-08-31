@@ -36,10 +36,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       // Update DOM
       if (resolved === 'dark') {
         root.classList.add('dark')
-        console.log('✅ Dark mode enabled')
       } else {
         root.classList.remove('dark')
-        console.log('✅ Light mode enabled')
       }
     }
 
