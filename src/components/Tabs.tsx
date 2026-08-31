@@ -35,11 +35,11 @@ export function Tabs({
 
   return (
     <div
-      className={`relative flex gap-2 bg-gray-100 dark:bg-gray-900/50 p-1 border border-gray-200 dark:border-gray-800 ${className}`}
+      className={`relative flex gap-2 bg-gray-100 dark:bg-gray-900/50 p-1 border border-gray-200 dark:border-gray-800 rounded-full ${className}`}
     >
       {/* Sliding indicator */}
       <div
-        className="absolute top-1 bottom-1 bg-blue-100 dark:bg-gray-800 transition-all duration-300 ease-out"
+        className="absolute top-1 bottom-1 bg-blue-100 dark:bg-gray-800 transition-all duration-300 ease-out rounded-full"
         style={{
           left: `${indicatorStyle.left}px`,
           width: `${indicatorStyle.width}px`,

@@ -1,6 +1,11 @@
 -- ============================================================
 -- Seed Data for De Anza Cybersecurity Club
 -- Run this after setup.sql to populate the database
+--
+-- NOTE: All historical migrations have been folded directly into
+-- setup.sql (schema, RLS, functions, triggers). The migrations/
+-- folder has been removed. This file + setup.sql + curriculum.sql
+-- are now the single source of truth for a fresh database.
 -- ============================================================
 
 -- ============================================================
@@ -214,9 +219,14 @@ INSERT INTO public.meetings (slug, title, description, date, time, location, typ
 );
 
 -- ============================================================
--- LESSONS CURRICULUM DATA
--- This section contains the complete study curriculum
+-- LESSONS / STUDY CURRICULUM REMOVED (2026)
 -- ============================================================
-
--- Note: The curriculum is loaded via a separate file due to size
--- Run: psql -f supabase/curriculum.sql after this file
+-- The entire lessons + user_progress + Security+ study path feature
+-- has been decommissioned.
+--
+-- - lessons table dropped
+-- - user_progress table dropped
+-- - curriculum.sql is obsolete and has been removed
+--
+-- See supabase/migrations/20260601190000_remove_lessons_and_study_plan.sql
+-- for the removal migration.

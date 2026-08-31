@@ -2,11 +2,21 @@ import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Spinner, Check, Plus, ArrowLeft, User } from "@/lib/cyberIcon";
+import { Spinner, Check, Plus, ArrowLeft } from "@/lib/cyberIcon";
+import { parseLocalDate } from "@/lib/meetingUtils";
 
 interface AttendanceForm {
   secretCode: string;
   studentId: string;
+}
+
+interface CheckedInMeeting {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  slug?: string | null;
 }
 
 function Attendance() {
@@ -14,7 +24,8 @@ function Attendance() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [attendanceCount, setAttendanceCount] = useState(0);
+  const [checkedInMeeting, setCheckedInMeeting] =
+    useState<CheckedInMeeting | null>(null);
 
   const { user, userProfile } = useAuth();
 
@@ -62,9 +73,13 @@ function Attendance() {
     }
 
     // Get student ID from profile or form input (optional for non-De Anza students)
-    const studentIdToUse = userProfile?.student_id || form.studentId.trim() || null;
+    const studentIdToUse =
+      userProfile?.student_id || form.studentId.trim() || null;
 
-    if (studentIdToUse && (studentIdToUse.length !== 8 || !/^\d+$/.test(studentIdToUse))) {
+    if (
+      studentIdToUse &&
+      (studentIdToUse.length !== 8 || !/^\d+$/.test(studentIdToUse))
+    ) {
       setError("[ERROR] Student ID must be 8 digits if provided");
       return;
     }
@@ -91,12 +106,13 @@ function Attendance() {
       }
 
       // Extract meeting info from the secure function response
+      const md = meetingData as any;
       const meeting = {
-        id: meetingData.meeting_id,
-        title: meetingData.meeting_title,
-        date: meetingData.meeting_date,
-        time: meetingData.meeting_time,
-        location: meetingData.meeting_location,
+        id: md.meeting_id,
+        title: md.meeting_title,
+        date: md.meeting_date,
+        time: md.meeting_time,
+        location: md.meeting_location,
       };
 
       // Check if already checked in (by user_id if logged in, or by student_id if not)
@@ -114,7 +130,7 @@ function Attendance() {
           .from("attendance")
           .select("id")
           .eq("meeting_id", meeting.id)
-          .eq("student_id", studentIdToUse)
+          .eq("student_id", studentIdToUse as string)
           .single();
         existingAttendance = data;
       }
@@ -128,45 +144,32 @@ function Attendance() {
       const { error: insertError } = await supabase.from("attendance").insert({
         meeting_id: meeting.id,
         user_id: user?.id || null,
-        student_id: studentIdToUse || "N/A",
+        student_id: studentIdToUse ?? "N/A",
       });
 
       if (insertError) throw insertError;
 
-      // Also create/update registration with "attended" status for logged-in users
-      if (user) {
-        const { data: existingRegistration } = await supabase
-          .from("registrations")
-          .select("id")
-          .eq("meeting_id", meeting.id)
-          .eq("user_id", user.id)
+      // Fetch slug (verify RPC doesn't return it) so we can deep-link the success screen to the event detail
+      let slug: string | null = null;
+      try {
+        const { data: m } = await supabase
+          .from("meetings")
+          .select("slug")
+          .eq("id", meeting.id)
           .single();
-
-        if (existingRegistration) {
-          // Update existing registration to "attended"
-          await supabase
-            .from("registrations")
-            .update({ status: "attended" })
-            .eq("id", existingRegistration.id);
-        } else {
-          // Create new registration with "attended" status
-          await supabase.from("registrations").insert({
-            meeting_id: meeting.id,
-            user_id: user.id,
-            status: "attended",
-          });
-        }
+        slug = m?.slug ?? null;
+      } catch {
+        // non-fatal; deep link optional
       }
 
-      // Fetch updated attendance count for signed-in users
-      if (user) {
-        const { count } = await supabase
-          .from("attendance")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
-        setAttendanceCount(count || 0);
-      }
-
+      setCheckedInMeeting({
+        id: meeting.id,
+        title: meeting.title,
+        date: meeting.date,
+        time: meeting.time,
+        location: meeting.location,
+        slug,
+      });
       setSubmitted(true);
       setForm({
         secretCode: "",
@@ -181,6 +184,11 @@ function Attendance() {
   };
 
   if (submitted) {
+    const m = checkedInMeeting;
+    const detailTo = m?.slug
+      ? `/home?meeting=${encodeURIComponent(m.slug)}`
+      : "/home";
+
     return (
       <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center p-6">
         <div className="crt-overlay dark:opacity-100 opacity-0" />
@@ -191,75 +199,59 @@ function Attendance() {
           </div>
 
           {/* Success Message */}
-          <h1 className="font-mono font-bold text-green-700 dark:text-matrix text-4xl md:text-5xl mb-4 uppercase">
+          <h1 className="font-mono font-bold text-green-700 dark:text-matrix text-4xl md:text-5xl mb-2 uppercase">
             CHECK-IN COMPLETE
           </h1>
 
-          <div className="border-l-2 border-green-300 dark:border-matrix/30 pl-5 mb-8 text-left max-w-lg mx-auto">
-            <p className="font-mono text-gray-600 dark:text-gray-400 text-sm">
-              Your attendance has been verified and logged in the system.
-            </p>
-          </div>
-
-          {/* User Profile */}
-          {user && userProfile && (
-            <div className="border border-gray-200 dark:border-matrix/20 p-6 mb-6 text-left">
-              <div className="flex items-center gap-4 mb-6">
-                {userProfile.photo_url ? (
-                  <img
-                    src={userProfile.photo_url}
-                    alt="Profile"
-                    className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
-                    <User className="w-8 h-8 text-green-700 dark:text-matrix" />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg">
-                    {userProfile.display_name}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-500 text-sm font-mono">
-                    {user.email}
-                  </p>
-                  <p className="text-gray-500 dark:text-gray-600 text-xs font-mono mt-1">
-                    ID: {userProfile?.student_id || form.studentId}
-                  </p>
-                </div>
+          {m ? (
+            <div className="mb-6">
+              <div className="font-mono text-matrix text-lg md:text-xl font-semibold tracking-wide">
+                {m.title}
               </div>
-
-              {/* Stats */}
-              <div className="border-t border-gray-200 dark:border-matrix/20 pt-6">
-                <div className="text-center">
-                  <p className="text-xs text-gray-500 dark:text-gray-600 font-mono uppercase tracking-widest mb-2">
-                    Total Meetings Attended
-                  </p>
-                  <div className="text-5xl font-bold font-mono text-green-700 dark:text-matrix">
-                    {attendanceCount}
-                  </div>
-                </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {parseLocalDate(m.date).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                })}{" "}
+                · {m.time} · {m.location}
               </div>
             </div>
-          )}
+          ) : null}
+
+          <div className="border-l-2 border-green-300 dark:border-matrix/30 pl-5 mb-8 text-left max-w-lg mx-auto">
+            <p className="font-mono text-gray-600 dark:text-gray-400 text-sm">
+              Attendance verified and logged. Your dashboard will reflect this
+              on next view.
+            </p>
+          </div>
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => setSubmitted(false)}
+              onClick={() => {
+                setSubmitted(false);
+                setCheckedInMeeting(null);
+              }}
               className="cli-btn-dashed font-mono inline-flex items-center justify-center gap-2 uppercase"
             >
               <Plus className="w-4 h-4" />
               CHECK IN AGAIN
             </button>
             <Link
-              to="/dashboard"
+              to={detailTo}
               className="cli-btn-filled font-mono inline-flex items-center justify-center gap-2 uppercase"
             >
               <ArrowLeft className="w-4 h-4" />
-              DASHBOARD
+              {m?.slug ? "VIEW EVENT" : "DASHBOARD"}
             </Link>
           </div>
+          {!m?.slug && (
+            <p className="mt-3 text-[10px] text-gray-500 dark:text-gray-600 font-mono">
+              Open the event from your dashboard list to see resources &amp;
+              details.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -294,9 +286,6 @@ function Attendance() {
 
             <h1 className="font-mono font-bold text-green-700 dark:text-matrix leading-tight mb-6">
               <span className="block text-5xl md:text-6xl lg:text-7xl">
-                ATTENDANCE
-              </span>
-              <span className="block text-5xl md:text-6xl lg:text-7xl">
                 CHECK-IN
               </span>
             </h1>
@@ -314,111 +303,69 @@ function Attendance() {
         <div className="max-w-5xl mx-auto px-6">
           <form
             onSubmit={handleSubmit}
-            className={`max-w-2xl space-y-8 pb-20 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            className={`max-w-2xl mx-auto space-y-6 pb-4 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
             style={{ transitionDelay: "200ms" }}
           >
-          {/* User Identity Section */}
-          {user && userProfile ? (
-            <div className="border border-gray-200 dark:border-matrix/20 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest">
-                  User Session
+            {/* Student ID - only for non-logged-in users */}
+            {!user && (
+              <div className="border border-gray-200 dark:border-matrix/20 p-6">
+                <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-4">
+                  Student ID
+                </label>
+                <input
+                  type="text"
+                  name="studentId"
+                  value={form.studentId}
+                  onChange={handleChange}
+                  maxLength={8}
+                  className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
+                  placeholder="12345678"
+                  autoComplete="off"
+                />
+                <p className="text-xs mt-3 text-gray-500 dark:text-gray-600 font-mono">
+                  <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
+                  Enter your 8-digit student ID (optional if signed in)
                 </p>
-                <span className="text-xs text-green-600 dark:text-matrix font-mono">
-                  AUTHENTICATED
-                </span>
               </div>
+            )}
 
-              <div className="flex items-center gap-4">
-                {userProfile.photo_url ? (
-                  <img
-                    src={userProfile.photo_url}
-                    alt="Profile"
-                    className="w-16 h-16 border border-gray-300 dark:border-matrix/30"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-green-100 dark:bg-matrix/10 border border-gray-300 dark:border-matrix/30 flex items-center justify-center">
-                    <User className="w-8 h-8 text-green-700 dark:text-matrix" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-green-700 dark:text-matrix font-mono font-semibold text-lg truncate">
-                    {userProfile.display_name}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm mt-1">
-                    <span className="text-gray-600 dark:text-gray-500 font-mono">
-                      ID: {userProfile.student_id}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-600 truncate font-mono text-xs">
-                      {user.email}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="border border-gray-200 dark:border-matrix/20 p-6">
-              <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-4">
-                Student ID
+            {/* Secret Code */}
+            <div>
+              <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-2">
+                Secret Code
               </label>
               <input
                 type="text"
-                name="studentId"
-                value={form.studentId}
+                name="secretCode"
+                value={form.secretCode}
                 onChange={handleChange}
-                maxLength={8}
-                className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
-                placeholder="12345678"
+                required
+                className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono uppercase text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
+                placeholder="ENTER CODE"
                 autoComplete="off"
               />
-              <p className="text-xs mt-3 text-gray-500 dark:text-gray-600 font-mono">
-                <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
-                Enter your 8-digit student ID (optional if signed in)
-              </p>
             </div>
-          )}
 
-          {/* Secret Code */}
-          <div className="border border-gray-200 dark:border-matrix/20 p-6">
-            <label className="block text-xs text-gray-600 dark:text-gray-500 font-mono uppercase tracking-widest mb-4">
-              Secret Code
-            </label>
-            <input
-              type="text"
-              name="secretCode"
-              value={form.secretCode}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 bg-white dark:bg-terminal-bg border border-gray-300 dark:border-matrix/30 font-mono uppercase text-lg text-gray-900 dark:text-matrix focus:border-green-500 dark:focus:border-matrix focus:outline-none transition-colors"
-              placeholder="ENTER CODE"
-              autoComplete="off"
-            />
-            <p className="text-xs mt-3 text-gray-500 dark:text-gray-600 font-mono">
-              <span className="text-green-700 dark:text-matrix">&gt;</span>{" "}
-              Enter the secret code provided during the meeting
-            </p>
-          </div>
-
-          {error && (
-            <div className="text-red-600 dark:text-hack-red text-sm font-mono border-l-2 border-red-500 dark:border-hack-red pl-4 py-2">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting || !form.secretCode.trim()}
-            className="cli-btn-filled w-full justify-center font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <Spinner className="animate-spin h-4 w-4" />
-                VERIFYING...
-              </span>
-            ) : (
-              "CHECK IN"
+            {error && (
+              <div className="text-red-600 dark:text-hack-red text-sm font-mono border-l-2 border-red-500 dark:border-hack-red pl-4 py-2">
+                {error}
+              </div>
             )}
-          </button>
+
+            <button
+              type="submit"
+              disabled={submitting || !form.secretCode.trim()}
+              className="cli-btn-filled w-full justify-center font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner className="animate-spin h-4 w-4" />
+                  VERIFYING...
+                </span>
+              ) : (
+                "CHECK IN"
+              )}
+            </button>
           </form>
         </div>
       </div>

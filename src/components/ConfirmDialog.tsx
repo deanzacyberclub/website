@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Spinner, Warning } from '@/lib/cyberIcon'
 
 interface ConfirmDialogProps {
@@ -49,8 +50,8 @@ function ConfirmDialog({
 
   const styles = variantStyles[variant]
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
         onClick={onClose}
@@ -100,7 +101,8 @@ function ConfirmDialog({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

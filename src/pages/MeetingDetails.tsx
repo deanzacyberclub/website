@@ -1,18 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { TYPE_COLORS, TYPE_LABELS } from "./Meetings";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOfficerVerification } from "@/hooks/useOfficerVerification";
-import type {
-  Meeting,
-  MeetingType,
-  Announcement,
-  Photo,
-  Resource,
-  Registration,
-  RegistrationType,
-} from "@/types/database.types";
+import type { Meeting, Resource, Attendance } from "@/types/database.types";
 import {
   Spinner,
   Close,
@@ -20,15 +11,11 @@ import {
   Plus,
   Trash,
   Calendar,
-  Clock,
   MapPin,
-  Star,
   Key,
   Eye,
   EyeOff,
   Fullscreen,
-  Megaphone,
-  Photo as PhotoIcon,
   Download,
   Link as LinkIcon,
   Slides,
@@ -37,14 +24,21 @@ import {
   CheckCircle,
   Users,
 } from "@/lib/cyberIcon";
-import {
-  registerForMeeting,
-  cancelRegistration,
-  getUserRegistration,
-  getRegistrationCount,
-  getWaitlistCount,
-} from "@/lib/registrations";
-import ConfirmDialog from "@/components/ConfirmDialog";
+
+const DISCORD_RESOURCE: Resource = {
+  id: "discord-default",
+  title: "Join Discord",
+  url: "https://discord.gg/MEtzjYFts2",
+  type: "link",
+};
+
+function ensureDiscordResource(resources: Resource[]): Resource[] {
+  const hasDiscord = resources.some((r) =>
+    r.url.includes("discord.gg/MEtzjYFts2"),
+  );
+  if (hasDiscord) return resources;
+  return [DISCORD_RESOURCE, ...resources];
+}
 
 interface UserProfile {
   id: string;
@@ -53,11 +47,11 @@ interface UserProfile {
   email: string;
 }
 
-interface RegistrationWithUser extends Registration {
+interface AttendeeWithUser extends Attendance {
   user?: UserProfile;
 }
 
-type TabType = "announcements" | "photos" | "resources";
+type TabType = "resources";
 
 interface EditForm {
   slug: string;
@@ -66,28 +60,46 @@ interface EditForm {
   date: string;
   time: string;
   location: string;
-  type: MeetingType;
-  featured: boolean;
   topics: string;
   secret_code: string;
-  registration_type: RegistrationType;
-  registration_capacity: number | null;
-  invite_code: string;
-  invite_form_url: string;
-  announcements: Announcement[];
-  photos: Photo[];
   resources: Resource[];
 }
 
-function MeetingDetails() {
-  const { slug } = useParams<{ slug: string }>();
+function isWithinCheckInWindow(dateStr: string): boolean {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const eventDate = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return eventDate >= sevenDaysAgo && eventDate <= tomorrow;
+}
+
+function MeetingDetails({
+  slug: propSlug,
+  embedded = false,
+  onClose,
+  onSelectMeeting,
+  availableTopics: _availableTopics,
+  onTitleLoad,
+}: {
+  slug?: string;
+  embedded?: boolean;
+  onClose?: () => void;
+  onSelectMeeting?: (slug: string) => void;
+  availableTopics?: string[];
+  onTitleLoad?: (title: string) => void;
+} = {}) {
+  const { slug: routeSlug } = useParams<{ slug: string }>();
+  const slug = propSlug || routeSlug;
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
-  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification();
+  const { isVerifiedOfficer } = useOfficerVerification();
   const [loaded, setLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>("announcements");
+  const [activeTab, setActiveTab] = useState<TabType>("resources");
   const [meeting, setMeeting] = useState<Meeting | null>(null);
-  const [relatedMeetings, setRelatedMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -99,155 +111,81 @@ function MeetingDetails() {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
-  // Registration state
-  const [userRegistration, setUserRegistration] = useState<Registration | null>(
-    null,
-  );
-  const [registrationCount, setRegistrationCount] = useState(0);
-  const [waitlistCount, setWaitlistCount] = useState(0);
-  const [registering, setRegistering] = useState(false);
-  const [inviteCode, setInviteCode] = useState("");
-  const [showInviteCodeInput, setShowInviteCodeInput] = useState(false);
-  const [registrationMessage, setRegistrationMessage] = useState<{
+  // Attendance state
+  const [myAttendance, setMyAttendance] = useState<Attendance | null>(null);
+  const [attendees, setAttendees] = useState<AttendeeWithUser[]>([]);
+
+  // Check-in form state
+  const [checkInCode, setCheckInCode] = useState("");
+  const [checkInSubmitting, setCheckInSubmitting] = useState(false);
+  const [checkInMessage, setCheckInMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [registeredUsers, setRegisteredUsers] = useState<
-    RegistrationWithUser[]
-  >([]);
-  const [loadingRegistrations, setLoadingRegistrations] = useState(false);
-  const [pastEventAttendees, setPastEventAttendees] = useState<
-    RegistrationWithUser[]
-  >([]);
-  const [loadingAttendees, setLoadingAttendees] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [cancelError, setCancelError] = useState("");
 
-  // Use server-verified officer status instead of client-side state
   const isOfficer = isVerifiedOfficer ?? false;
 
   useEffect(() => {
-    async function fetchMeeting() {
+    async function fetchRichMeetingPageData() {
       if (!slug) return;
 
+      setLoading(true);
       try {
-        let data, error;
+        const { data: rawData, error } = await supabase.rpc(
+          "get_meeting_page_data",
+          {
+            p_slug: slug,
+          },
+        );
 
-        if (isOfficer) {
-          // Officers use secure function to get meeting with secret code
-          const result = await supabase
-            .rpc('get_meeting_with_secrets', { meeting_slug: slug })
-            .single();
-          data = result.data;
-          error = result.error;
+        if (error) throw error;
+        const data = rawData as any;
+        if (data?.error === "not_found") {
+          setMeeting(null);
+          return;
+        }
+
+        if (data?.meeting) {
+          setMeeting(data.meeting as Meeting);
+          onTitleLoad?.(data.meeting.title);
+        }
+
+        setMyAttendance(data?.my_attendance ?? null);
+
+        if (data?.attendees) {
+          setAttendees(
+            (data.attendees as any[]).map((a) => ({
+              ...a,
+              user: a.user as UserProfile | undefined,
+            })) as AttendeeWithUser[],
+          );
         } else {
-          // Regular users use public view
-          const result = await supabase
+          setAttendees([]);
+        }
+      } catch (err) {
+        console.error("get_meeting_page_data failed, falling back:", err);
+        try {
+          const { data, error } = await supabase
             .from("meetings_public")
             .select("*")
             .eq("slug", slug)
             .single();
-          data = result.data;
-          error = result.error;
+
+          if (error) throw error;
+          setMeeting({ ...data, secret_code: null } as Meeting);
+        } catch (fallbackErr) {
+          console.error("Fallback fetch failed:", fallbackErr);
+          setMeeting(null);
         }
-
-        if (error) throw error;
-        setMeeting(data);
-
-        // Fetch related meetings of the same type
-        if (data) {
-          const { data: related } = await supabase
-            .from("meetings_public")
-            .select("*")
-            .eq("type", data.type)
-            .neq("slug", slug)
-            .limit(3);
-
-          setRelatedMeetings(related || []);
-        }
-      } catch (err) {
-        console.error("Error fetching meeting:", err);
-        setMeeting(null);
       } finally {
         setLoading(false);
         setLoaded(true);
       }
     }
 
-    fetchMeeting();
-  }, [slug, isOfficer]);
+    fetchRichMeetingPageData();
+  }, [slug]);
 
-  // Fetch registration data
-  useEffect(() => {
-    async function fetchRegistrationData() {
-      if (!meeting || !user) return;
-
-      try {
-        // Fetch user's registration status
-        const registration = await getUserRegistration(meeting.id, user.id);
-        setUserRegistration(registration);
-
-        // Fetch registration counts
-        const count = await getRegistrationCount(meeting.id);
-        setRegistrationCount(count);
-
-        const wCount = await getWaitlistCount(meeting.id);
-        setWaitlistCount(wCount);
-      } catch (err) {
-        console.error("Error fetching registration data:", err);
-      }
-    }
-
-    fetchRegistrationData();
-  }, [meeting, user]);
-
-  // Fetch attendees for past events
-  useEffect(() => {
-    async function fetchPastEventAttendees() {
-      if (!meeting || !isPast(meeting.date)) return;
-
-      setLoadingAttendees(true);
-      try {
-        // Fetch all registrations for this meeting with "attended" status
-        // (registrations table is publicly readable for "attended" status)
-        const { data: registrations } = await supabase
-          .from("registrations")
-          .select("*")
-          .eq("meeting_id", meeting.id)
-          .eq("status", "attended")
-          .order("registered_at", { ascending: false });
-
-        if (registrations && registrations.length > 0) {
-          // Fetch public profiles for all attendees
-          const userIds = registrations.map((r) => r.user_id);
-          const { data: profiles } = await supabase
-            .from("public_profiles")
-            .select("id, display_name, photo_url")
-            .in("id", userIds);
-
-          // Map profiles to registrations
-          const attendeesWithProfiles: RegistrationWithUser[] = registrations.map(
-            (reg) => ({
-              ...reg,
-              user: profiles?.find((p) => p.id === reg.user_id) as UserProfile | undefined,
-            })
-          );
-
-          setPastEventAttendees(attendeesWithProfiles);
-        } else {
-          setPastEventAttendees([]);
-        }
-      } catch (err) {
-        console.error("Error fetching past event attendees:", err);
-      } finally {
-        setLoadingAttendees(false);
-      }
-    }
-
-    fetchPastEventAttendees();
-  }, [meeting]);
-
-  // ESC key to close fullscreen code
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && codeFullscreen) {
@@ -258,7 +196,7 @@ function MeetingDetails() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [codeFullscreen]);
 
-  const tabs: TabType[] = ["announcements", "photos", "resources"];
+  const tabs: TabType[] = ["resources"];
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -285,7 +223,6 @@ function MeetingDetails() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Parse date string as local timezone (not UTC)
   const parseLocalDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split("-").map(Number);
     return new Date(year, month - 1, day);
@@ -295,126 +232,81 @@ function MeetingDetails() {
     return parseLocalDate(dateStr) < today;
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = parseLocalDate(dateStr);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const handleRegister = async () => {
-    if (!meeting || !user) {
-      navigate(`/auth?to=/meetings/${slug}`);
+  const handleCheckIn = async () => {
+    if (!meeting) return;
+    if (!user) {
+      navigate(`/auth?to=/home?meeting=${encodeURIComponent(slug || "")}`);
       return;
     }
 
-    setRegistering(true);
-    setRegistrationMessage(null);
-
-    const result = await registerForMeeting(
-      meeting.id,
-      user.id,
-      meeting,
-      inviteCode,
-    );
-
-    if (result.success) {
-      setUserRegistration(result.registration || null);
-      setRegistrationMessage({ type: "success", text: result.message });
-      setShowInviteCodeInput(false);
-      setInviteCode("");
-
-      // Refresh counts
-      const count = await getRegistrationCount(meeting.id);
-      setRegistrationCount(count);
-      const wCount = await getWaitlistCount(meeting.id);
-      setWaitlistCount(wCount);
-    } else {
-      setRegistrationMessage({ type: "error", text: result.message });
-    }
-
-    setRegistering(false);
-  };
-
-  const handleCancelRegistration = async () => {
-    if (!meeting || !user) return;
-
-    setRegistering(true);
-    setCancelError("");
-
-    const result = await cancelRegistration(meeting.id, user.id);
-
-    if (result.success) {
-      setUserRegistration(null);
-      setRegistrationMessage({ type: "success", text: result.message });
-      setShowCancelDialog(false);
-
-      // Refresh counts
-      const count = await getRegistrationCount(meeting.id);
-      setRegistrationCount(count);
-      const wCount = await getWaitlistCount(meeting.id);
-      setWaitlistCount(wCount);
-    } else {
-      setCancelError(result.message);
-    }
-
-    setRegistering(false);
-  };
-
-  const handleAcceptInvite = async () => {
-    if (!meeting || !user || !userRegistration) return;
-
-    setRegistering(true);
-    setRegistrationMessage(null);
+    setCheckInSubmitting(true);
+    setCheckInMessage(null);
 
     try {
-      const { data, error } = await supabase
-        .from("registrations")
-        .update({ status: "registered" })
-        .eq("id", userRegistration.id)
+      // Verify the code and 7-day window via RPC
+      const { data: verifyRows, error: verifyError } = await supabase.rpc(
+        "verify_meeting_secret_code",
+        { secret_code_input: checkInCode },
+      );
+
+      if (verifyError) throw verifyError;
+
+      const rows = verifyRows as any;
+      const matched = Array.isArray(rows) ? rows[0] : rows;
+
+      if (!matched || matched.meeting_id !== meeting.id) {
+        setCheckInMessage({
+          type: "error",
+          text: "Invalid code. Make sure you're entering the code for this event.",
+        });
+        return;
+      }
+
+      // Insert attendance record
+      const { data: newAttendance, error: insertError } = await supabase
+        .from("attendance")
+        .insert({
+          meeting_id: meeting.id,
+          user_id: user.id,
+          student_id: userProfile?.student_id || "N/A",
+        })
         .select()
         .single();
 
-      if (error) throw error;
+      if (insertError) {
+        if (insertError.code === "23505") {
+          // Already checked in (unique constraint)
+          const { data: existing } = await supabase
+            .from("attendance")
+            .select("*")
+            .eq("meeting_id", meeting.id)
+            .eq("user_id", user.id)
+            .single();
+          if (existing) setMyAttendance(existing);
+          setCheckInMessage({ type: "success", text: "Already checked in!" });
+          return;
+        }
+        throw insertError;
+      }
 
-      setUserRegistration(data);
-      setRegistrationMessage({ type: "success", text: "You have accepted the invite!" });
-
-      // Refresh counts
-      const count = await getRegistrationCount(meeting.id);
-      setRegistrationCount(count);
+      setMyAttendance(newAttendance);
+      setCheckInMessage({ type: "success", text: "Checked in successfully!" });
+      setCheckInCode("");
+      // Refresh attendees list
+      setAttendees((prev) => [
+        { ...newAttendance, user: userProfile as any },
+        ...prev,
+      ]);
     } catch (err) {
-      console.error("Error accepting invite:", err);
-      setRegistrationMessage({ type: "error", text: "Failed to accept invite. Please try again." });
+      console.error("Check-in error:", err);
+      setCheckInMessage({
+        type: "error",
+        text: "Failed to check in. Please try again.",
+      });
+    } finally {
+      setCheckInSubmitting(false);
     }
-
-    setRegistering(false);
   };
-
-  const handleDeclineInvite = async () => {
-    if (!meeting || !user) return;
-
-    setRegistering(true);
-    setRegistrationMessage(null);
-
-    const result = await cancelRegistration(meeting.id, user.id);
-
-    if (result.success) {
-      setUserRegistration(null);
-      setRegistrationMessage({ type: "success", text: "Invite declined" });
-    } else {
-      setRegistrationMessage({ type: "error", text: result.message });
-    }
-
-    setRegistering(false);
-  };
-
-  const isAtCapacity = meeting?.registration_capacity
-    ? registrationCount >= meeting.registration_capacity
-    : false;
 
   const startEditing = async () => {
     if (!meeting) return;
@@ -425,125 +317,18 @@ function MeetingDetails() {
       date: meeting.date,
       time: meeting.time,
       location: meeting.location,
-      type: meeting.type,
-      featured: meeting.featured,
       topics: meeting.topics?.join(", ") || "",
       secret_code: meeting.secret_code || "",
-      registration_type: meeting.registration_type || "open",
-      registration_capacity: meeting.registration_capacity,
-      invite_code: meeting.invite_code || "",
-      invite_form_url: meeting.invite_form_url || "",
-      announcements: meeting.announcements ? [...meeting.announcements] : [],
-      photos: meeting.photos ? [...meeting.photos] : [],
-      resources: meeting.resources ? [...meeting.resources] : [],
+      resources: ensureDiscordResource(
+        meeting.resources ? [...meeting.resources] : [],
+      ),
     });
     setEditError("");
     setIsEditing(true);
-
-    // Fetch registered users for this meeting
-    if (isOfficer) {
-      setLoadingRegistrations(true);
-      try {
-        const { data: registrations } = await supabase
-          .from("registrations")
-          .select("*")
-          .eq("meeting_id", meeting.id)
-          .order("registered_at", { ascending: false });
-
-        if (registrations && registrations.length > 0) {
-          // Fetch user profiles for all registrations using officer function
-          const userIds = registrations.map((r) => r.user_id);
-          const { data: profiles } = await supabase
-            .rpc("get_user_profiles_for_officers", { user_ids: userIds });
-
-          // Map users to registrations
-          const registrationsWithUsers: RegistrationWithUser[] =
-            registrations.map((reg) => ({
-              ...reg,
-              user: profiles?.find((p) => p.id === reg.user_id),
-            }));
-
-          setRegisteredUsers(registrationsWithUsers);
-        } else {
-          setRegisteredUsers([]);
-        }
-      } catch (err) {
-        console.error("Error fetching registrations:", err);
-      } finally {
-        setLoadingRegistrations(false);
-      }
-    }
   };
 
   const generateId = () => crypto.randomUUID();
 
-  // Announcement handlers
-  const addAnnouncement = () => {
-    if (!editForm) return;
-    const newAnnouncement: Announcement = {
-      id: generateId(),
-      title: "",
-      content: "",
-      date: new Date().toISOString().split("T")[0],
-    };
-    setEditForm({
-      ...editForm,
-      announcements: [...editForm.announcements, newAnnouncement],
-    });
-  };
-
-  const updateAnnouncement = (
-    id: string,
-    field: keyof Announcement,
-    value: string,
-  ) => {
-    if (!editForm) return;
-    setEditForm({
-      ...editForm,
-      announcements: editForm.announcements.map((a) =>
-        a.id === id ? { ...a, [field]: value } : a,
-      ),
-    });
-  };
-
-  const deleteAnnouncement = (id: string) => {
-    if (!editForm) return;
-    setEditForm({
-      ...editForm,
-      announcements: editForm.announcements.filter((a) => a.id !== id),
-    });
-  };
-
-  // Photo handlers
-  const addPhoto = () => {
-    if (!editForm) return;
-    const newPhoto: Photo = {
-      id: generateId(),
-      url: "",
-      caption: "",
-    };
-    setEditForm({ ...editForm, photos: [...editForm.photos, newPhoto] });
-  };
-
-  const updatePhoto = (id: string, field: keyof Photo, value: string) => {
-    if (!editForm) return;
-    setEditForm({
-      ...editForm,
-      photos: editForm.photos.map((p) =>
-        p.id === id ? { ...p, [field]: value } : p,
-      ),
-    });
-  };
-
-  const deletePhoto = (id: string) => {
-    if (!editForm) return;
-    setEditForm({
-      ...editForm,
-      photos: editForm.photos.filter((p) => p.id !== id),
-    });
-  };
-
-  // Resource handlers
   const addResource = () => {
     if (!editForm) return;
     const newResource: Resource = {
@@ -593,7 +378,6 @@ function MeetingDetails() {
   const saveChanges = async () => {
     if (!meeting || !editForm) return;
 
-    // Validate slug
     const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
     if (!slugRegex.test(editForm.slug)) {
       setEditError(
@@ -611,56 +395,38 @@ function MeetingDetails() {
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
 
-      // Filter out empty announcements, photos, and resources
-      const validAnnouncements = editForm.announcements.filter(
-        (a) => a.title.trim() && a.content.trim(),
-      );
-      const validPhotos = editForm.photos.filter((p) => p.url.trim());
-      const validResources = editForm.resources.filter(
+      const resourcesWithDiscord = ensureDiscordResource(editForm.resources);
+      const validResources = resourcesWithDiscord.filter(
         (r) => r.title.trim() && r.url.trim(),
       );
 
       const { data, error } = await supabase
-        .from("meetings")
-        .update({
-          slug: editForm.slug,
-          title: editForm.title,
-          description: editForm.description,
-          date: editForm.date,
-          time: editForm.time,
-          location: editForm.location,
-          type: editForm.type,
-          featured: editForm.featured,
-          topics: topicsArray,
-          secret_code: editForm.secret_code || null,
-          registration_type: editForm.registration_type,
-          registration_capacity: editForm.registration_capacity,
-          invite_code: editForm.invite_code || null,
-          invite_form_url: editForm.invite_form_url || null,
-          announcements: validAnnouncements,
-          photos: validPhotos,
-          resources: validResources,
-          updated_at: new Date().toISOString(),
+        .rpc("officer_update_meeting", {
+          meeting_id: meeting.id,
+          p_slug: editForm.slug,
+          p_title: editForm.title,
+          p_description: editForm.description,
+          p_date: editForm.date,
+          p_time: editForm.time,
+          p_location: editForm.location,
+          p_topics: topicsArray,
+          p_secret_code: editForm.secret_code || null,
+          p_resources: validResources as any,
         })
-        .eq("id", meeting.id)
-        .select()
         .single();
 
       if (error) throw error;
 
-      setMeeting(data);
+      setMeeting(data as unknown as Meeting);
       setIsEditing(false);
       setEditForm(null);
 
-      // Refresh registration counts
-      const count = await getRegistrationCount(data.id);
-      setRegistrationCount(count);
-      const wCount = await getWaitlistCount(data.id);
-      setWaitlistCount(wCount);
-
-      // If slug changed, navigate to new URL
       if (editForm.slug !== slug) {
-        navigate(`/meetings/${editForm.slug}`, { replace: true });
+        if (embedded && onSelectMeeting) {
+          onSelectMeeting(editForm.slug);
+        } else {
+          navigate(`/home?meeting=${editForm.slug}`, { replace: true });
+        }
       }
     } catch (err) {
       console.error("Error saving meeting:", err);
@@ -676,23 +442,18 @@ function MeetingDetails() {
     }
   };
 
-  if (loading) {
+  if (!meeting && !loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix flex items-center justify-center">
-        <div className="text-center">
-          <div className="flex items-center gap-3 justify-center">
-            <Spinner className="animate-spin h-6 w-6 text-blue-600 dark:text-matrix" />
-            <span className="font-terminal text-lg">Loading meeting...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!meeting) {
-    return (
-      <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
-        <div className="relative max-w-4xl mx-auto px-6">
+      <div
+        className={
+          embedded
+            ? "bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix"
+            : "bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen"
+        }
+      >
+        <div
+          className={embedded ? "px-4 py-4" : "relative max-w-4xl mx-auto px-6"}
+        >
           <header className="mb-12">
             <div className="terminal-window">
               <div className="terminal-header">
@@ -704,18 +465,28 @@ function MeetingDetails() {
                 </span>
               </div>
               <div className="terminal-body text-center py-12">
-                <div className="text-4xl mb-4 text-red-600 dark:text-hack-red">404</div>
+                <div className="text-4xl mb-4 text-red-600 dark:text-hack-red">
+                  404
+                </div>
                 <p className="text-gray-600 dark:text-gray-500 mb-2">
-                  <span className="text-red-600 dark:text-hack-red">[ERROR]</span> Meeting not
-                  found
+                  <span className="text-red-600 dark:text-hack-red">
+                    [ERROR]
+                  </span>{" "}
+                  Meeting not found
                 </p>
                 <p className="text-gray-500 dark:text-gray-600 text-sm mb-6">
                   The meeting you're looking for doesn't exist or has been
                   removed.
                 </p>
                 <button
-                  onClick={() => navigate("/meetings")}
-                  className="cli-btn-dashedpx-6 py-2"
+                  onClick={() => {
+                    if (embedded && onClose) {
+                      onClose();
+                    } else {
+                      navigate("/home");
+                    }
+                  }}
+                  className="cli-btn-dashed px-6 py-2"
                 >
                   Browse All Meetings
                 </button>
@@ -728,24 +499,13 @@ function MeetingDetails() {
   }
 
   return (
-    <div className="bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen">
-      {/* Cancel Registration Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={showCancelDialog}
-        onClose={() => {
-          setShowCancelDialog(false);
-          setCancelError("");
-        }}
-        onConfirm={handleCancelRegistration}
-        title="Cancel Registration?"
-        message="Are you sure you want to cancel your registration for this event? You may lose your spot if the event fills up."
-        confirmText="YES, CANCEL"
-        cancelText="KEEP REGISTRATION"
-        loading={registering}
-        error={cancelError}
-        variant="danger"
-      />
-
+    <div
+      className={
+        embedded
+          ? "bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix"
+          : "bg-white dark:bg-terminal-bg text-gray-900 dark:text-matrix min-h-screen"
+      }
+    >
       {/* Fullscreen Attendance Code Overlay */}
       {codeFullscreen && meeting?.secret_code && (
         <div
@@ -775,13 +535,15 @@ function MeetingDetails() {
         </div>
       )}
 
-      <div className="relative max-w-4xl mx-auto px-6">
-        {/* Header */}
-        <header
-          className={`mb-8 transition-all duration-700 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
+      <div
+        className={embedded ? "px-4 py-4" : "relative max-w-4xl mx-auto px-6"}
+      >
+        {/* Header - always visible immediately for stable layout */}
+        <header className={`mb-8 ${embedded ? "hidden" : ""}`}>
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-blue-600 dark:text-matrix neon-text-subtle">$</span>
+            <span className="text-blue-600 dark:text-matrix neon-text-subtle">
+              $
+            </span>
             <span className="text-gray-600 dark:text-gray-400 font-terminal">
               cat ./meetings/{slug}/README.md
             </span>
@@ -792,60 +554,55 @@ function MeetingDetails() {
         <article
           className={`mb-12 transition-all duration-700 delay-100 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
-          <div className="terminal-window">
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-              <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
-                {isEditing
-                  ? "edit_meeting.sh"
-                  : meeting.title.toLowerCase().replace(/\s+/g, "_")}
-              </span>
-              {isOfficer && !isEditing && (
-                <button
-                  onClick={startEditing}
-                  className="ml-auto text-xs text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 font-terminal flex items-center gap-1 transition-colors"
-                >
-                  <Edit className="w-3 h-3" />
-                  EDIT
-                </button>
-              )}
-            </div>
-            <div className="terminal-body">
-              {isEditing && editForm ? (
-                /* Edit Mode */
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-matrix">
-                      Edit Meeting
-                    </h2>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={cancelEditing}
-                        disabled={saving}
-                        className="px-4 py-2 text-sm font-terminal text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 transition-colors disabled:opacity-50"
-                      >
-                        CANCEL
-                      </button>
-                      <button
-                        onClick={saveChanges}
-                        disabled={saving}
-                        className="px-4 py-2 text-sm font-terminal bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix hover:bg-blue-100 dark:hover:bg-matrix/30 transition-colors disabled:opacity-50 flex items-center gap-2"
-                      >
-                        {saving && <Spinner className="animate-spin h-4 w-4" />}
-                        {saving ? "SAVING..." : "SAVE"}
-                      </button>
+          <>
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Spinner className="animate-spin h-6 w-6 text-gray-400 dark:text-gray-500" />
+              </div>
+            ) : isEditing && editForm ? (
+              /* Edit Mode */
+              <div className="terminal-window">
+                <div className="terminal-header">
+                  <div className="terminal-dot red" />
+                  <div className="terminal-dot yellow" />
+                  <div className="terminal-dot green" />
+                  <span className="ml-4 text-xs text-gray-600 dark:text-gray-500 font-terminal">
+                    edit_meeting.sh
+                  </span>
+                </div>
+                <div className="terminal-body">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-matrix">
+                        Edit Meeting
+                      </h2>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={cancelEditing}
+                          disabled={saving}
+                          className="px-4 py-2 text-sm font-terminal text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 transition-colors disabled:opacity-50"
+                        >
+                          CANCEL
+                        </button>
+                        <button
+                          onClick={saveChanges}
+                          disabled={saving}
+                          className="px-4 py-2 text-sm font-terminal bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix hover:bg-blue-100 dark:hover:bg-matrix/30 transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {saving && (
+                            <Spinner className="animate-spin h-4 w-4" />
+                          )}
+                          {saving ? "SAVING..." : "SAVE"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {editError && (
-                    <div className="p-3 bg-red-50 dark:bg-hack-red/10 border border-red-300 dark:border-hack-red/50 text-red-600 dark:text-hack-red text-sm">
-                      {editError}
-                    </div>
-                  )}
+                    {editError && (
+                      <div className="p-3 bg-red-50 dark:bg-hack-red/10 border border-red-300 dark:border-hack-red/50 text-red-600 dark:text-hack-red text-sm">
+                        {editError}
+                      </div>
+                    )}
 
-                  <div className="grid gap-4 md:grid-cols-2">
                     {/* Slug */}
                     <div>
                       <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
@@ -862,7 +619,7 @@ function MeetingDetails() {
                               .replace(/[^a-z0-9-]/g, ""),
                           )
                         }
-                        className="input-hack w-full "
+                        className="input-hack w-full"
                         placeholder="my-meeting"
                       />
                       <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
@@ -870,125 +627,103 @@ function MeetingDetails() {
                       </p>
                     </div>
 
-                    {/* Type */}
+                    {/* Title */}
                     <div>
-                      <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
-                        TYPE
-                      </label>
-                      <select
-                        value={editForm.type}
-                        onChange={(e) =>
-                          handleEditChange("type", e.target.value)
-                        }
-                        className="input-hack w-full "
-                      >
-                        <option value="workshop">Workshop</option>
-                        <option value="lecture">Lecture</option>
-                        <option value="ctf">CTF</option>
-                        <option value="social">Social</option>
-                        <option value="general">General</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Title */}
-                  <div>
-                    <label className="block text-xs text-gray-500 font-terminal mb-1">
-                      TITLE
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.title}
-                      onChange={(e) =>
-                        handleEditChange("title", e.target.value)
-                      }
-                      className="input-hack w-full "
-                      placeholder="Meeting title"
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <label className="block text-xs text-gray-500 font-terminal mb-1">
-                      DESCRIPTION
-                    </label>
-                    <textarea
-                      value={editForm.description}
-                      onChange={(e) =>
-                        handleEditChange("description", e.target.value)
-                      }
-                      className="input-hack w-full  min-h-[100px] resize-y"
-                      placeholder="Meeting description"
-                    />
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {/* Date */}
-                    <div>
-                      <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
-                        DATE
-                      </label>
-                      <input
-                        type="date"
-                        value={editForm.date}
-                        onChange={(e) =>
-                          handleEditChange("date", e.target.value)
-                        }
-                        className="input-hack w-full "
-                      />
-                    </div>
-
-                    {/* Time */}
-                    <div>
-                      <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
-                        TIME
+                      <label className="block text-xs text-gray-500 font-terminal mb-1">
+                        TITLE
                       </label>
                       <input
                         type="text"
-                        value={editForm.time}
+                        value={editForm.title}
                         onChange={(e) =>
-                          handleEditChange("time", e.target.value)
+                          handleEditChange("title", e.target.value)
                         }
-                        className="input-hack w-full "
-                        placeholder="4:00 PM - 6:00 PM"
+                        className="input-hack w-full"
+                        placeholder="Meeting title"
                       />
                     </div>
-                  </div>
 
-                  {/* Location */}
-                  <div>
-                    <label className="block text-xs text-gray-500 font-terminal mb-1">
-                      LOCATION
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.location}
-                      onChange={(e) =>
-                        handleEditChange("location", e.target.value)
-                      }
-                      className="input-hack w-full "
-                      placeholder="S43 Room 120"
-                    />
-                  </div>
+                    {/* Description */}
+                    <div>
+                      <label className="block text-xs text-gray-500 font-terminal mb-1">
+                        DESCRIPTION
+                      </label>
+                      <textarea
+                        value={editForm.description}
+                        onChange={(e) =>
+                          handleEditChange("description", e.target.value)
+                        }
+                        className="input-hack w-full min-h-[100px] resize-y"
+                        placeholder="Meeting description"
+                      />
+                    </div>
 
-                  {/* Topics */}
-                  <div>
-                    <label className="block text-xs text-gray-500 font-terminal mb-1">
-                      TOPICS (comma-separated)
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.topics}
-                      onChange={(e) =>
-                        handleEditChange("topics", e.target.value)
-                      }
-                      className="input-hack w-full "
-                      placeholder="Security, Hacking, CTF"
-                    />
-                  </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {/* Date */}
+                      <div>
+                        <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
+                          DATE
+                        </label>
+                        <input
+                          type="date"
+                          value={editForm.date}
+                          onChange={(e) =>
+                            handleEditChange("date", e.target.value)
+                          }
+                          className="input-hack w-full"
+                        />
+                      </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {/* Secret Code */}
+                      {/* Time */}
+                      <div>
+                        <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
+                          TIME
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.time}
+                          onChange={(e) =>
+                            handleEditChange("time", e.target.value)
+                          }
+                          className="input-hack w-full"
+                          placeholder="4:00 PM - 6:00 PM"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Location */}
+                    <div>
+                      <label className="block text-xs text-gray-500 font-terminal mb-1">
+                        LOCATION
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.location}
+                        onChange={(e) =>
+                          handleEditChange("location", e.target.value)
+                        }
+                        className="input-hack w-full"
+                        placeholder="S43 Room 120"
+                      />
+                    </div>
+
+                    {/* Topics */}
+                    <div>
+                      <label className="block text-xs text-gray-500 font-terminal mb-1">
+                        TOPICS (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.topics}
+                        onChange={(e) =>
+                          handleEditChange("topics", e.target.value)
+                        }
+                        className="input-hack w-full"
+                        placeholder="Security, Hacking, CTF"
+                      />
+                    </div>
+
+                    {/* Attendance Code */}
                     <div>
                       <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
                         ATTENDANCE CODE
@@ -1002,969 +737,531 @@ function MeetingDetails() {
                             e.target.value.toUpperCase(),
                           )
                         }
-                        className="input-hack w-full  font-mono"
+                        className="input-hack w-full font-mono"
                         placeholder="SECRETCODE"
                       />
                       <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
-                        Code for attendance check-in
+                        Members enter this code to check in during the event
                       </p>
                     </div>
 
-                    {/* Featured */}
-                    <div className="flex items-center gap-3 pt-6">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleEditChange("featured", !editForm.featured)
-                        }
-                        className={`relative w-12 h-6 transition-colors ${editForm.featured ? "bg-blue-600 dark:bg-matrix" : "bg-gray-400 dark:bg-gray-600"}`}
-                      >
-                        <span
-                          className={`absolute top-1 w-4 h-4 bg-white transition-transform ${editForm.featured ? "left-7" : "left-1"}`}
-                        />
-                      </button>
-                      <label className="text-sm text-gray-600 dark:text-gray-400">
-                        Featured meeting
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Registration Settings */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <h3 className="text-lg font-semibold text-purple-600 dark:text-hack-purple mb-4">
-                      Registration Settings
-                    </h3>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {/* Registration Type */}
-                      <div>
-                        <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
-                          REGISTRATION TYPE
-                        </label>
-                        <select
-                          value={editForm.registration_type}
-                          onChange={(e) =>
-                            handleEditChange(
-                              "registration_type",
-                              e.target.value,
-                            )
-                          }
-                          className="input-hack w-full "
-                        >
-                          <option value="open">
-                            Open (anyone can register)
-                          </option>
-                          <option value="invite_only">Invite Only</option>
-                          <option value="closed">
-                            Closed (no registration)
-                          </option>
-                        </select>
-                      </div>
-
-                      {/* Registration Capacity */}
-                      <div>
-                        <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
-                          CAPACITY (leave empty for unlimited)
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={editForm.registration_capacity || ""}
-                          onChange={(e) =>
-                            handleEditChange(
-                              "registration_capacity",
-                              e.target.value ? parseInt(e.target.value) : null,
-                            )
-                          }
-                          className="input-hack w-full "
-                          placeholder="50"
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
-                          Max number of attendees
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Invite-only fields */}
-                    {editForm.registration_type === "invite_only" && (
-                      <div className="grid gap-4 md:grid-cols-2 mt-4">
-                        <div>
-                          <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
-                            INVITE CODE
-                          </label>
-                          <input
-                            type="text"
-                            value={editForm.invite_code}
-                            onChange={(e) =>
-                              handleEditChange(
-                                "invite_code",
-                                e.target.value.toUpperCase(),
-                              )
-                            }
-                            className="input-hack w-full  font-mono"
-                            placeholder="INVITE123"
-                          />
-                          <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
-                            Code users enter to register
-                          </p>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs text-gray-600 dark:text-gray-500 font-terminal mb-1">
-                            INVITE REQUEST FORM URL
-                          </label>
-                          <input
-                            type="url"
-                            value={editForm.invite_form_url}
-                            onChange={(e) =>
-                              handleEditChange(
-                                "invite_form_url",
-                                e.target.value,
-                              )
-                            }
-                            className="input-hack w-full "
-                            placeholder="https://forms.gle/..."
-                          />
-                          <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
-                            Optional form for users to request invites
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Registered Users List */}
-                    <div className="mt-6">
+                    {/* Attendees List (read-only in edit mode) */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                          Registered Users ({registeredUsers.length})
+                          Attendees ({attendees.length})
                         </h4>
-                        {loadingRegistrations && (
-                          <Spinner className="animate-spin h-4 w-4 text-blue-600 dark:text-matrix" />
-                        )}
                       </div>
 
-                      {registeredUsers.length === 0 ? (
+                      {attendees.length === 0 ? (
                         <p className="text-gray-600 dark:text-gray-500 text-sm">
-                          No registrations yet
+                          No check-ins yet
                         </p>
                       ) : (
                         <div className="space-y-2 max-h-64 overflow-y-auto">
-                          {registeredUsers.map((registration) => (
-                            <div
-                              key={registration.id}
-                              className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
+                          {attendees.map((att) => (
+                            <Link
+                              key={att.id}
+                              to={`/@/${att.user_id}`}
+                              className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700 hover:border-matrix/50 hover:bg-matrix/5 transition-all group"
                             >
-                              {/* Profile Picture */}
                               <div className="shrink-0">
-                                {registration.user?.photo_url ? (
+                                {att.user?.photo_url ? (
                                   <img
-                                    src={registration.user.photo_url}
-                                    alt={registration.user.display_name}
-                                    className="w-10 h-10 object-cover border border-gray-300 dark:border-gray-600"
+                                    src={att.user.photo_url}
+                                    alt={att.user.display_name}
+                                    className="w-10 h-10 object-cover border border-gray-300 dark:border-gray-600 group-hover:border-matrix/40 transition-colors"
                                   />
                                 ) : (
-                                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 flex items-center justify-center border border-gray-400 dark:border-gray-600">
+                                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 flex items-center justify-center border border-gray-400 dark:border-gray-600 group-hover:border-matrix/40 transition-colors">
                                     <span className="text-gray-600 dark:text-gray-400 text-sm font-bold">
-                                      {registration.user?.display_name
-                                        .charAt(0)
-                                        .toUpperCase()}
+                                      {att.user?.display_name
+                                        ?.charAt(0)
+                                        .toUpperCase() || "?"}
                                     </span>
                                   </div>
                                 )}
                               </div>
-
-                              {/* User Info */}
                               <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                  {registration.user?.display_name ||
-                                    "Unknown User"}
+                                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-matrix transition-colors">
+                                  {att.user?.display_name || "Unknown User"}
                                 </div>
-                                <div className="text-xs text-gray-600 dark:text-gray-500 truncate">
-                                  {registration.user?.email}
+                                <div className="text-xs text-gray-500 dark:text-gray-500">
+                                  {new Date(att.checked_in_at).toLocaleString()}
                                 </div>
                               </div>
+                              <span className="text-xs px-2 py-0.5 border border-matrix/40 text-matrix bg-matrix/10 font-terminal">
+                                ATTENDED
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-                              {/* Status Badge */}
-                              <div>
-                                <span
-                                  className={`inline-block px-2 py-0.5text-xs font-terminal border ${
-                                    registration.status === "attended"
-                                      ? "border-blue-300 dark:border-matrix text-blue-600 dark:text-matrix bg-blue-50 dark:bg-matrix/10"
-                                      : registration.status === "registered"
-                                        ? "border-cyan-300 dark:border-hack-cyan text-cyan-600 dark:text-hack-cyan bg-cyan-50 dark:bg-hack-cyan/10"
-                                        : registration.status === "invited"
-                                          ? "border-purple-300 dark:border-hack-purple text-purple-600 dark:text-hack-purple bg-purple-50 dark:bg-hack-purple/10"
-                                          : registration.status === "waitlist"
-                                            ? "border-yellow-300 dark:border-hack-yellow text-yellow-600 dark:text-hack-yellow bg-yellow-50 dark:bg-hack-yellow/10"
-                                            : "border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-500"
-                                  }`}
+                    {/* Resources Editor */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-yellow-600 dark:text-hack-yellow">
+                          Resources
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={addResource}
+                          className="text-xs font-terminal text-yellow-600 dark:text-hack-yellow hover:text-yellow-700 dark:hover:text-hack-yellow/80 flex items-center gap-1"
+                        >
+                          <Plus className="w-4 h-4" />
+                          ADD
+                        </button>
+                      </div>
+                      {editForm.resources.length === 0 ? (
+                        <p className="text-gray-600 dark:text-gray-500 text-sm">
+                          No resources yet
+                        </p>
+                      ) : (
+                        <div className="space-y-4">
+                          {editForm.resources.map((resource) => (
+                            <div
+                              key={resource.id}
+                              className="p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
+                            >
+                              <div className="flex justify-between items-start mb-3">
+                                <input
+                                  type="text"
+                                  value={resource.title}
+                                  onChange={(e) =>
+                                    updateResource(
+                                      resource.id,
+                                      "title",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="input-hack flex-1 text-sm"
+                                  placeholder="Resource title"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => deleteResource(resource.id)}
+                                  className="ml-2 p-1 text-gray-600 dark:text-gray-500 hover:text-red-600 dark:hover:text-hack-red transition-colors"
                                 >
-                                  {registration.status.toUpperCase()}
-                                </span>
+                                  <Trash className="w-5 h-5" />
+                                </button>
+                              </div>
+                              <div className="grid gap-3 md:grid-cols-2">
+                                <input
+                                  type="url"
+                                  value={resource.url}
+                                  onChange={(e) =>
+                                    updateResource(
+                                      resource.id,
+                                      "url",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="input-hack w-full text-sm"
+                                  placeholder="https://example.com/resource"
+                                />
+                                <select
+                                  value={resource.type}
+                                  onChange={(e) =>
+                                    updateResource(
+                                      resource.id,
+                                      "type",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="input-hack w-full text-sm"
+                                >
+                                  <option value="link">Link</option>
+                                  <option value="slides">Slides</option>
+                                  <option value="video">Video</option>
+                                  <option value="file">File</option>
+                                </select>
                               </div>
                             </div>
                           ))}
                         </div>
                       )}
-
-                      {/* Stats Summary */}
-                      {registeredUsers.length > 0 && (
-                        <div className="mt-4 grid grid-cols-3 gap-3">
-                          <div className="p-2 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700 text-center">
-                            <div className="text-lg font-bold text-blue-600 dark:text-matrix">
-                              {
-                                registeredUsers.filter(
-                                  (r) =>
-                                    r.status === "registered" ||
-                                    r.status === "attended",
-                                ).length
-                              }
-                            </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-500">
-                              Registered
-                            </div>
-                          </div>
-                          <div className="p-2 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700 text-center">
-                            <div className="text-lg font-bold text-yellow-600 dark:text-hack-yellow">
-                              {
-                                registeredUsers.filter(
-                                  (r) => r.status === "waitlist",
-                                ).length
-                              }
-                            </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-500">
-                              Waitlist
-                            </div>
-                          </div>
-                          <div className="p-2 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700 text-center">
-                            <div className="text-lg font-bold text-blue-600 dark:text-matrix">
-                              {
-                                registeredUsers.filter(
-                                  (r) => r.status === "attended",
-                                ).length
-                              }
-                            </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-500">
-                              Attended
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  </div>
-
-                  {/* Announcements Editor */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-matrix">
-                        Announcements
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={addAnnouncement}
-                        className="text-xs font-terminal text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 flex items-center gap-1"
-                      >
-                        <Plus className="w-4 h-4" />
-                        ADD
-                      </button>
-                    </div>
-                    {editForm.announcements.length === 0 ? (
-                      <p className="text-gray-600 dark:text-gray-500 text-sm">
-                        No announcements yet
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {editForm.announcements.map((announcement) => (
-                          <div
-                            key={announcement.id}
-                            className="p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <input
-                                type="text"
-                                value={announcement.title}
-                                onChange={(e) =>
-                                  updateAnnouncement(
-                                    announcement.id,
-                                    "title",
-                                    e.target.value,
-                                  )
-                                }
-                                className="input-hack flex-1  text-sm"
-                                placeholder="Announcement title"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  deleteAnnouncement(announcement.id)
-                                }
-                                className="ml-2 p-1 text-gray-600 dark:text-gray-500 hover:text-red-600 dark:hover:text-hack-red transition-colors"
-                              >
-                                <Trash className="w-5 h-5" />
-                              </button>
-                            </div>
-                            <textarea
-                              value={announcement.content}
-                              onChange={(e) =>
-                                updateAnnouncement(
-                                  announcement.id,
-                                  "content",
-                                  e.target.value,
-                                )
-                              }
-                              className="input-hack w-full  text-sm min-h-[60px] resize-y mb-2"
-                              placeholder="Announcement content"
-                            />
-                            <input
-                              type="date"
-                              value={announcement.date}
-                              onChange={(e) =>
-                                updateAnnouncement(
-                                  announcement.id,
-                                  "date",
-                                  e.target.value,
-                                )
-                              }
-                              className="input-hack  text-sm"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Photos Editor */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-cyan-600 dark:text-hack-cyan">
-                        Photos
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={addPhoto}
-                        className="text-xs font-terminal text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 flex items-center gap-1"
-                      >
-                        <Plus className="w-4 h-4" />
-                        ADD
-                      </button>
-                    </div>
-                    {editForm.photos.length === 0 ? (
-                      <p className="text-gray-600 dark:text-gray-500 text-sm">No photos yet</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {editForm.photos.map((photo) => (
-                          <div
-                            key={photo.id}
-                            className="p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <input
-                                type="url"
-                                value={photo.url}
-                                onChange={(e) =>
-                                  updatePhoto(photo.id, "url", e.target.value)
-                                }
-                                className="input-hack flex-1  text-sm"
-                                placeholder="https://example.com/image.jpg"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => deletePhoto(photo.id)}
-                                className="ml-2 p-1 text-gray-600 dark:text-gray-500 hover:text-red-600 dark:hover:text-hack-red transition-colors"
-                              >
-                                <Trash className="w-5 h-5" />
-                              </button>
-                            </div>
-                            <input
-                              type="text"
-                              value={photo.caption || ""}
-                              onChange={(e) =>
-                                updatePhoto(photo.id, "caption", e.target.value)
-                              }
-                              className="input-hack w-full text-sm"
-                              placeholder="Caption (optional)"
-                            />
-                            {photo.url && (
-                              <div className="mt-3">
-                                <img
-                                  src={photo.url}
-                                  alt="Preview"
-                                  className="max-h-32 border border-gray-200 dark:border-gray-700"
-                                  onError={(e) =>
-                                    ((
-                                      e.target as HTMLImageElement
-                                    ).style.display = "none")
-                                  }
-                                />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Resources Editor */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-yellow-600 dark:text-hack-yellow">
-                        Resources
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={addResource}
-                        className="text-xs font-terminal text-yellow-600 dark:text-hack-yellow hover:text-yellow-700 dark:hover:text-hack-yellow/80 flex items-center gap-1"
-                      >
-                        <Plus className="w-4 h-4" />
-                        ADD
-                      </button>
-                    </div>
-                    {editForm.resources.length === 0 ? (
-                      <p className="text-gray-600 dark:text-gray-500 text-sm">No resources yet</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {editForm.resources.map((resource) => (
-                          <div
-                            key={resource.id}
-                            className="p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-700"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <input
-                                type="text"
-                                value={resource.title}
-                                onChange={(e) =>
-                                  updateResource(
-                                    resource.id,
-                                    "title",
-                                    e.target.value,
-                                  )
-                                }
-                                className="input-hack flex-1  text-sm"
-                                placeholder="Resource title"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => deleteResource(resource.id)}
-                                className="ml-2 p-1 text-gray-600 dark:text-gray-500 hover:text-red-600 dark:hover:text-hack-red transition-colors"
-                              >
-                                <Trash className="w-5 h-5" />
-                              </button>
-                            </div>
-                            <div className="grid gap-3 md:grid-cols-2">
-                              <input
-                                type="url"
-                                value={resource.url}
-                                onChange={(e) =>
-                                  updateResource(
-                                    resource.id,
-                                    "url",
-                                    e.target.value,
-                                  )
-                                }
-                                className="input-hack w-full  text-sm"
-                                placeholder="https://example.com/resource"
-                              />
-                              <select
-                                value={resource.type}
-                                onChange={(e) =>
-                                  updateResource(
-                                    resource.id,
-                                    "type",
-                                    e.target.value,
-                                  )
-                                }
-                                className="input-hack w-full  text-sm"
-                              >
-                                <option value="link">Link</option>
-                                <option value="slides"></option>
-                                <option value="video">Video</option>
-                                <option value="file">File</option>
-                              </select>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
-              ) : (
-                /* View Mode */
-                <>
-                  {/* Status Badges */}
-                  <div className="flex flex-wrap items-center gap-3 mb-6">
-                    <span
-                      className={`inline-block px-3 py-1text-sm font-terminal border ${TYPE_COLORS[meeting.type]}`}
+              </div>
+            ) : meeting ? (
+              /* View Mode */
+              <>
+                {/* Officer edit button */}
+                {isOfficer && (
+                  <div className="flex justify-end mb-4">
+                    <button
+                      onClick={startEditing}
+                      className="text-xs text-cyan-600 dark:text-hack-cyan hover:text-cyan-700 dark:hover:text-hack-cyan/80 font-terminal flex items-center gap-2 transition-colors px-3 py-1.5 border border-cyan-200 dark:border-hack-cyan/40 hover:border-cyan-400 dark:hover:border-hack-cyan/70"
                     >
-                      {TYPE_LABELS[meeting.type]}
-                    </span>
-                    {meeting.featured && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1text-sm font-terminal bg-blue-50 dark:bg-matrix/20 text-blue-600 dark:text-matrix border border-blue-300 dark:border-matrix/50">
-                        <Star className="w-4 h-4" />
-                        FEATURED
-                      </span>
-                    )}
-                    {isPast(meeting.date) && (
-                      <span className="inline-block px-3 py-1text-sm font-terminal border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-500">
-                        COMPLETED
-                      </span>
-                    )}
+                      <Edit className="w-3 h-3" />
+                      EDIT MEETING
+                    </button>
                   </div>
+                )}
 
-                  {/* Title */}
-                  <h1
-                    className={`text-3xl md:text-4xl font-bold mb-4 ${isPast(meeting.date) ? "text-gray-600 dark:text-gray-400" : "text-blue-600 dark:text-matrix neon-text"}`}
-                  >
-                    {meeting.title}
-                  </h1>
+                {/* Big Title */}
+                <h1 className="text-[28px] md:text-[34px] leading-tight font-semibold tracking-[-0.5px] text-white mb-4">
+                  {meeting.title}
+                </h1>
 
-                  {/* Description */}
-                  <p className="text-gray-600 dark:text-gray-400 text-lg mb-8 leading-relaxed">
-                    {meeting.description}
-                  </p>
+                {/* Date + Time */}
+                <div className="flex items-center gap-2 text-white/90 mb-5 text-[15px]">
+                  <Calendar className="w-4 h-4 text-white/60" />
+                  <span>
+                    {(() => {
+                      const d = parseLocalDate(meeting.date);
+                      return d.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                      });
+                    })()}
+                  </span>
+                  <span className="text-white/40">•</span>
+                  <span className="font-mono text-sm text-white/70">
+                    {meeting.time}
+                  </span>
+                </div>
 
-                  {/* Details Grid */}
-                  <div className="grid md:grid-cols-2 gap-6 mb-8">
-                    {/* Date */}
-                    <div className="flex items-start gap-4 p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800">
-                      <div className="p-2 bg-blue-50 dark:bg-matrix/10 text-blue-600 dark:text-matrix">
-                        <Calendar className="w-6 h-6" />
+                {/* Location Card */}
+                <div
+                  onClick={() =>
+                    window.open("https://maps.apple/p/VvLMJzG~DAkT7d", "_blank")
+                  }
+                  className="mb-6 rounded-2xl overflow-hidden border border-[#222] bg-[#0a0a0a] cursor-pointer active:scale-[0.985] transition-all"
+                >
+                  <div className="relative h-[130px] bg-[#0f1f2e] flex items-center justify-center">
+                    <div className="absolute inset-0 bg-[radial-gradient(#1a2a3a_0.6px,transparent_1px)] bg-[length:3px_3px]" />
+                    <div className="relative z-10 flex flex-col items-center">
+                      <div className="w-9 h-9 rounded-full bg-[#ff3b5c] shadow-[0_0_0_8px_rgba(255,59,92,0.25)] flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-white" />
                       </div>
-                      <div>
-                        <div className="text-xs text-gray-600 dark:text-gray-500 uppercase font-terminal mb-1">
-                          Date
-                        </div>
-                        <div
-                          className={`font-semibold ${isPast(meeting.date) ? "text-gray-600 dark:text-gray-400" : "text-blue-600 dark:text-matrix"}`}
+                    </div>
+                  </div>
+                  <div className="px-4 py-3 bg-[#111] flex justify-between items-center">
+                    <div>
+                      <div className="font-semibold text-white">
+                        {meeting.location}
+                      </div>
+                      <div className="text-xs text-white/50">
+                        Cupertino, California
+                      </div>
+                    </div>
+                    <div className="text-xs px-3 py-1 rounded-md bg-white/5 text-white/70">
+                      OPEN IN MAPS
+                    </div>
+                  </div>
+                </div>
+
+                {/* Officer Secret Code Card */}
+                {isOfficer && meeting.secret_code && (
+                  <div className="mb-6 rounded-2xl overflow-hidden border border-hack-purple/40 bg-[#0d0a14] p-5">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Key className="w-4 h-4 text-hack-purple" />
+                        <span className="text-xs font-terminal text-hack-purple uppercase tracking-widest">
+                          Attendance Code (For Officers)
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setCodeRevealed(!codeRevealed)}
+                          className="p-1.5 bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors rounded"
+                          title={codeRevealed ? "Hide code" : "Reveal code"}
                         >
-                          {formatDate(meeting.date)}
-                        </div>
+                          {codeRevealed ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCodeRevealed(true);
+                            setCodeFullscreen(true);
+                          }}
+                          className="p-1.5 bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors rounded"
+                          title="Fullscreen"
+                        >
+                          <Fullscreen className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-
-                    {/* Time */}
-                    <div className="flex items-start gap-4 p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800">
-                      <div className="p-2 bg-blue-50 dark:bg-matrix/10 text-blue-600 dark:text-matrix">
-                        <Clock className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-600 dark:text-gray-500 uppercase font-terminal mb-1">
-                          Time
-                        </div>
-                        <div className="text-gray-900 dark:text-white font-semibold">
-                          {meeting.time}
-                        </div>
-                      </div>
+                    <div
+                      className={`text-3xl font-bold font-mono text-hack-purple tracking-widest transition-all select-none ${!codeRevealed ? "blur-sm" : ""}`}
+                    >
+                      {codeRevealed ? meeting.secret_code : "XXXXXXXXX"}
                     </div>
-
-                    {/* Location */}
-                    <div className="flex items-start gap-4 p-4 bg-gray-100 dark:bg-terminal-alt border border-gray-200 dark:border-gray-800 md:col-span-2">
-                      <div className="p-2 bg-blue-50 dark:bg-matrix/10 text-blue-600 dark:text-matrix">
-                        <MapPin className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-600 dark:text-gray-500 uppercase font-terminal mb-1">
-                          Location
-                        </div>
-                        <div className="text-gray-900 dark:text-white font-semibold">
-                          {meeting.location}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Secret Attendance Code - Officers Only */}
-                    {isOfficer && meeting.secret_code && (
-                      <div className="relative flex items-start gap-4 p-4  bg-hack-purple/10 border border-hack-purple/50 md:col-span-2">
-                        <div className="p-2  bg-hack-purple/20 text-hack-purple">
-                          <Key className="w-6 h-6" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-xs text-hack-purple uppercase font-terminal mb-1">
-                            Attendance Code
-                          </div>
-                          <div
-                            className={`text-2xl font-bold font-mono text-hack-purple tracking-widest transition-all ${!codeRevealed ? "blur-sm select-none" : ""}`}
-                          >
-                            {codeRevealed ? meeting.secret_code : "SAMPLECODE"}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setCodeRevealed(!codeRevealed)}
-                            className="p-2  bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors"
-                            title={codeRevealed ? "Hide code" : "Reveal code"}
-                          >
-                            {codeRevealed ? (
-                              <EyeOff className="w-5 h-5" />
-                            ) : (
-                              <Eye className="w-5 h-5" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setCodeRevealed(true);
-                              setCodeFullscreen(true);
-                            }}
-                            className="p-2  bg-hack-purple/20 text-hack-purple hover:bg-hack-purple/30 transition-colors"
-                            title="Fullscreen"
-                          >
-                            <Fullscreen className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
+                )}
 
-                  {/* Topics */}
-                  {meeting.topics && meeting.topics.length > 0 && (
-                    <div className="mb-8">
-                      <div className="text-xs text-gray-500 uppercase font-terminal mb-3">
-                        Topics Covered
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {meeting.topics.map((topic) => (
-                          <span
-                            key={topic}
-                            className="px-3 py-1.5  text-sm bg-terminal-alt border border-gray-700 text-gray-300 hover:border-matrix/50 transition-colors"
-                          >
-                            {topic}
-                          </span>
-                        ))}
-                      </div>
+                {/* Attendance Status / Check-in Card */}
+                {myAttendance ? (
+                  /* Always show CHECKED IN, even for old events */
+                  <div className="mb-8 rounded-2xl border border-emerald-900/60 bg-emerald-950/40 p-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle className="w-4 h-4 text-emerald-400" />
+                      <span className="text-sm font-medium tracking-wider text-emerald-400">
+                        CHECKED IN
+                      </span>
                     </div>
-                  )}
-
-                  {/* Past Event - Show Registration Status */}
-                  {isPast(meeting.date) &&
-                    userRegistration &&
-                    userRegistration.status !== "cancelled" && (
-                      <div className="pt-6 border-t border-gray-800">
-                        {userRegistration.status === "attended" ? (
-                          <div className="p-6  bg-matrix/10 border border-matrix/50 text-center">
-                            <div className="w-16 h-16 mx-auto mb-4  bg-matrix/20 border border-matrix/50 flex items-center justify-center">
-                              <CheckCircle className="w-8 h-8 text-matrix" />
-                            </div>
-                            <h3 className="text-xl font-bold text-matrix mb-2">
-                              Thank you for joining
-                            </h3>
-                            <p className="text-gray-400 text-sm">
-                              We hope you enjoyed the event! Check out the
-                              photos and resources below.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="p-6  bg-gray-800/50 border border-gray-700 text-center">
-                            <div className="w-16 h-16 mx-auto mb-4  bg-gray-700/50 border border-gray-600 flex items-center justify-center">
-                              <CheckCircle className="w-8 h-8 text-gray-400" />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-300 mb-2">
-                              {userRegistration.status === "registered" &&
-                                "Thank you for joining"}
-                              {userRegistration.status === "invited" &&
-                                "You were invited to this event"}
-                              {userRegistration.status === "waitlist" &&
-                                "You were on the waitlist"}
-                            </h3>
-                            <p className="text-gray-500 text-sm">
-                              We hope you enjoyed the event! Check out the
-                              photos and resources below.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                  {/* Past Event - Attendance Summary */}
-                  {isPast(meeting.date) && (
-                    <div className="pt-6 border-t border-gray-800">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2  bg-matrix/10">
-                          <Users className="w-5 h-5 text-matrix" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">
-                            {loadingAttendees ? (
-                              <span className="text-gray-400">Loading...</span>
-                            ) : (
-                              <>
-                                {pastEventAttendees.length}{" "}
-                                {pastEventAttendees.length === 1
-                                  ? "person"
-                                  : "people"}{" "}
-                                attended
-                              </>
-                            )}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            Event participants
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Attendees List */}
-                      {!loadingAttendees && pastEventAttendees.length > 0 && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {pastEventAttendees.map((attendee) => (
-                            <div
-                              key={attendee.id}
-                              className="flex items-center gap-2 p-2  bg-terminal-alt border border-gray-800"
-                            >
-                              {attendee.user?.photo_url ? (
-                                <img
-                                  src={attendee.user.photo_url}
-                                  alt={attendee.user.display_name}
-                                  className="w-8 h-8  object-cover border border-gray-600"
-                                />
-                              ) : (
-                                <div className="w-8 h-8  bg-gray-700 flex items-center justify-center border border-gray-600">
-                                  <span className="text-gray-400 text-xs font-bold">
-                                    {attendee.user?.display_name
-                                      ?.charAt(0)
-                                      .toUpperCase() || "?"}
-                                  </span>
-                                </div>
-                              )}
-                              <span className="text-sm text-gray-300 truncate">
-                                {attendee.user?.display_name || "Unknown"}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {!loadingAttendees && pastEventAttendees.length === 0 && (
-                        <p className="text-gray-500 text-sm">
-                          No attendance records for this event.
-                        </p>
+                    <div className="text-xs text-white/50 mt-1">
+                      {new Date(myAttendance.checked_in_at).toLocaleString(
+                        "en-US",
+                        {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        },
                       )}
                     </div>
-                  )}
-
-                  {/* Registration Section */}
-                  {!isPast(meeting.date) && (
-                    <div className="pt-6 border-t border-gray-800">
-                      {registrationMessage && (
+                  </div>
+                ) : isWithinCheckInWindow(meeting.date) ? (
+                  /* Within 7-day window — show check-in form */
+                  <div className="mb-8 rounded-2xl border border-[#222] bg-[#111] p-5">
+                    <div className="space-y-3">
+                      {checkInMessage && (
                         <div
-                          className={`p-3  mb-4 ${
-                            registrationMessage.type === "success"
-                              ? "bg-matrix/10 border border-matrix/50 text-matrix"
-                              : "bg-hack-red/10 border border-hack-red/50 text-hack-red"
+                          className={`text-sm ${
+                            checkInMessage.type === "success"
+                              ? "text-emerald-400"
+                              : "text-red-400"
                           }`}
                         >
-                          {registrationMessage.text}
+                          {checkInMessage.text}
                         </div>
                       )}
+                      <div className="text-xs text-white/50 mb-2 font-terminal uppercase tracking-widest">
+                        {isPast(meeting.date)
+                          ? "Event Check-in (7-day window)"
+                          : "Check In"}
+                      </div>
+                      <input
+                        type="text"
+                        value={checkInCode}
+                        onChange={(e) =>
+                          setCheckInCode(e.target.value.toUpperCase())
+                        }
+                        onKeyDown={(e) =>
+                          e.key === "Enter" &&
+                          !checkInSubmitting &&
+                          checkInCode &&
+                          handleCheckIn()
+                        }
+                        placeholder="ENTER CODE"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 font-mono text-lg tracking-widest focus:outline-none focus:border-white/20"
+                        disabled={checkInSubmitting}
+                      />
+                      <button
+                        onClick={handleCheckIn}
+                        disabled={checkInSubmitting || !checkInCode.trim()}
+                        className="w-full py-3 text-lg font-medium rounded-2xl bg-white text-black active:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+                      >
+                        {checkInSubmitting ? "Checking in..." : "Check In"}
+                      </button>
+                      <a
+                        href="https://discord.gg/MEtzjYFts2"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full py-2 text-sm text-center text-white/50 hover:text-white/80 transition-colors"
+                      >
+                        Join Discord →
+                      </a>
+                    </div>
+                  </div>
+                ) : isPast(meeting.date) ? (
+                  /* Past event, 7-day window expired, no check-in */
+                  <div className="mb-8 rounded-2xl border border-red-900/40 bg-[#0f0808] p-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-red-400 text-base leading-none">
+                        ✗
+                      </span>
+                      <span className="text-sm font-medium tracking-wider text-red-400">
+                        NOT CHECKED IN
+                      </span>
+                    </div>
+                    <div className="text-xs text-white/40 mt-1">
+                      {(() => {
+                        const [y, m, d] = meeting.date.split("-").map(Number);
+                        const deadline = new Date(y, m - 1, d + 7);
+                        return `Check-in deadline passed on ${deadline.toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          },
+                        )}`;
+                      })()}
+                    </div>
+                  </div>
+                ) : (
+                  /* Future event, window not open yet */
+                  <div className="mb-8 rounded-2xl border border-[#222] bg-[#111] p-5">
+                    <div className="text-xs text-white/40 mb-3 font-terminal uppercase tracking-widest">
+                      Upcoming Event
+                    </div>
+                    <a
+                      href="https://discord.gg/MEtzjYFts2"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full py-2 text-sm text-center text-white/50 hover:text-white/80 transition-colors"
+                    >
+                      Join Discord for updates →
+                    </a>
+                  </div>
+                )}
 
-                      {/* Registration Stats */}
-                      {(meeting.registration_capacity ||
-                        registrationCount > 0) && (
-                        <div className="flex items-center gap-4 mb-4 text-sm">
-                          <div className="flex items-center gap-2 text-gray-400">
-                            <Users className="w-4 h-4" />
-                            <span>
-                              {registrationCount} registered
-                              {meeting.registration_capacity &&
-                                ` / ${meeting.registration_capacity} capacity`}
-                            </span>
+                {/* Guests / Attendees */}
+                {attendees.length > 0 && (
+                  <div className="mb-8">
+                    <div className="text-sm font-medium text-white/80 mb-3">
+                      Guests{" "}
+                      <span className="text-white/50">
+                        ({attendees.length})
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-3 rounded-2xl border border-[#222] bg-[#111] p-4">
+                      {attendees.slice(0, 20).map((a, i) => {
+                        const name = a.user?.display_name;
+                        const parts = name?.trim().split(/\s+/) ?? [];
+                        const shortLabel =
+                          parts.length > 1
+                            ? `${parts[0]} ${parts[parts.length - 1][0]}`
+                            : (parts[0] ?? "Guest");
+
+                        const avatarContent = (
+                          <>
+                            {a.user?.photo_url ? (
+                              <img
+                                src={a.user.photo_url}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-matrix/20 flex items-center justify-center text-xs text-matrix">
+                                {(name || "G")[0]}
+                              </div>
+                            )}
+                          </>
+                        );
+
+                        return (
+                          <div key={i} className="group relative">
+                            {a.user_id ? (
+                              <Link
+                                to={`/@/${a.user_id}`}
+                                className="block w-10 h-10 rounded-full overflow-hidden border-2 border-[#222] bg-[#0a0a0a] hover:border-white/30 transition-colors"
+                              >
+                                {avatarContent}
+                              </Link>
+                            ) : (
+                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#222] bg-[#0a0a0a]">
+                                {avatarContent}
+                              </div>
+                            )}
+                            {/* Tooltip — outside overflow-hidden, desktop only */}
+                            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-black text-white rounded whitespace-nowrap z-50 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+                              {shortLabel}
+                            </div>
                           </div>
-                          {waitlistCount > 0 && (
-                            <div className="text-gray-500">
-                              {waitlistCount} on waitlist
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* About */}
+                <div className="mb-8 text-[15px] text-white/85 leading-relaxed">
+                  <div className="uppercase text-xs tracking-[1px] text-white/50 mb-2">
+                    About Event
+                  </div>
+                  <p>{meeting.description}</p>
+                </div>
+
+                {/* Topics */}
+                {meeting.topics && meeting.topics.length > 0 && (
+                  <div className="mb-8">
+                    <div className="text-xs text-gray-500 uppercase font-terminal mb-3">
+                      Topics Covered
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {meeting.topics.map((topic) => (
+                        <Link
+                          key={topic}
+                          to={`/home?q=${encodeURIComponent(topic)}`}
+                          className="px-3 py-1.5 text-sm bg-terminal-alt border border-gray-700 text-gray-300 hover:border-matrix/50 hover:text-matrix transition-colors cursor-pointer"
+                        >
+                          {topic}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Past Event - Attendance Summary */}
+                {isPast(meeting.date) && attendees.length > 0 && (
+                  <div className="pt-6 border-t border-gray-800">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-matrix/10">
+                        <Users className="w-5 h-5 text-matrix" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">
+                          {attendees.length}{" "}
+                          {attendees.length === 1 ? "person" : "people"}{" "}
+                          attended
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Event participants
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {attendees.map((attendee) => (
+                        <Link
+                          key={attendee.id}
+                          to={`/@/${attendee.user_id}`}
+                          className="flex items-center gap-2 p-2 bg-terminal-alt border border-gray-800 hover:border-matrix/50 hover:bg-matrix/5 transition-all group"
+                        >
+                          {attendee.user?.photo_url ? (
+                            <img
+                              src={attendee.user.photo_url}
+                              alt={attendee.user.display_name}
+                              className="w-8 h-8 object-cover border border-gray-600 group-hover:border-matrix/40 transition-colors"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-700 flex items-center justify-center border border-gray-600 group-hover:border-matrix/40 transition-colors">
+                              <span className="text-gray-400 text-xs font-bold">
+                                {attendee.user?.display_name
+                                  ?.charAt(0)
+                                  .toUpperCase() || "?"}
+                              </span>
                             </div>
                           )}
-                        </div>
-                      )}
-
-                      {/* User has been invited - show accept/decline */}
-                      {userRegistration &&
-                      userRegistration.status === "invited" ? (
-                        <div className="space-y-4">
-                          <div className="p-4  bg-hack-cyan/10 border border-hack-cyan/50">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Star className="w-5 h-5 text-hack-cyan" />
-                              <span className="font-semibold text-hack-cyan">
-                                You've been invited!
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-400">
-                              You've been invited to attend this meeting. Accept the invite to confirm your spot.
-                            </p>
-                          </div>
-                          <div className="flex gap-3">
-                            <button
-                              onClick={handleDeclineInvite}
-                              disabled={registering}
-                              className="flex-1 px-4 py-2 text-sm font-terminal text-gray-400 hover:text-hack-red border border-gray-600 hover:border-hack-red  transition-colors disabled:opacity-50"
-                            >
-                              {registering ? "..." : "Decline"}
-                            </button>
-                            <button
-                              onClick={handleAcceptInvite}
-                              disabled={registering}
-                              className="flex-1 cli-btn-filled px-4 py-2 disabled:opacity-50"
-                            >
-                              {registering ? "Accepting..." : "Accept Invite"}
-                            </button>
-                          </div>
-                        </div>
-                      ) : userRegistration &&
-                      userRegistration.status !== "cancelled" ? (
-                        /* User already registered */
-                        <div className="space-y-4">
-                          <div className="p-4  bg-matrix/10 border border-matrix/50">
-                            <div className="flex items-center gap-2 mb-2">
-                              <CheckCircle className="w-5 h-5 text-matrix" />
-                              <span className="font-semibold text-matrix">
-                                {userRegistration.status === "registered" &&
-                                  "You are registered"}
-                                {userRegistration.status === "waitlist" &&
-                                  "You are on the waitlist"}
-                                {userRegistration.status === "attended" &&
-                                  "You are registered"}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-400">
-                              {userRegistration.status === "registered" &&
-                                "See you at the event!"}
-                              {userRegistration.status === "waitlist" &&
-                                "You'll be notified if a spot opens up."}
-                              {userRegistration.status === "attended" &&
-                                "See you at the event!"}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => setShowCancelDialog(true)}
-                            className="text-sm text-gray-500 hover:text-hack-red transition-colors"
-                          >
-                            Cancel registration
-                          </button>
-                        </div>
-                      ) : meeting.registration_type === "closed" ? (
-                        /* Closed registration */
-                        <div className="p-4  bg-gray-800/50 border border-gray-700">
-                          <p className="text-gray-400 text-center">
-                            Registration is closed for this event
-                          </p>
-                        </div>
-                      ) : meeting.registration_type === "invite_only" &&
-                        !showInviteCodeInput ? (
-                        /* Invite-only event */
-                        <div className="space-y-4">
-                          <div className="p-4  bg-hack-purple/10 border border-hack-purple/50">
-                            <p className="text-hack-purple text-sm mb-2">
-                              This is an invite-only event
-                            </p>
-                            <p className="text-gray-400 text-xs">
-                              {meeting.invite_form_url
-                                ? "Request an invite or enter your invite code to register."
-                                : "Enter your invite code to register."}
-                            </p>
-                          </div>
-                          <div className="flex flex-col sm:flex-row gap-3">
-                            {meeting.invite_form_url && (
-                              <a
-                                href={meeting.invite_form_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="cli-btn-dashedpx-6 py-3 text-center flex-1"
-                              >
-                                Request Invite
-                              </a>
-                            )}
-                            <button
-                              onClick={() => setShowInviteCodeInput(true)}
-                              className="cli-btn-filled px-6 py-3 flex-1"
-                            >
-                              I have an invite code
-                            </button>
-                          </div>
-                        </div>
-                      ) : showInviteCodeInput ||
-                        meeting.registration_type === "invite_only" ? (
-                        /* Invite code input */
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-xs text-gray-500 font-terminal mb-2">
-                              INVITE CODE
-                            </label>
-                            <input
-                              type="text"
-                              value={inviteCode}
-                              onChange={(e) =>
-                                setInviteCode(e.target.value.toUpperCase())
-                              }
-                              onKeyDown={(e) =>
-                                e.key === "Enter" && handleRegister()
-                              }
-                              className="input-hack w-full  font-mono"
-                              placeholder="ENTER CODE"
-                              disabled={registering}
-                            />
-                          </div>
-                          <div className="flex gap-3">
-                            <button
-                              onClick={() => {
-                                setShowInviteCodeInput(false);
-                                setInviteCode("");
-                              }}
-                              disabled={registering}
-                              className="cli-btn-dashedpx-6 py-3 flex-1"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleRegister}
-                              disabled={registering || !inviteCode}
-                              className="cli-btn-filled px-6 py-3 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {registering ? "Registering..." : "Register"}
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Open registration or waitlist */
-                        <div className="flex flex-col gap-4">
-                          <button
-                            onClick={handleRegister}
-                            disabled={registering}
-                            className="cli-btn-filled px-6 py-3 text-center disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {registering
-                              ? "Processing..."
-                              : isAtCapacity
-                                ? "Join Waitlist"
-                                : "Register for Event"}
-                          </button>
-                          <div className="flex flex-col sm:flex-row gap-3">
-                            <a
-                              href="https://discord.gg/v5JWDrZVNp"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="cli-btn-dashedpx-6 py-2 text-center text-sm flex-1"
-                            >
-                              Join Discord
-                            </a>
-                            <Link
-                              to="/meetings"
-                              className="cli-btn-dashedpx-6 py-2 text-center text-sm flex-1"
-                            >
-                              View All Events
-                            </Link>
-                          </div>
-                        </div>
-                      )}
+                          <span className="text-sm text-gray-300 truncate group-hover:text-matrix transition-colors">
+                            {attendee.user?.display_name || "Unknown"}
+                          </span>
+                        </Link>
+                      ))}
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+                  </div>
+                )}
+              </>
+            ) : null}
+          </>
         </article>
 
-        {/* Tabbed Content Section */}
-        {!isEditing &&
-          (meeting.announcements?.length > 0 ||
-            meeting.photos?.length > 0 ||
-            meeting.resources?.length > 0) && (
+        {/* Resources Section */}
+        {!loading &&
+          !isEditing &&
+          meeting?.resources &&
+          meeting.resources.length > 0 && (
             <section
               className={`mb-12 transition-all duration-700 delay-150 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
             >
@@ -1975,71 +1272,10 @@ function MeetingDetails() {
                 </span>
               </div>
 
-              {/* Tab Navigation */}
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-                <button
-                  onClick={() => setActiveTab("announcements")}
-                  className={`px-4 py-2  text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
-                    activeTab === "announcements"
-                      ? "bg-matrix/20 text-matrix border border-matrix"
-                      : "bg-terminal-alt text-gray-400 border border-gray-700 hover:border-matrix/50"
-                  }`}
-                >
-                  <Megaphone className="w-4 h-4" />
-                  ANNOUNCEMENTS
-                  {meeting.announcements?.length ? (
-                    <span className="px-1.5 py-0.5text-xs bg-matrix/30">
-                      {meeting.announcements.length}
-                    </span>
-                  ) : null}
-                </button>
-                <button
-                  onClick={() => setActiveTab("photos")}
-                  className={`px-4 py-2  text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
-                    activeTab === "photos"
-                      ? "bg-hack-cyan/20 text-hack-cyan border border-hack-cyan"
-                      : "bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-cyan/50"
-                  }`}
-                >
-                  <PhotoIcon className="w-4 h-4" />
-                  PHOTOS
-                  {meeting.photos?.length ? (
-                    <span className="px-1.5 py-0.5text-xs bg-hack-cyan/30">
-                      {meeting.photos.length}
-                    </span>
-                  ) : null}
-                </button>
-                <button
-                  onClick={() => setActiveTab("resources")}
-                  className={`px-4 py-2  text-sm font-terminal transition-all whitespace-nowrap flex items-center gap-2 ${
-                    activeTab === "resources"
-                      ? "bg-hack-yellow/20 text-hack-yellow border border-hack-yellow"
-                      : "bg-terminal-alt text-gray-400 border border-gray-700 hover:border-hack-yellow/50"
-                  }`}
-                >
-                  <Download className="w-4 h-4" />
-                  RESOURCES
-                  {meeting.resources?.length ? (
-                    <span className="px-1.5 py-0.5text-xs bg-hack-yellow/30">
-                      {meeting.resources.length}
-                    </span>
-                  ) : null}
-                </button>
+              <div className="text-sm text-gray-400 mb-2 font-terminal">
+                RESOURCES
               </div>
 
-              {/* Swipe indicator */}
-              <div className="flex justify-center gap-2 mb-4 md:hidden">
-                {tabs.map((tab) => (
-                  <div
-                    key={tab}
-                    className={`w-2 h-2  transition-all ${
-                      activeTab === tab ? "bg-matrix w-4" : "bg-gray-600"
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Tab Content */}
               <div
                 ref={tabContainerRef}
                 onTouchStart={handleTouchStart}
@@ -2055,83 +1291,7 @@ function MeetingDetails() {
                     {activeTab}
                   </span>
                 </div>
-                <div className="terminal-body min-h-[200px]">
-                  {/* Announcements Tab */}
-                  {activeTab === "announcements" && (
-                    <div className="space-y-4">
-                      {meeting.announcements &&
-                      meeting.announcements.length > 0 ? (
-                        meeting.announcements.map((announcement) => (
-                          <div
-                            key={announcement.id}
-                            className="p-4  bg-terminal-alt border border-gray-800"
-                          >
-                            <div className="flex items-start justify-between gap-4 mb-2">
-                              <h4 className="font-semibold text-matrix">
-                                {announcement.title}
-                              </h4>
-                              <span className="text-xs text-gray-500 whitespace-nowrap">
-                                {new Date(announcement.date).toLocaleDateString(
-                                  "en-US",
-                                  { month: "short", day: "numeric" },
-                                )}
-                              </span>
-                            </div>
-                            <p className="text-gray-400 text-sm">
-                              {announcement.content}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8">
-                          <Megaphone className="w-12 h-12 mx-auto text-gray-600 mb-3" />
-                          <p className="text-gray-500 text-sm">
-                            No announcements yet
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Photos Tab */}
-                  {activeTab === "photos" && (
-                    <div>
-                      {meeting.photos && meeting.photos.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          {meeting.photos.map((photo) => (
-                            <div
-                              key={photo.id}
-                              className="group relative aspect-square  overflow-hidden bg-terminal-alt border border-gray-800"
-                            >
-                              <img
-                                src={photo.url}
-                                alt={photo.caption || "Event photo"}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src =
-                                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23374151" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-                                }}
-                              />
-                              {photo.caption && (
-                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <p className="text-white text-xs">
-                                    {photo.caption}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <PhotoIcon className="w-12 h-12 mx-auto text-gray-600 mb-3" />
-                          <p className="text-gray-500 text-sm">No photos yet</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Resources Tab */}
+                <div className="terminal-body min-h-[120px]">
                   {activeTab === "resources" && (
                     <div className="space-y-3">
                       {meeting.resources && meeting.resources.length > 0 ? (
@@ -2141,9 +1301,9 @@ function MeetingDetails() {
                             href={resource.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-4 p-4  bg-terminal-alt border border-gray-800 hover:border-hack-yellow/50 transition-colors group"
+                            className="flex items-center gap-4 p-4 bg-terminal-alt border border-gray-800 hover:border-hack-yellow/50 transition-colors group"
                           >
-                            <div className="p-2  bg-hack-yellow/10 text-hack-yellow">
+                            <div className="p-2 bg-hack-yellow/10 text-hack-yellow">
                               {resource.type === "slides" && (
                                 <Slides className="w-5 h-5" />
                               )}
@@ -2180,65 +1340,8 @@ function MeetingDetails() {
                   )}
                 </div>
               </div>
-
-              {/* Swipe hint on mobile */}
-              <p className="text-center text-xs text-gray-600 mt-3 md:hidden">
-                Swipe left or right to switch tabs
-              </p>
             </section>
           )}
-
-        {/* Related Meetings */}
-        {relatedMeetings.length > 0 && (
-          <section
-            className={`mb-16 transition-all duration-700 delay-200 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-matrix neon-text-subtle text-lg">$</span>
-              <span className="text-gray-400 font-terminal">
-                ls ./meetings/ --type={meeting.type} | head -3
-              </span>
-            </div>
-
-            <h2 className="text-xl font-bold text-matrix mb-4">
-              Related {TYPE_LABELS[meeting.type]} Events
-            </h2>
-            <div className="grid gap-4 md:grid-cols-3">
-              {relatedMeetings.map((related) => (
-                <Link
-                  key={related.id}
-                  to={`/meetings/${related.slug}`}
-                  className={`card-hack p-4  group transition-all ${
-                    isPast(related.date) ? "opacity-70" : ""
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span
-                      className={`inline-block px-2 py-0.5text-xs font-terminal border ${TYPE_COLORS[related.type]}`}
-                    >
-                      {TYPE_LABELS[related.type]}
-                    </span>
-                    {isPast(related.date) && (
-                      <span className="inline-block px-2 py-0.5text-xs font-terminal border border-gray-600 text-gray-500">
-                        PAST
-                      </span>
-                    )}
-                  </div>
-                  <h3
-                    className={`font-semibold mb-2 group-hover:neon-text-subtle transition-all line-clamp-2 ${
-                      isPast(related.date) ? "text-gray-400" : "text-matrix"
-                    }`}
-                  >
-                    {related.title}
-                  </h3>
-                  <div className="text-sm text-gray-500">
-                    {formatDate(related.date)}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
       </div>
     </div>
   );

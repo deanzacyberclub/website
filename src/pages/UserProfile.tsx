@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import {
   Spinner,
   ChevronLeft,
@@ -12,7 +11,6 @@ import {
   Trophy,
   CheckCircle,
   Users,
-  Clock,
 } from "@/lib/cyberIcon";
 
 interface UserDetails {
@@ -23,18 +21,6 @@ interface UserDetails {
   student_id: string | null;
   is_officer: boolean;
   created_at: string;
-}
-
-interface UserRegistration {
-  id: string;
-  meeting_id: string;
-  status: string;
-  registered_at: string;
-  meeting?: {
-    title: string;
-    slug: string;
-    date: string;
-  };
 }
 
 interface UserAttendance {
@@ -59,31 +45,18 @@ interface CTFTeamInfo {
 function UserProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, userProfile, loading: authLoading } = useAuth();
-  const { isVerifiedOfficer, isLoading: verifyingOfficer } = useOfficerVerification();
+  const { loading: authLoading } = useAuth();
   const [loaded, setLoaded] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
-  const [registrations, setRegistrations] = useState<UserRegistration[]>([]);
   const [attendance, setAttendance] = useState<UserAttendance[]>([]);
   const [ctfInfo, setCtfInfo] = useState<CTFTeamInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deletingAttendance, setDeletingAttendance] = useState<string | null>(null);
+  const [deletingAttendance, setDeletingAttendance] = useState<string | null>(
+    null,
+  );
 
-  // Use server-verified officer status instead of client-side state
-  const isOfficer = isVerifiedOfficer ?? false;
-
-  // Redirect non-authenticated users or non-officers
-  useEffect(() => {
-    if (!authLoading && (!user || !isOfficer)) {
-      navigate("/dashboard");
-    }
-  }, [authLoading, user, isOfficer, navigate]);
-
-  // Note: Authorization is also enforced by ProtectedRoute wrapper (requireOfficer)
-  // and server-side RLS policies on all Supabase operations
-
-  // Fetch user details
+  // Fetch user details (guarded by the route wrapper + server-side checks inside the officer RPCs)
   useEffect(() => {
     async function fetchUserDetails() {
       if (!id) return;
@@ -99,34 +72,14 @@ function UserProfile() {
         );
 
         if (userError) throw userError;
-        if (!userData || userData.length === 0) {
+        const userDataArr = userData as any[];
+        if (!userDataArr || userDataArr.length === 0) {
           setError("User not found");
           setLoading(false);
           return;
         }
 
-        setUserDetails(userData[0]);
-
-        // Fetch user's registrations
-        const { data: regsData } = await supabase
-          .from("registrations")
-          .select("*")
-          .eq("user_id", id)
-          .order("registered_at", { ascending: false });
-
-        if (regsData && regsData.length > 0) {
-          const meetingIds = [...new Set(regsData.map((r) => r.meeting_id))];
-          const { data: meetings } = await supabase
-            .from("meetings_public")
-            .select("id, title, slug, date")
-            .in("id", meetingIds);
-
-          const regsWithMeetings = regsData.map((reg) => ({
-            ...reg,
-            meeting: meetings?.find((m) => m.id === reg.meeting_id),
-          }));
-          setRegistrations(regsWithMeetings);
-        }
+        setUserDetails(userDataArr[0]);
 
         // Fetch user's attendance
         const { data: attendanceData } = await supabase
@@ -151,37 +104,14 @@ function UserProfile() {
           setAttendance(attendanceWithMeetings);
         }
 
-        // Fetch CTF team info
-        const { data: teamMember } = await supabase
-          .from("ctf_team_members")
-          .select("team_id, ctf_teams(id, name, captain_id)")
-          .eq("user_id", id)
-          .single();
-
-        if (teamMember && teamMember.ctf_teams) {
-          const team = teamMember.ctf_teams as any;
-
-          // Get team's submissions
-          const { data: submissions } = await supabase
-            .from("ctf_submissions")
-            .select("*")
-            .eq("team_id", team.id)
-            .eq("is_correct", true);
-
-          // Calculate points (simplified - you may want to join with challenges)
-          setCtfInfo({
-            team_id: team.id,
-            team_name: team.name,
-            is_captain: team.captain_id === id,
-            total_points: 0, // Would need challenge data to calculate
-            solves_count: submissions?.length || 0,
-          });
-        }
+        // CTF team feature was removed in 2026 (tables dropped).
+        // Leaving ctfInfo as null keeps the UI clean. No queries attempted.
+        setCtfInfo(null);
       } catch (err: any) {
         console.error("Error fetching user details:", err);
         // If authorization error, redirect to dashboard
         if (err?.code === "PGRST301" || err?.status === 403) {
-          navigate("/dashboard");
+          navigate("/home");
           return;
         }
         setError("Failed to load user details");
@@ -346,27 +276,11 @@ function UserProfile() {
 
         {/* Stats Grid */}
         <div
-          className={`grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 transition-all duration-700 delay-100 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          className={`grid grid-cols-2 gap-4 mb-8 transition-all duration-700 delay-100 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
           <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800">
             <div className="text-2xl font-bold text-white">
               {attendance.length}
-            </div>
-            <div className="text-xs text-gray-500 font-terminal">
-              ATTENDANCE
-            </div>
-          </div>
-          <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800">
-            <div className="text-2xl font-bold text-white">
-              {registrations.length}
-            </div>
-            <div className="text-xs text-gray-500 font-terminal">
-              REGISTRATIONS
-            </div>
-          </div>
-          <div className="p-4 rounded-xl bg-terminal-alt border border-gray-800">
-            <div className="text-2xl font-bold text-white">
-              {registrations.filter((r) => r.status === "attended").length}
             </div>
             <div className="text-xs text-gray-500 font-terminal">
               EVENTS ATTENDED
@@ -441,7 +355,7 @@ function UserProfile() {
                     </div>
                     {att.meeting ? (
                       <Link
-                        to={`/meetings/${att.meeting.slug}`}
+                        to={`/home?meeting=${att.meeting.slug}`}
                         className="text-gray-200 hover:text-hack-cyan transition-colors"
                       >
                         {att.meeting.title}
@@ -454,68 +368,14 @@ function UserProfile() {
                     <span className="text-xs text-gray-500">
                       {formatDateTime(att.checked_in_at)}
                     </span>
-                    {isOfficer && (
-                      <button
-                        onClick={() => deleteAttendanceRecord(att.id)}
-                        disabled={deletingAttendance === att.id}
-                        className="px-2 py-1 text-xs rounded text-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors disabled:opacity-50"
-                      >
-                        {deletingAttendance === att.id ? "..." : "Remove"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Registrations */}
-        <div
-          className={`mb-8 transition-all duration-700 delay-250 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-        >
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-hack-cyan" />
-            Registration History ({registrations.length})
-          </h2>
-          {registrations.length === 0 ? (
-            <p className="text-gray-500 text-sm">No registrations</p>
-          ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {registrations.slice(0, 10).map((reg) => (
-                <div
-                  key={reg.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-terminal-alt border border-gray-800"
-                >
-                  <div className="flex items-center gap-3">
-                    {reg.meeting ? (
-                      <Link
-                        to={`/meetings/${reg.meeting.slug}`}
-                        className="text-gray-200 hover:text-hack-cyan transition-colors"
-                      >
-                        {reg.meeting.title}
-                      </Link>
-                    ) : (
-                      <span className="text-gray-400">Unknown Meeting</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`px-2 py-0.5 rounded text-xs font-terminal ${
-                        reg.status === "attended"
-                          ? "bg-matrix/20 text-matrix border border-matrix/30"
-                          : reg.status === "registered"
-                            ? "bg-hack-cyan/20 text-hack-cyan border border-hack-cyan/30"
-                            : reg.status === "waitlist"
-                              ? "bg-hack-yellow/20 text-hack-yellow border border-hack-yellow/30"
-                              : "bg-gray-700 text-gray-400 border border-gray-600"
-                      }`}
+                    {/* Only officers can reach this page (enforced by ProtectedRoute + server RPCs), so always show delete control */}
+                    <button
+                      onClick={() => deleteAttendanceRecord(att.id)}
+                      disabled={deletingAttendance === att.id}
+                      className="px-2 py-1 text-xs rounded text-hack-red hover:bg-hack-red/10 border border-hack-red/30 transition-colors disabled:opacity-50"
                     >
-                      {reg.status.toUpperCase()}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {formatDate(reg.registered_at)}
-                    </span>
+                      {deletingAttendance === att.id ? "..." : "Remove"}
+                    </button>
                   </div>
                 </div>
               ))}

@@ -18,4 +18,21 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split large third-party libraries into their own chunks
+          'framer-motion': ['framer-motion'],
+          'supabase': ['@supabase/supabase-js'],
+          'ogl': ['ogl'],
+          // React-related can sometimes benefit from separate chunking too
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+    // Enable minification and compression hints
+    minify: 'esbuild',
+    cssCodeSplit: true,
+  },
 })

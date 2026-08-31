@@ -1,250 +1,408 @@
-import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import ProfileMenu from "./ProfileMenu";
-import { Login, Home, Settings, Logout, User } from "@/lib/cyberIcon";
+import { Login, Logout, ChevronRight } from "@/lib/cyberIcon";
 import ConfirmDialog from "./ConfirmDialog";
+import {
+  preloadLive,
+  preloadDashboard,
+  preloadSettings,
+} from "@/lib/preloadRoutes";
 
 function PageHeader() {
   const location = useLocation();
-  const navigate = useLocation();
-  const { user, userProfile, loading, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const isEventsActive = location.pathname.startsWith("/meetings");
-  const isStudyActive = location.pathname === "/study";
-  const isCTFActive = location.pathname.startsWith("/ctf");
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const hamburgerRef = useRef<HTMLDivElement>(null);
+
+  const isHomeActive = location.pathname === "/home";
   const isCheckInActive = location.pathname === "/live";
-  const isDashboardActive = location.pathname === "/dashboard";
+  const isDashboardActive = location.pathname === "/home";
   const isSettingsActive = location.pathname === "/settings";
+  const isSignInActive = location.pathname === "/auth";
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Click outside + Escape handling for mobile menu
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const clickedInsideMenu = mobileMenuRef.current?.contains(target);
+      const clickedHamburger = hamburgerRef.current?.contains(target);
+
+      if (!clickedInsideMenu && !clickedHamburger) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [mobileMenuOpen]);
+
   const handleSignOut = async () => {
     setLoggingOut(true);
-    await signOut();
-    setLoggingOut(false);
-    setShowLogoutConfirm(false);
-    closeMobileMenu();
-    window.location.href = '/';
+    try {
+      await signOut();
+      navigate("/");
+    } finally {
+      setLoggingOut(false);
+      setShowLogoutConfirm(false);
+      closeMobileMenu();
+    }
   };
+
+  const authRedirect = `/auth?to=${encodeURIComponent(
+    location.pathname === "/" ? "/home" : location.pathname,
+  )}`;
 
   return (
     <>
-      <div className="flex items-center justify-between mb-3">
-        <Link
-          to="/"
-          className="glitch text-blue-600 dark:text-matrix hover:text-blue-700 dark:hover:text-matrix transition-colors font-terminal text-sm tracking-tight neon-text-subtle"
-          data-text="[dacc]"
-        >
-          [dacc]
-        </Link>
-
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-6">
-          <Link
-            to="/meetings"
-            className={`${
-              isEventsActive
-                ? "text-blue-600 dark:text-matrix neon-text-subtle"
-                : "text-gray-600 dark:text-gray-500 hover:text-blue-600 dark:hover:text-matrix"
-            } transition-colors font-terminal text-sm`}
-          >
-            events
-          </Link>
-          <Link
-            to="/ctf"
-            className={`${
-              isCTFActive
-                ? "text-blue-600 dark:text-matrix neon-text-subtle"
-                : "text-gray-600 dark:text-gray-500 hover:text-blue-600 dark:hover:text-matrix"
-            } transition-colors font-terminal text-sm`}
-          >
-            ctf
-          </Link>
-          {user && (
+      {/* Header bar: rounded inset bar on mobile (all corners), rounded + centered on desktop */}
+      <div className="sticky top-0 z-[110] w-full mx-2 mt-2 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] md:mx-auto md:mt-0 md:max-w-7xl md:px-6 md:rounded-3xl md:border md:border-gray-200 dark:md:border-gray-800 md:bg-white dark:md:bg-[#0a0a0a] md:shadow-sm">
+        {/* Desktop layout: Nav | Centered Logo | Auth */}
+        <div className="hidden md:flex items-center justify-between py-2.5 relative">
+          {/* Left: Navigation */}
+          <nav className="flex items-center gap-6 text-sm font-terminal font-bold">
+            <Link
+              to="/home"
+              onMouseEnter={preloadDashboard}
+              onFocus={preloadDashboard}
+              className={`flex items-center gap-1.5 transition-colors font-medium ${
+                isHomeActive
+                  ? "text-matrix"
+                  : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <motion.span
+                initial={{ opacity: isHomeActive ? 1 : 0 }}
+                animate={{ opacity: isHomeActive ? 1 : 0 }}
+                transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+                className="text-matrix"
+                aria-hidden="true"
+              >
+                &gt;
+              </motion.span>
+              home
+            </Link>
             <Link
               to="/live"
-              className={`${
+              onMouseEnter={preloadLive}
+              onFocus={preloadLive}
+              className={`flex items-center gap-1.5 transition-colors font-medium ${
                 isCheckInActive
-                  ? "text-blue-600 dark:text-matrix neon-text-subtle"
-                  : "text-gray-600 dark:text-gray-500 hover:text-blue-600 dark:hover:text-matrix"
-              } transition-colors font-terminal text-sm`}
+                  ? "text-matrix"
+                  : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              }`}
             >
+              <motion.span
+                initial={{ opacity: isCheckInActive ? 1 : 0 }}
+                animate={{ opacity: isCheckInActive ? 1 : 0 }}
+                transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+                className="text-matrix"
+                aria-hidden="true"
+              >
+                &gt;
+              </motion.span>
               check-in
             </Link>
-          )}
-        </div>
+          </nav>
 
-        {/* Desktop Auth */}
-        <div className="hidden md:block">
-          {loading ? (
-            <div className="w-10 h-10 bg-gray-100 dark:bg-terminal-alt border-2 border-gray-300 dark:border-gray-700 animate-pulse" />
-          ) : user ? (
-            <ProfileMenu />
-          ) : (
+          {/* Center: Logo (perfectly centered) */}
+          <div className="absolute left-1/2 -translate-x-1/2">
             <Link
-              to={`/auth?to=${encodeURIComponent(location.pathname === "/" ? "/dashboard" : location.pathname)}`}
-              className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-matrix text-gray-700 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors font-terminal text-sm"
+              to="/"
+              className="font-terminal text-sm font-bold text-green-700 dark:text-matrix hover:text-green-800 dark:hover:text-matrix/80 transition-colors glitch relative group"
+              data-text="[dacc]"
             >
-              <Login className="w-4 h-4" />
-              Sign in
+              <span className="relative">[dacc]</span>
             </Link>
-          )}
+          </div>
+
+          {/* Right: Auth */}
+          <div className="flex items-center">
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-300 dark:bg-matrix/30 animate-pulse" />
+                <span className="text-xs text-gray-400 dark:text-gray-600 font-terminal">
+                  Loading...
+                </span>
+              </div>
+            ) : user ? (
+              <ProfileMenu />
+            ) : (
+              <Link
+                to={authRedirect}
+                className={`flex items-center gap-1.5 font-terminal text-sm font-bold transition-colors group ${
+                  isSignInActive
+                    ? "text-matrix"
+                    : "text-gray-700 dark:text-gray-300 hover:text-green-700 dark:hover:text-matrix"
+                }`}
+              >
+                <span className="relative w-3.5 h-3.5 flex-shrink-0">
+                  <AnimatePresence>
+                    {isSignInActive ? (
+                      <motion.span
+                        key="caret"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          duration: 0.12,
+                          ease: [0.25, 0.1, 0.25, 1],
+                        }}
+                        className="absolute inset-0 flex items-center justify-center text-matrix text-[13px] leading-none"
+                        aria-hidden="true"
+                      >
+                        &gt;
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="icon"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          duration: 0.12,
+                          ease: [0.25, 0.1, 0.25, 1],
+                        }}
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <Login className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </span>
+                sign in
+              </Link>
+            )}
+          </div>
         </div>
 
-        {/* Mobile Hamburger */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden flex flex-col gap-1.5 w-7 h-7 justify-center items-center group"
-          aria-label="Toggle menu"
-        >
-          <span
-            className={`block h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
-              mobileMenuOpen ? "w-6 rotate-45 translate-y-2" : "w-6"
-            }`}
-          />
-          <span
-            className={`block h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
-              mobileMenuOpen ? "w-0 opacity-0" : "w-5"
-            }`}
-          />
-          <span
-            className={`block h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
-              mobileMenuOpen ? "w-6 -rotate-45 -translate-y-2" : "w-4"
-            }`}
-          />
-        </button>
-      </div>
+        {/* Mobile layout: Logo left + Hamburger right (full width) */}
+        <div className="md:hidden flex items-center justify-between py-3 px-4">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="font-terminal text-sm font-bold text-green-700 dark:text-matrix hover:text-green-800 dark:hover:text-matrix/80 transition-colors glitch relative group"
+            data-text="[dacc]"
+          >
+            <span className="relative">[dacc]</span>
+          </Link>
 
-      {/* Mobile Menu */}
+          {/* Mobile: hamburger */}
+          <div ref={hamburgerRef} className="flex md:hidden items-center">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex w-6 h-6 items-center justify-center"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              <div className="relative w-5 h-5">
+                <span
+                  className={`absolute left-0 block h-px bg-gray-700 dark:bg-gray-300 transition-all duration-300 ${
+                    mobileMenuOpen
+                      ? "top-1/2 w-5 -translate-y-1/2 rotate-45"
+                      : "top-[4px] w-5"
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-1/2 block h-px w-5 -translate-y-1/2 bg-gray-700 dark:bg-gray-300 transition-all duration-200 ${
+                    mobileMenuOpen ? "opacity-0" : ""
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 block h-px bg-gray-700 dark:bg-gray-300 transition-all duration-300 ${
+                    mobileMenuOpen
+                      ? "top-1/2 w-5 -translate-y-1/2 -rotate-45"
+                      : "bottom-[4px] w-4"
+                  }`}
+                />
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* /header bar */}
+      {/* Mobile dropdown panel (rectangular, terminal-aligned, no heavy rounding) */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ${
-          mobileMenuOpen ? "max-h-[32rem] mb-8" : "max-h-0"
+        ref={mobileMenuRef}
+        className={`md:hidden mt-2 overflow-hidden transition-all duration-200 ${
+          mobileMenuOpen
+            ? "max-h-[520px] opacity-100"
+            : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
-        <div className="border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-terminal-bg">
-          <div className="flex flex-col">
+        <div className="mx-2 border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111111] overflow-hidden shadow-lg dark:shadow-2xl rounded-2xl">
+          <div className="flex flex-col py-1 text-sm font-terminal">
             <Link
-              to="/meetings"
+              to="/home"
               onClick={closeMobileMenu}
-              className={`px-4 py-3 border-b border-gray-200 dark:border-gray-700 ${
-                isEventsActive
-                  ? "text-blue-600 dark:text-matrix bg-blue-50 dark:bg-matrix/10"
-                  : "text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-terminal-alt"
-              } transition-colors font-terminal text-sm`}
+              onMouseEnter={preloadDashboard}
+              onFocus={preloadDashboard}
+              className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
+                isHomeActive
+                  ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
+                  : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
+              }`}
             >
-              &gt; events
+              <span
+                className={`transition-colors duration-150 ${
+                  isHomeActive
+                    ? "text-matrix"
+                    : "text-gray-400 dark:text-gray-600"
+                }`}
+              >
+                &gt;
+              </span>
+              home
+              {isHomeActive && (
+                <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />
+              )}
             </Link>
+
             <Link
-              to="/ctf"
+              to="/live"
               onClick={closeMobileMenu}
-              className={`px-4 py-3 border-b border-gray-200 dark:border-gray-700 ${
-                isCTFActive
-                  ? "text-blue-600 dark:text-matrix bg-blue-50 dark:bg-matrix/10"
-                  : "text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-terminal-alt"
-              } transition-colors font-terminal text-sm`}
+              onMouseEnter={preloadLive}
+              onFocus={preloadLive}
+              className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
+                isCheckInActive
+                  ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
+                  : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
+              }`}
             >
-              &gt; ctf
+              <span
+                className={`transition-colors duration-150 ${
+                  isCheckInActive
+                    ? "text-matrix"
+                    : "text-gray-400 dark:text-gray-600"
+                }`}
+              >
+                &gt;
+              </span>
+              check in
+              {isCheckInActive && (
+                <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />
+              )}
             </Link>
+
             {user && (
               <>
+                <div className="mx-5 my-1 h-px bg-gray-200 dark:bg-gray-700" />
                 <Link
-                  to="/live"
+                  to="/home"
                   onClick={closeMobileMenu}
-                  className={`px-4 py-3 border-b border-gray-200 dark:border-gray-700 ${
-                    isCheckInActive
-                      ? "text-blue-600 dark:text-matrix bg-blue-50 dark:bg-matrix/10"
-                      : "text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-terminal-alt"
-                  } transition-colors font-terminal text-sm`}
-                >
-                  &gt; check-in
-                </Link>
-                <Link
-                  to="/dashboard"
-                  onClick={closeMobileMenu}
-                  className={`px-4 py-3 border-b border-gray-200 dark:border-gray-700 ${
+                  onMouseEnter={preloadDashboard}
+                  onFocus={preloadDashboard}
+                  className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
                     isDashboardActive
-                      ? "text-blue-600 dark:text-matrix bg-blue-50 dark:bg-matrix/10"
-                      : "text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-terminal-alt"
-                  } transition-colors font-terminal text-sm`}
+                      ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
+                  }`}
                 >
-                  &gt; dashboard
+                  <span
+                    className={`transition-colors duration-150 ${
+                      isDashboardActive
+                        ? "text-matrix"
+                        : "text-gray-400 dark:text-gray-600"
+                    }`}
+                  >
+                    &gt;
+                  </span>
+                  dashboard
+                  <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
                 <Link
                   to="/settings"
                   onClick={closeMobileMenu}
-                  className={`px-4 py-3 border-b border-gray-200 dark:border-gray-700 ${
+                  onMouseEnter={preloadSettings}
+                  onFocus={preloadSettings}
+                  className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
                     isSettingsActive
-                      ? "text-blue-600 dark:text-matrix bg-blue-50 dark:bg-matrix/10"
-                      : "text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-terminal-alt"
-                  } transition-colors font-terminal text-sm`}
+                      ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
+                  }`}
                 >
-                  &gt; settings
+                  <span
+                    className={`transition-colors duration-150 ${
+                      isSettingsActive
+                        ? "text-matrix"
+                        : "text-gray-400 dark:text-gray-600"
+                    }`}
+                  >
+                    &gt;
+                  </span>
+                  settings
+                  <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
+                <div className="mx-5 my-1 h-px bg-gray-200 dark:bg-gray-700" />
                 <button
                   onClick={() => {
                     closeMobileMenu();
                     setShowLogoutConfirm(true);
                   }}
-                  className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-left text-gray-700 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-hack-red/10 hover:text-red-600 dark:hover:text-hack-red transition-colors font-terminal text-sm"
+                  className="w-full flex items-center gap-2 px-5 py-3 text-left text-gray-800 dark:text-gray-200 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-hack-red transition-colors group font-medium"
                 >
-                  &gt; logout
+                  <span className="text-gray-400 dark:text-gray-600 group-hover:text-red-500 dark:group-hover:text-hack-red">
+                    &gt;
+                  </span>
+                  logout
+                  <Logout className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </>
             )}
 
-            {/* Profile Info or Sign In */}
-            <div className="px-4 py-3">
-              {loading ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 dark:bg-terminal-alt border-2 border-gray-300 dark:border-gray-700 animate-pulse" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-100 dark:bg-terminal-alt animate-pulse w-24" />
-                    <div className="h-3 bg-gray-100 dark:bg-terminal-alt animate-pulse w-32" />
-                  </div>
-                </div>
-              ) : user && userProfile ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 overflow-hidden border-2 border-blue-300 dark:border-matrix/50 flex-shrink-0">
-                    {userProfile.photo_url ? (
-                      <img
-                        src={userProfile.photo_url}
-                        alt={userProfile.display_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-blue-100 dark:bg-matrix/20 flex items-center justify-center text-blue-600 dark:text-matrix font-bold text-sm">
-                        {userProfile.display_name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-blue-600 dark:text-matrix truncate">
-                      {userProfile.display_name}
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-500 truncate">
-                      {userProfile.email}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <Link
-                  to={`/auth?to=${encodeURIComponent(location.pathname === "/" ? "/dashboard" : location.pathname)}`}
-                  onClick={closeMobileMenu}
-                  className="flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-matrix text-gray-700 dark:text-gray-400 hover:text-blue-600 dark:hover:text-matrix transition-colors font-terminal text-sm"
+            {!user && !loading && (
+              <Link
+                to={authRedirect}
+                onClick={closeMobileMenu}
+                className={`flex items-center gap-2 px-5 py-3 transition-colors group font-medium ${
+                  isSignInActive
+                    ? "text-matrix bg-green-50/50 dark:bg-matrix/5"
+                    : "text-gray-800 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5"
+                }`}
+              >
+                <Login className="w-3.5 h-3.5" />
+                <span
+                  className={`transition-colors duration-150 ${isSignInActive ? "text-matrix" : ""}`}
                 >
-                  <Login className="w-4 h-4" />
-                  Sign in
-                </Link>
-              )}
-            </div>
+                  &gt; sign in
+                </span>
+                {isSignInActive ? (
+                  <span className="ml-auto w-1.5 h-1.5 bg-green-500 dark:bg-matrix animate-pulse" />
+                ) : (
+                  <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
+              </Link>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Logout Confirmation Dialog */}
+      {/* Logout confirmation */}
       <ConfirmDialog
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
@@ -255,7 +413,9 @@ function PageHeader() {
         cancelText="CANCEL"
         loading={loggingOut}
         variant="warning"
-        icon={<Logout className="w-8 h-8 text-yellow-600 dark:text-hack-yellow" />}
+        icon={
+          <Logout className="w-8 h-8 text-yellow-600 dark:text-hack-yellow" />
+        }
       />
     </>
   );

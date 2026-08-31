@@ -154,7 +154,7 @@ function TermsContent() {
           If you have questions about these Terms of Service, please reach out
           through our{" "}
           <a
-            href="https://discord.gg/v5JWDrZVNp"
+            href="https://discord.gg/MEtzjYFts2"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-900 dark:text-matrix hover:text-blue-600 dark:hover:neon-text-subtle transition-all"
@@ -336,7 +336,7 @@ function PrivacyContent() {
           If you have questions about this Privacy Policy, please reach out
           through our{" "}
           <a
-            href="https://discord.gg/v5JWDrZVNp"
+            href="https://discord.gg/MEtzjYFts2"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-900 dark:text-matrix hover:text-blue-600 dark:hover:neon-text-subtle transition-all"

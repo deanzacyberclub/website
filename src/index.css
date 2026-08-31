@@ -1,14 +1,74 @@
-@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap");
+/* ========================================================
+   SELF-HOSTED FONTS (for best Lighthouse performance)
+   ======================================================== */
 
 @import "tailwindcss";
+
+/*
+  FONT STATUS: Self-hosted WOFF2 files (verified present in public/fonts/)
+  - FiraCode-Regular.woff2, Medium, SemiBold, Bold
+  - ShareTechMono-Regular.woff2
+
+  All fonts are now served locally for best performance.
+*/
+
+/* ===================== Fira Code (Self-hosted) ===================== */
+@font-face {
+    font-family: "Fira Code";
+    src: url("/fonts/FiraCode-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+    font-feature-settings: "liga" 0;
+}
+
+@font-face {
+    font-family: "Fira Code";
+    src: url("/fonts/FiraCode-Medium.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+    font-feature-settings: "liga" 0;
+}
+
+@font-face {
+    font-family: "Fira Code";
+    src: url("/fonts/FiraCode-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+    font-feature-settings: "liga" 0;
+}
+
+@font-face {
+    font-family: "Fira Code";
+    src: url("/fonts/FiraCode-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+    font-feature-settings: "liga" 0;
+}
+
+/* ===================== Share Tech Mono (Self-hosted) ===================== */
+@font-face {
+    font-family: "Share Tech Mono";
+    src: url("/fonts/ShareTechMono-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 
 /* Enable class-based dark mode */
 @variant dark (.dark &);
 
 @theme {
-    /* Fonts */
-    --font-mono: "Fira Code", "Share Tech Mono", monospace;
-    --font-terminal: "Share Tech Mono", monospace;
+    /* Fonts - self hosted */
+    --font-mono:
+        "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    --font-terminal:
+        "Share Tech Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+        Consolas, "Liberation Mono", "Courier New", monospace;
 
     /* Light Mode Colors */
     --color-primary-light: #2563eb;
@@ -41,8 +101,7 @@
     --color-hack-purple: #bf5af2;
 
     /* Shadows - Light Mode */
-    --shadow-light:
-        0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
     --shadow-light-strong:
         0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
 
@@ -77,29 +136,37 @@
 }
 
 :root {
+    /* Light mode values */
+    --matrix-green: #2563eb;
+    --matrix-green-dim: #1d4ed8;
+    --matrix-green-glow: rgba(37, 99, 235, 0.4);
+    --terminal-bg: #ffffff;
+    --terminal-bg-alt: #f9fafb;
+    --scanline-opacity: 0.03;
+    --crt-curve: 2px;
+}
+
+html.dark {
+    /* Dark mode overrides */
     --matrix-green: #00ff41;
     --matrix-green-dim: #00cc33;
     --matrix-green-glow: rgba(0, 255, 65, 0.6);
     --terminal-bg: #0a0a0a;
     --terminal-bg-alt: #0d1117;
-    --scanline-opacity: 0.03;
-    --crt-curve: 2px;
+    background-color: #0a0a0a;
+}
+
+html {
+    background-color: #ffffff;
 }
 
 * {
     scrollbar-width: thin;
+    scrollbar-color: #9ca3af #f3f4f6;
 }
 
-@media (prefers-color-scheme: light) {
-    * {
-        scrollbar-color: #9ca3af #f3f4f6;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    * {
-        scrollbar-color: var(--matrix-green-dim) var(--terminal-bg);
-    }
+html.dark * {
+    scrollbar-color: var(--matrix-green-dim) var(--terminal-bg);
 }
 
 ::-webkit-scrollbar {
@@ -111,10 +178,8 @@
     background: #f3f4f6;
 }
 
-@media (prefers-color-scheme: dark) {
-    ::-webkit-scrollbar-track {
-        background: var(--terminal-bg);
-    }
+html.dark ::-webkit-scrollbar-track {
+    background: var(--terminal-bg);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -122,20 +187,16 @@
     border-radius: 3px;
 }
 
-@media (prefers-color-scheme: dark) {
-    ::-webkit-scrollbar-thumb {
-        background: var(--matrix-green-dim);
-    }
+html.dark ::-webkit-scrollbar-thumb {
+    background: var(--matrix-green-dim);
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: #6b7280;
 }
 
-@media (prefers-color-scheme: dark) {
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--matrix-green);
-    }
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: var(--matrix-green);
 }
 
 img {
@@ -145,37 +206,19 @@ img {
 
 html {
     scroll-behavior: smooth;
-}
-
-@media (prefers-color-scheme: light) {
-    html {
-        background-color: #ffffff;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    html {
-        background-color: var(--terminal-bg);
-    }
+    background-color: #ffffff;
 }
 
 body {
-    font-family: "Fira Code", "Share Tech Mono", monospace;
+    font-family: var(--font-mono);
     overflow-x: hidden;
+    background-color: #ffffff;
+    color: #111827;
 }
 
-@media (prefers-color-scheme: light) {
-    body {
-        background-color: #ffffff;
-        color: #111827;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: var(--terminal-bg);
-        color: var(--matrix-green);
-    }
+html.dark body {
+    background-color: var(--terminal-bg);
+    color: var(--matrix-green);
 }
 
 ::selection {
@@ -183,11 +226,9 @@ body {
     color: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-    ::selection {
-        background: var(--matrix-green);
-        color: var(--terminal-bg);
-    }
+html.dark ::selection {
+    background: var(--matrix-green);
+    color: var(--terminal-bg);
 }
 
 /* ============================================
@@ -281,27 +322,25 @@ body {
 }
 
 /* Dark mode: full CRT effect */
-@media (prefers-color-scheme: dark) {
-    .crt-overlay::before {
-        background: repeating-linear-gradient(
-            0deg,
-            rgba(0, 0, 0, 0.15) 0px,
-            rgba(0, 0, 0, 0.15) 1px,
-            transparent 1px,
-            transparent 2px
-        );
-        opacity: 1;
-    }
+html.dark .crt-overlay::before {
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15) 0px,
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    opacity: 1;
+}
 
-    .crt-overlay::after {
-        background: radial-gradient(
-            ellipse at center,
-            transparent 0%,
-            rgba(0, 0, 0, 0.2) 80%,
-            rgba(0, 0, 0, 0.5) 100%
-        );
-        opacity: 1;
-    }
+html.dark .crt-overlay::after {
+    background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        rgba(0, 0, 0, 0.2) 80%,
+        rgba(0, 0, 0, 0.5) 100%
+    );
+    opacity: 1;
 }
 
 @keyframes scanline-scroll {
@@ -470,15 +509,13 @@ body {
     overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-    .terminal-window {
-        background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
-        border: 1px solid #333;
-        box-shadow:
-            0 0 0 1px rgba(0, 255, 65, 0.1),
-            0 4px 30px rgba(0, 0, 0, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    }
+.dark .terminal-window {
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 1px solid #333;
+    box-shadow:
+        0 0 0 1px rgba(0, 255, 65, 0.1),
+        0 4px 30px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .terminal-window.overflow-visible {
@@ -494,11 +531,9 @@ body {
     border-bottom: 1px solid #d1d5db;
 }
 
-@media (prefers-color-scheme: dark) {
-    .terminal-header {
-        background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
-        border-bottom: 1px solid #333;
-    }
+.dark .terminal-header {
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    border-bottom: 1px solid #333;
 }
 
 .terminal-dot {
@@ -713,22 +748,18 @@ button {
     outline: none;
 }
 
-@media (prefers-color-scheme: dark) {
-    .input-hack {
-        background: rgba(0, 255, 65, 0.05);
-        border: 1px solid rgba(0, 255, 65, 0.3);
-        color: var(--matrix-green);
-    }
+.dark .input-hack {
+    background: rgba(0, 255, 65, 0.05);
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    color: var(--matrix-green);
 }
 
 .input-hack::placeholder {
     color: #9ca3af;
 }
 
-@media (prefers-color-scheme: dark) {
-    .input-hack::placeholder {
-        color: rgba(0, 255, 65, 0.4);
-    }
+.dark .input-hack::placeholder {
+    color: rgba(0, 255, 65, 0.4);
 }
 
 .input-hack:focus {
@@ -736,13 +767,11 @@ button {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    .input-hack:focus {
-        border-color: var(--matrix-green);
-        box-shadow:
-            0 0 10px rgba(0, 255, 65, 0.2),
-            inset 0 0 10px rgba(0, 255, 65, 0.05);
-    }
+.dark .input-hack:focus {
+    border-color: var(--matrix-green);
+    box-shadow:
+        0 0 10px rgba(0, 255, 65, 0.2),
+        inset 0 0 10px rgba(0, 255, 65, 0.05);
 }
 
 /* ============================================
@@ -756,15 +785,13 @@ button {
     transition: all 0.3s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-    .card-hack {
-        background: linear-gradient(
-            135deg,
-            rgba(0, 255, 65, 0.03) 0%,
-            transparent 100%
-        );
-        border: 1px solid rgba(0, 255, 65, 0.2);
-    }
+.dark .card-hack {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 255, 65, 0.03) 0%,
+        transparent 100%
+    );
+    border: 1px solid rgba(0, 255, 65, 0.2);
 }
 
 .card-hack::before {
@@ -774,25 +801,18 @@ button {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        #2563eb,
-        transparent
-    );
+    background: linear-gradient(90deg, transparent, #2563eb, transparent);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-    .card-hack::before {
-        background: linear-gradient(
-            90deg,
-            transparent,
-            var(--matrix-green),
-            transparent
-        );
-    }
+.dark .card-hack::before {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--matrix-green),
+        transparent
+    );
 }
 
 .card-hack:hover {
@@ -800,18 +820,16 @@ button {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    .card-hack:hover {
-        border-color: rgba(0, 255, 65, 0.5);
-        background: linear-gradient(
-            135deg,
-            rgba(0, 255, 65, 0.08) 0%,
-            transparent 100%
-        );
-        box-shadow:
-            0 0 20px rgba(0, 255, 65, 0.1),
-            inset 0 0 20px rgba(0, 255, 65, 0.02);
-    }
+.dark .card-hack:hover {
+    border-color: rgba(0, 255, 65, 0.5);
+    background: linear-gradient(
+        135deg,
+        rgba(0, 255, 65, 0.08) 0%,
+        transparent 100%
+    );
+    box-shadow:
+        0 0 20px rgba(0, 255, 65, 0.1),
+        inset 0 0 20px rgba(0, 255, 65, 0.02);
 }
 
 .card-hack:hover::before {
@@ -939,11 +957,9 @@ button {
     text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-    .cli-btn-filled {
-        background: var(--matrix-green);
-        color: var(--terminal-bg);
-    }
+.dark .cli-btn-filled {
+    background: var(--matrix-green);
+    color: var(--terminal-bg);
 }
 
 .cli-btn-filled:hover {
@@ -951,11 +967,9 @@ button {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    .cli-btn-filled:hover {
-        background: #00ff6a;
-        box-shadow: 0 0 20px var(--matrix-green-glow);
-    }
+.dark .cli-btn-filled:hover {
+    background: #00ff6a;
+    box-shadow: 0 0 20px var(--matrix-green-glow);
 }
 
 /* Dashed outline button */
@@ -973,11 +987,9 @@ button {
     text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-    .cli-btn-dashed {
-        color: var(--matrix-green);
-        border: 1px dashed var(--matrix-green);
-    }
+.dark .cli-btn-dashed {
+    color: var(--matrix-green);
+    border: 1px dashed var(--matrix-green);
 }
 
 .cli-btn-dashed:hover {
@@ -986,11 +998,9 @@ button {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    .cli-btn-dashed:hover {
-        background: rgba(0, 255, 65, 0.1);
-        box-shadow: 0 0 15px rgba(0, 255, 65, 0.15);
-    }
+.dark .cli-btn-dashed:hover {
+    background: rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.15);
 }
 
 /* Blinking cursor */
@@ -1074,114 +1084,52 @@ button {
 }
 
 /* ============================================
-   STUDY PATHWAY COMPONENTS
-   ============================================ */
-
-/* Flashcard flip animation */
-.flashcard {
-    perspective: 1000px;
-}
-
-.flashcard-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.6s;
-    transform-style: preserve-3d;
-}
-
-.flashcard.flipped .flashcard-inner {
-    transform: rotateY(180deg);
-}
-
-.flashcard-front,
-.flashcard-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-}
-
-.flashcard-back {
-    transform: rotateY(180deg);
-}
-
-/* Progress ring animation */
-@keyframes progress-ring {
-    0% {
-        stroke-dashoffset: 251.2;
-    }
-    100% {
-        stroke-dashoffset: 0;
-    }
-}
-
-.progress-ring {
-    animation: progress-ring 1.5s ease-out forwards;
-}
-
-/* Lesson node pulse for in_progress state */
-@keyframes lesson-pulse {
-    0%,
-    100% {
-        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-    }
-    50% {
-        box-shadow:
-            0 0 20px rgba(0, 255, 255, 0.6),
-            0 0 30px rgba(0, 255, 255, 0.3);
-    }
-}
-
-/* Pathway connection line animation */
-@keyframes pathway-dash {
-    to {
-        stroke-dashoffset: 0;
-    }
-}
-
-.pathway-connection {
-    stroke-dasharray: 5, 5;
-    animation: pathway-dash 20s linear infinite;
-}
-
-/* Star rating animation */
-@keyframes star-pop {
-    0%,
-    100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.2);
-    }
-}
-
-.star-pop {
-    animation: star-pop 0.3s ease-out;
-}
-
-/* Quiz result celebration animation */
-@keyframes celebrate-bounce {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    25% {
-        transform: translateY(-10px);
-    }
-    75% {
-        transform: translateY(-5px);
-    }
-}
-
-.celebrate-bounce {
-    animation: celebrate-bounce 0.6s ease-out;
-}
-
-/* ============================================
    CTF CHALLENGE EFFECTS
    ============================================ */
+@keyframes tab-enter {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-tab-enter {
+    animation: tab-enter 0.22s ease-out forwards;
+}
+
+@keyframes search-open {
+    0%   { opacity: 0; transform: scaleX(0.55); }
+    55%  { opacity: 1; transform: scaleX(1.07); }
+    75%  { transform: scaleX(0.97); }
+    90%  { transform: scaleX(1.02); }
+    100% { opacity: 1; transform: scaleX(1); }
+}
+
+.animate-search-open {
+    animation: search-open 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform-origin: right center;
+}
+
+@keyframes search-close {
+    from {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+    to {
+        opacity: 0;
+        transform: scaleX(0.6);
+    }
+}
+
+.animate-search-close {
+    animation: search-close 0.08s ease-in forwards;
+    transform-origin: right center;
+}
+
 @keyframes shake {
     0%,
     100% {
@@ -1204,4 +1152,174 @@ button {
 
 .shake {
     animation: shake 0.5s ease-in-out;
+}
+
+/* ============================================
+   LIQUID GLASS ISLANDS (iOS/macOS 26)
+   ============================================ */
+.glass-island {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 1.5px solid rgba(255, 255, 255, 0.8);
+    box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border-radius: 9999px;
+}
+
+.dark .glass-island {
+    background: rgba(15, 15, 15, 0.72);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Rectangular glass for dropdown panels */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 1.5px solid rgba(255, 255, 255, 0.8);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+}
+
+.dark .glass-panel {
+    background: rgba(15, 15, 15, 0.82);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ============================================
+   DACC HERO BACKGROUND ANIMATION
+   ============================================ */
+@keyframes dacc-breathe {
+    0%,
+    100% {
+        opacity: 0.45;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes dacc-scan {
+    0% {
+        top: -40%;
+    }
+    100% {
+        top: 120%;
+    }
+}
+
+@keyframes ctf-float {
+    0%,
+    100% {
+        transform: translateY(-6px);
+    }
+    50% {
+        transform: translateY(6px);
+    }
+}
+
+.dacc-bg-wrapper {
+    position: relative;
+    animation: dacc-breathe 7s ease-in-out infinite;
+}
+
+.dacc-scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 35%;
+    top: -35%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(34, 197, 94, 0.05) 40%,
+        rgba(34, 197, 94, 0.05) 60%,
+        transparent 100%
+    );
+    animation: dacc-scan 12s linear infinite;
+    pointer-events: none;
+}
+
+.dark .dacc-scan-line {
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 255, 65, 0.07) 40%,
+        rgba(0, 255, 65, 0.07) 60%,
+        transparent 100%
+    );
+}
+
+/* ============================================
+   MEETING DETAIL SHEET / DRAWER ANIMATIONS
+   ============================================ */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sheet-slide-right {
+  animation: slideInFromRight 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sheet-slide-up {
+  animation: slideUpFromBottom 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Exit animations (for close) */
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.sheet-slide-right-exit {
+  animation: slideOutToRight 0.2s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.sheet-slide-up-exit {
+  animation: slideOutToBottom 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
