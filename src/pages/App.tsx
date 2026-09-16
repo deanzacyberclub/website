@@ -40,8 +40,8 @@ import {
 import type { Meeting } from "@/types/database.types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { OFFICERS, CURRENT_QUARTER, ROLE_ORDER } from "@/constants";
-import type { OfficerData } from "@/constants";
+import { OFFICERS, OPEN_ROLES, CURRENT_QUARTER, ROLE_ORDER } from "@/constants";
+import type { OfficerData, OpenRole } from "@/constants";
 import { useInView } from "@/hooks/useInView";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
@@ -1362,6 +1362,45 @@ function OfficerCard({
 }
 
 // ─── Officer Modal ────────────────────────────────────
+// ─── Open Role Card (still recruiting) ───────────────
+function OpenRoleCard({ role, responsibilities }: OpenRole) {
+  return (
+    <a
+      href={DISCORD_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group relative w-full text-left overflow-hidden rounded-2xl border border-dashed border-white/20 bg-[#0a0a0a] shadow-xl transition-all duration-300 hover:border-emerald-400/60 hover:shadow-2xl focus:outline-none focus:ring-1 focus:ring-white/20 flex flex-col p-5"
+    >
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <span className="text-[10px] font-mono uppercase tracking-widest text-white/60">
+          {role}
+        </span>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 border border-emerald-400/40 px-2 py-0.5">
+          Still recruiting
+        </span>
+      </div>
+      <div className="font-mono font-semibold text-white text-base mb-3">
+        This could be you
+      </div>
+      <ul className="space-y-1 mb-4 flex-1">
+        {responsibilities.map((item) => (
+          <li
+            key={item}
+            className="font-sans text-xs text-white/60 leading-relaxed flex gap-2"
+          >
+            <span className="text-emerald-400/70 shrink-0">&gt;</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="flex items-center gap-1 font-mono text-xs text-white/50 group-hover:text-emerald-400 transition-colors">
+        Apply on Discord
+        <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+      </div>
+    </a>
+  );
+}
+
 function OfficerModal({
   officer,
   onClose,
@@ -1429,6 +1468,27 @@ function OfficerModal({
               {officer.name}
             </h3>
           </div>
+
+          {officer.responsibilities && officer.responsibilities.length > 0 && (
+            <div className="border-t border-gray-200 dark:border-matrix/20 pt-4 mb-4">
+              <p className="font-mono text-xs text-gray-400 dark:text-matrix/40 uppercase tracking-widest mb-2">
+                Responsibilities
+              </p>
+              <ul className="space-y-1">
+                {officer.responsibilities.map((item) => (
+                  <li
+                    key={item}
+                    className="font-mono text-xs text-gray-600 dark:text-gray-400 flex gap-2"
+                  >
+                    <span className="text-green-600 dark:text-matrix/60 shrink-0">
+                      &gt;
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {officer.leadershipHistory.length > 0 && (
             <div className="border-t border-gray-200 dark:border-matrix/20 pt-4 mb-4">
@@ -1741,17 +1801,20 @@ function App() {
                 subtitle="The team running the club this quarter"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[...OFFICERS]
-                  .map((officer) => {
-                    const currentEntry = officer.leadershipHistory.find(
-                      (e) => e.quarter === CURRENT_QUARTER,
-                    );
-                    return {
+                {OFFICERS.flatMap((officer) => {
+                  const currentEntry = officer.leadershipHistory.find(
+                    (e) => e.quarter === CURRENT_QUARTER,
+                  );
+                  // Only show officers who hold a role this quarter.
+                  if (!currentEntry) return [];
+                  return [
+                    {
                       officer,
-                      role: currentEntry?.role ?? officer.role,
-                      altRole: currentEntry?.altRole ?? officer.altRole,
-                    };
-                  })
+                      role: currentEntry.role,
+                      altRole: currentEntry.altRole,
+                    },
+                  ];
+                })
                   .sort((a, b) => {
                     const ai = ROLE_ORDER.indexOf(a.role);
                     const bi = ROLE_ORDER.indexOf(b.role);
@@ -1768,6 +1831,9 @@ function App() {
                       onClick={() => setSelectedOfficer(officer)}
                     />
                   ))}
+                {OPEN_ROLES.map((open) => (
+                  <OpenRoleCard key={open.role} {...open} />
+                ))}
               </div>
             </section>
           </ScrollReveal>

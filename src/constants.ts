@@ -18,9 +18,29 @@ export interface OfficerData {
     label: string;
   }[];
   leadershipHistory: LeadershipEntry[];
+  /** What this officer is responsible for in the current quarter. */
+  responsibilities?: string[];
 }
 
-export const CURRENT_QUARTER = "Spring 2026";
+export interface OpenRole {
+  role: string;
+  responsibilities: string[];
+}
+
+export const CURRENT_QUARTER = "Fall 2026";
+
+/** Officer positions we are still recruiting for this quarter. */
+export const OPEN_ROLES: OpenRole[] = [
+  {
+    role: "Outreach Manager",
+    responsibilities: [
+      "Managing social media",
+      "Active recruitment (Discord servers, campus, etc.)",
+      "Communicating and organizing with other clubs and sponsors",
+      "General club work",
+    ],
+  },
+];
 
 export const ROLE_ORDER = [
   "President",
@@ -55,6 +75,14 @@ export const OFFICERS: OfficerData[] = [
     leadershipHistory: [
       { quarter: "Winter 2026", role: "President" },
       { quarter: "Spring 2026", role: "Treasurer" },
+      { quarter: "Fall 2026", role: "President" },
+    ],
+    responsibilities: [
+      "Club management and organization",
+      "Carry out the constitution",
+      "Maintain the club website",
+      "Help with curriculum",
+      "General club work",
     ],
   },
   {
@@ -98,10 +126,22 @@ export const OFFICERS: OfficerData[] = [
   },
   {
     name: "Arin Thakkar",
-    role: "Secretary",
+    role: "Vice President",
+    altRole: "ICC Representative",
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Secretary" },
       { quarter: "Spring 2026", role: "Vice President" },
+      {
+        quarter: "Fall 2026",
+        role: "Vice President",
+        altRole: "ICC Representative",
+      },
+    ],
+    responsibilities: [
+      "Club management",
+      "Attend all ICC meetings",
+      "Report on the results of ICC meetings",
+      "Help with curriculum",
     ],
   },
   {
@@ -114,10 +154,35 @@ export const OFFICERS: OfficerData[] = [
   },
   {
     name: "Ollin Ruiz",
-    role: "Curriculum Lead",
+    role: "Secretary",
     leadershipHistory: [
       { quarter: "Winter 2026", role: "Curriculum Lead" },
       { quarter: "Spring 2026", role: "Curriculum Lead" },
+      { quarter: "Fall 2026", role: "Secretary" },
     ],
+    responsibilities: [
+      "Club organization",
+      "Handle the club agenda",
+      "Help with projects",
+    ],
+  },
+  {
+    name: "Janice",
+    role: "Treasurer",
+    altRole: "Marketing",
+    leadershipHistory: [
+      { quarter: "Fall 2026", role: "Treasurer", altRole: "Marketing" },
+    ],
+    responsibilities: [
+      "Managing and keeping track of funds",
+      "No dues collected this quarter",
+      "Marketing, posting, and outreach",
+    ],
+  },
+  {
+    name: "Michael",
+    role: "Curriculum Lead",
+    leadershipHistory: [{ quarter: "Fall 2026", role: "Curriculum Lead" }],
+    responsibilities: ["Building the curriculum", "General club work"],
   },
 ];
