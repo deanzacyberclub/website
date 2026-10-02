@@ -5,6 +5,13 @@
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_PUBLISHABLE_KEY"
 
+# forms.dacc.club -> /forms (add forms.dacc.club as a domain alias in Netlify + a CNAME in DNS)
+[[redirects]]
+  from = "https://forms.dacc.club/*"
+  to = "https://dacc.club/forms/:splat"
+  status = 301
+  force = true
+
 # SPA fallback for React Router (must be last)
 [[redirects]]
   from = "/*"

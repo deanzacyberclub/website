@@ -21,6 +21,8 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const CTF = lazy(() => import("@/pages/CTF"));
 const AppPromo = lazy(() => import("@/pages/AppPromo"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
+const Forms = lazy(() => import("@/pages/Forms"));
+const FormsCompile = lazy(() => import("@/pages/FormsCompile"));
 
 ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
   <React.StrictMode>
@@ -38,6 +40,15 @@ ReactDOM.createRoot(document.getElementById("deanzacybersecurityclub")!).render(
               <Route path="/legal" element={<Legal />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/forms" element={<Forms />} />
+              <Route
+                path="/forms/compile"
+                element={
+                  <ProtectedRoute>
+                    <FormsCompile />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/@/:id"
                 element={

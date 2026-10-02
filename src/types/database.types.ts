@@ -49,6 +49,39 @@ export interface Database {
         }
         Relationships: []
       }
+      form_signatures: {
+        Row: {
+          id: string
+          form: 'petition' | 'roster'
+          signer_name: string
+          position: string
+          email: string | null
+          student_id: string | null
+          signature_png: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          form: 'petition' | 'roster'
+          signer_name: string
+          position: string
+          email?: string | null
+          student_id?: string | null
+          signature_png: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          form?: 'petition' | 'roster'
+          signer_name?: string
+          position?: string
+          email?: string | null
+          student_id?: string | null
+          signature_png?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       meetings: {
         Row: {
           id: string
