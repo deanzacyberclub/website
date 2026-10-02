@@ -57,6 +57,7 @@ export interface Database {
           position: string
           email: string | null
           student_id: string | null
+          phone: string | null
           signature_png: string
           created_at: string
         }
@@ -67,6 +68,7 @@ export interface Database {
           position: string
           email?: string | null
           student_id?: string | null
+          phone?: string | null
           signature_png: string
           created_at?: string
         }
@@ -77,6 +79,7 @@ export interface Database {
           position?: string
           email?: string | null
           student_id?: string | null
+          phone?: string | null
           signature_png?: string
           created_at?: string
         }

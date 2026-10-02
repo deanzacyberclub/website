@@ -1,7 +1,7 @@
 -- ============================================================
 -- FORM SIGNATURES
 -- Collects digital signatures for ICC paperwork (club petition,
--- financial roster). Anyone with the /forms link can submit;
+-- financial roster 2026). Anyone with the /forms link can submit;
 -- only officers can read, compile, or delete.
 -- ============================================================
 
@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.form_signatures (
   position      TEXT NOT NULL CHECK (char_length(position) BETWEEN 2 AND 60),
   email         TEXT CHECK (email IS NULL OR char_length(email) <= 254),
   student_id    TEXT CHECK (student_id IS NULL OR char_length(student_id) <= 20),
+  phone         TEXT CHECK (phone IS NULL OR char_length(phone) <= 30),
   -- PNG data URL of the drawn signature (transparent background)
   signature_png TEXT NOT NULL CHECK (
     signature_png LIKE 'data:image/png;base64,%'

@@ -14,7 +14,7 @@ const FORM_META: Record<FormKey, { label: string; blurb: string }> = {
   },
   roster: {
     label: "ICC Club Financial Roster",
-    blurb: "Officers only. Needs name, title, email, signature.",
+    blurb: "Officers only. Needs name, title, CWID, phone, email, signature.",
   },
 };
 
@@ -27,6 +27,7 @@ function Forms() {
   const [position, setPosition] = useState("");
   const [email, setEmail] = useState("");
   const [studentId, setStudentId] = useState("");
+  const [phone, setPhone] = useState("");
   const [padEmpty, setPadEmpty] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,8 @@ function Forms() {
 
   const selected = (Object.keys(forms) as FormKey[]).filter((k) => forms[k]);
   const isOfficer = position !== "" && position !== "Member";
-  const needsStudentId = forms.petition;
+  const needsStudentId = forms.petition || forms.roster;
+  const needsPhone = forms.roster;
 
   const canSubmit =
     name.trim().length >= 2 &&
@@ -43,6 +45,7 @@ function Forms() {
     !padEmpty &&
     !submitting &&
     (!needsStudentId || studentId.trim().length > 0) &&
+    (!needsPhone || phone.trim().length > 0) &&
     email.trim().length > 0;
 
   const handleSubmit = async () => {
@@ -64,6 +67,7 @@ function Forms() {
         position,
         email: email.trim() || null,
         student_id: studentId.trim() || null,
+        phone: phone.trim() || null,
         signature_png: png,
       }));
       const { error: dbError } = await supabase.from("form_signatures").insert(rows);
@@ -98,6 +102,7 @@ function Forms() {
               setPosition("");
               setEmail("");
               setStudentId("");
+              setPhone("");
               padRef.current?.clear();
               setPadEmpty(true);
             }}
@@ -182,13 +187,23 @@ function Forms() {
               autoComplete="email"
             />
           </Field>
-          <Field label="STUDENT ID" required={needsStudentId} hint={needsStudentId ? "needed for the petition" : "optional"}>
+          <Field label="STUDENT ID (CWID)" required={needsStudentId} hint={needsStudentId ? "goes on the form" : "optional"}>
             <input
               className="input-hack w-full"
               inputMode="numeric"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
-              placeholder="2025xxxx"
+              placeholder="2060xxxx"
+            />
+          </Field>
+          <Field label="PHONE" required={needsPhone} hint={needsPhone ? "needed for the roster" : "optional"}>
+            <input
+              className="input-hack w-full"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="408 555 0100"
+              autoComplete="tel"
             />
           </Field>
         </div>
