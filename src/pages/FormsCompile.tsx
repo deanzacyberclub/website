@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { deleteSignature, listSignatures, type Sig } from "@/lib/formsApi";
 import { useOfficerVerification } from "@/hooks/useOfficerVerification";
 import { Tabs } from "@/components/Tabs";
 import { Download, Spinner, Trash, Warning } from "@/lib/cyberIcon";
-import type { Database } from "@/types/database.types";
 import {
   FORM_LABEL,
   PETITION_MAX_ROWS,
@@ -17,8 +16,6 @@ import {
   type FormKey,
   type Layout,
 } from "@/lib/iccForms";
-
-type Sig = Database["public"]["Tables"]["form_signatures"]["Row"];
 
 /** Blank ICC PDFs shipped with the site (public/forms/). */
 const BUNDLED: Record<FormKey, { path: string; label: string }> = {
@@ -51,13 +48,13 @@ function FormsCompile() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error: e } = await supabase
-      .from("form_signatures")
-      .select("*")
-      .order("created_at", { ascending: true });
-    if (e) setError(e.message);
-    setSigs((data as Sig[]) ?? []);
-    setLoading(false);
+    try {
+      setSigs(await listSignatures());
+    } catch (e) {
+      setError(`Could not load signatures: ${String(e)}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -88,9 +85,12 @@ function FormsCompile() {
 
   const remove = async (id: string) => {
     if (!confirm("Delete this signature?")) return;
-    const { error: e } = await supabase.from("form_signatures").delete().eq("id", id);
-    if (e) setError(e.message);
-    else setSigs((s) => s.filter((x) => x.id !== id));
+    try {
+      await deleteSignature(id);
+      setSigs((s) => s.filter((x) => x.id !== id));
+    } catch (e) {
+      setError(`Delete failed: ${String(e)}`);
+    }
   };
 
   const copyLink = async () => {

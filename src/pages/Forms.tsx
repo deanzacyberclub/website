@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { submitSignatures } from "@/lib/formsApi";
 import SignaturePad, { type SignaturePadHandle } from "@/components/SignaturePad";
 import { ROLE_ORDER } from "@/constants";
 import { CheckCircle, Spinner, Warning } from "@/lib/cyberIcon";
@@ -70,8 +70,7 @@ function Forms() {
         phone: phone.trim() || null,
         signature_png: png,
       }));
-      const { error: dbError } = await supabase.from("form_signatures").insert(rows);
-      if (dbError) throw dbError;
+      await submitSignatures(rows);
       setDone(selected);
     } catch (e) {
       console.error(e);
