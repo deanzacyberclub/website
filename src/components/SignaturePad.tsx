@@ -1,7 +1,13 @@
-import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 export interface SignaturePadHandle {
-  /** Returns a transparent-background PNG data URL, or null if empty. */
+  /** Transparent-background PNG data URL, or null if nothing was drawn. */
   toDataURL: () => string | null;
   clear: () => void;
   isEmpty: () => boolean;
@@ -13,45 +19,79 @@ interface SignaturePadProps {
 }
 
 /**
- * Minimal pointer-driven signature pad. No dependencies.
- * Draws in black so the exported PNG reads correctly on a printed form.
+ * Pointer-driven signature pad, no dependencies. Finger, stylus and mouse.
+ *
+ * Strokes live only in the canvas bitmap, and setting canvas.width wipes it,
+ * so layout changes are handled carefully: we re-layout only when the
+ * element's CSS width actually changes (not on height-only changes such as
+ * the mobile keyboard closing or the address bar collapsing), and we copy
+ * the existing bitmap across synchronously when we do.
  */
 const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
   function SignaturePad({ height = 180, onChange }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const drawing = useRef(false);
     const last = useRef<{ x: number; y: number } | null>(null);
+    const emptyRef = useRef(true);
+    const layoutWidth = useRef(0);
     const [empty, setEmpty] = useState(true);
 
-    const setupCanvas = () => {
-      const c = canvasRef.current;
-      if (!c) return;
-      const dpr = window.devicePixelRatio || 1;
-      const rect = c.getBoundingClientRect();
-      // Preserve existing strokes across resize
-      const snapshot = empty ? null : c.toDataURL();
-      c.width = Math.round(rect.width * dpr);
-      c.height = Math.round(rect.height * dpr);
-      const ctx = c.getContext("2d")!;
-      ctx.scale(dpr, dpr);
+    const markEmpty = (value: boolean) => {
+      if (emptyRef.current === value) return;
+      emptyRef.current = value;
+      setEmpty(value);
+      onChange?.(value);
+    };
+
+    const applyStrokeStyle = (ctx: CanvasRenderingContext2D) => {
       ctx.lineWidth = 2.2;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.strokeStyle = "#000000";
-      if (snapshot) {
-        const img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
-        img.src = snapshot;
+      ctx.fillStyle = "#000000";
+    };
+
+    /** (Re)size the bitmap to the element's CSS size, keeping existing strokes. */
+    const layout = (force = false) => {
+      const c = canvasRef.current;
+      if (!c) return;
+      const cssW = Math.round(c.getBoundingClientRect().width);
+      if (cssW === 0) return;
+      if (!force && cssW === layoutWidth.current) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      // Keep a synchronous copy of the current bitmap.
+      let copy: HTMLCanvasElement | null = null;
+      if (!emptyRef.current && c.width > 0 && c.height > 0) {
+        copy = document.createElement("canvas");
+        copy.width = c.width;
+        copy.height = c.height;
+        copy.getContext("2d")!.drawImage(c, 0, 0);
       }
+
+      layoutWidth.current = cssW;
+      c.width = Math.round(cssW * dpr);
+      c.height = Math.round(height * dpr);
+      const ctx = c.getContext("2d")!;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      applyStrokeStyle(ctx);
+      if (copy) ctx.drawImage(copy, 0, 0, cssW, height);
     };
 
     useEffect(() => {
-      setupCanvas();
-      const onResize = () => setupCanvas();
-      window.addEventListener("resize", onResize);
-      return () => window.removeEventListener("resize", onResize);
+      layout(true);
+      const c = canvasRef.current;
+      if (!c) return;
+      let ro: ResizeObserver | null = null;
+      if (typeof ResizeObserver !== "undefined") {
+        ro = new ResizeObserver(() => layout());
+        ro.observe(c);
+      } else {
+        window.addEventListener("resize", () => layout());
+      }
+      return () => ro?.disconnect();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [height]);
 
     const pos = (e: React.PointerEvent<HTMLCanvasElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -60,19 +100,25 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
 
     const onDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
       e.preventDefault();
-      e.currentTarget.setPointerCapture(e.pointerId);
+      // Blur any focused input so the mobile keyboard closes BEFORE we start
+      // drawing; the resulting layout shift then cannot wipe a stroke.
+      if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
+        document.activeElement.blur();
+      }
+      layout();
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* unsupported */
+      }
       drawing.current = true;
       last.current = pos(e);
       const ctx = e.currentTarget.getContext("2d")!;
-      // Dot for taps
+      applyStrokeStyle(ctx);
       ctx.beginPath();
       ctx.arc(last.current.x, last.current.y, 1.1, 0, Math.PI * 2);
-      ctx.fillStyle = "#000000";
       ctx.fill();
-      if (empty) {
-        setEmpty(false);
-        onChange?.(false);
-      }
+      markEmpty(false);
     };
 
     const onMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -93,7 +139,7 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
       try {
         e.currentTarget.releasePointerCapture(e.pointerId);
       } catch {
-        /* ignore */
+        /* already released */
       }
     };
 
@@ -105,27 +151,32 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, c.width, c.height);
       ctx.restore();
-      setEmpty(true);
-      onChange?.(true);
+      markEmpty(true);
     };
 
     useImperativeHandle(ref, () => ({
-      toDataURL: () => (empty ? null : canvasRef.current?.toDataURL("image/png") ?? null),
+      toDataURL: () =>
+        emptyRef.current ? null : (canvasRef.current?.toDataURL("image/png") ?? null),
       clear,
-      isEmpty: () => empty,
+      isEmpty: () => emptyRef.current,
     }));
 
     return (
       <div className="relative">
         <canvas
           ref={canvasRef}
-          style={{ height, touchAction: "none" }}
+          style={{
+            height,
+            touchAction: "none",
+            WebkitUserSelect: "none",
+            WebkitTouchCallout: "none",
+          }}
           className="w-full bg-white border border-gray-300 dark:border-matrix/40 cursor-crosshair select-none"
           onPointerDown={onDown}
           onPointerMove={onMove}
           onPointerUp={onUp}
           onPointerCancel={onUp}
-          onPointerLeave={onUp}
+          onContextMenu={(e) => e.preventDefault()}
           aria-label="Signature pad"
         />
         {empty && (
